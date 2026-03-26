@@ -17,11 +17,21 @@ export interface TableQueryResult {
   sourceChunkId: string;
 }
 
+export interface DocumentMeta {
+  id: string;
+  filename: string;
+  documentType: string | null;
+}
+
 // LangGraph agent state shared across all nodes.
 export const AgentState = Annotation.Root({
   query: Annotation<string>(),
   queryType: Annotation<QueryType>(),
   documentIds: Annotation<string[]>(),
+  documentMetas: Annotation<DocumentMeta[]>({
+    reducer: (_prev, next) => next,
+    default: () => [],
+  }),
   conversationHistory: Annotation<MessageRecord[]>(),
   retrievedChunks: Annotation<RetrievedChunk[]>({
     reducer: (prev, next) => {
