@@ -1,61 +1,8 @@
 import { getLLM } from "@/lib/langchain/model";
-import { SYSTEM_PROMPT } from "@/lib/agent/prompts/system";
-import { buildSynthesisPrompt } from "@/lib/agent/prompts/synthesis";
-import { retrieveChunks } from "@/lib/agent/tools/retriever-tool";
+import { buildAgentGraph } from "@/lib/agent/graph";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { Citation, MessageRecord } from "@/types/conversation";
-
-// Parse citation references from the assistant response text.
-function extractCitations(
-  text: string,
-  chunks: { id: string; section_title: string | null; page_number: number | null; content: string }[],
-): Citation[] {
-  const citations: Citation[] = [];
-  const seen = new Set<string>();
-
-  // Match [Section: X, Page: Y] patterns
-  const pattern = /\[Section:\s*([^,\]]+),\s*Page:\s*(\d+)\]/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = pattern.exec(text)) !== null) {
-    const sectionRef = match[1].trim();
-    const pageRef = parseInt(match[2], 10);
-
-    // Find the best matching chunk
-    const matchingChunk = chunks.find(
-      (c) =>
-        (c.section_title?.toLowerCase().includes(sectionRef.toLowerCase()) ||
-          sectionRef.toLowerCase().includes(c.section_title?.toLowerCase() ?? "")) &&
-        c.page_number === pageRef,
-    ) ?? chunks.find((c) => c.page_number === pageRef);
-
-    if (matchingChunk && !seen.has(matchingChunk.id)) {
-      seen.add(matchingChunk.id);
-      citations.push({
-        chunk_id: matchingChunk.id,
-        section_title: matchingChunk.section_title,
-        page_number: matchingChunk.page_number,
-        snippet: matchingChunk.content.slice(0, 200),
-      });
-    }
-  }
-
-  // Also add all retrieved chunks that were used as context but not explicitly cited
-  for (const chunk of chunks) {
-    if (!seen.has(chunk.id)) {
-      seen.add(chunk.id);
-      citations.push({
-        chunk_id: chunk.id,
-        section_title: chunk.section_title,
-        page_number: chunk.page_number,
-        snippet: chunk.content.slice(0, 200),
-      });
-    }
-  }
-
-  return citations;
-}
+import type { MessageRecord } from "@/types/conversation";
 
 // Generate a short title for a new conversation from the first message.
 async function generateTitle(message: string): Promise<string> {
@@ -83,7 +30,7 @@ interface ChatRequestBody {
   documentIds: string[];
 }
 
-// Streaming chat endpoint that performs RAG and returns a streamed response.
+// Streaming chat endpoint powered by the LangGraph agent.
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -160,72 +107,80 @@ export async function POST(request: Request) {
       .limit(10);
 
     const history = (historyRows ?? []) as MessageRecord[];
-    // Exclude the current user message from history passed to the prompt
     const priorHistory = history.slice(0, -1);
 
-    // Retrieve relevant chunks
-    const chunks = await retrieveChunks(message, documentIds);
+    // Run the LangGraph agent
+    const agent = buildAgentGraph();
+    const result = await agent.invoke({
+      query: message,
+      queryType: "simple_factual",
+      documentIds,
+      conversationHistory: priorHistory,
+    });
 
-    // Build prompt and stream response
-    const synthesisPrompt = buildSynthesisPrompt(message, chunks, priorHistory);
-    const llm = getLLM();
+    const agentResponse = result.response ?? "I was unable to generate a response.";
+    const citations = result.citations ?? [];
+    const nodesVisited = result.nodesVisited ?? [];
 
-    const stream = await llm.stream([
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: synthesisPrompt },
-    ]);
+    // Save assistant message with agent execution trace
+    await admin.from("messages").insert({
+      conversation_id: conversationId,
+      role: "assistant",
+      content: agentResponse,
+      citations,
+      tool_calls: [
+        {
+          type: "agent_trace",
+          nodesVisited,
+          queryType: result.queryType,
+          retrievalAttempts: result.retrievalAttempts,
+          chunkCount: result.retrievedChunks?.length ?? 0,
+          hasTableData: !!result.tableData,
+          contextSufficient: result.contextSufficient,
+        },
+      ],
+    });
 
-    let fullResponse = "";
-
+    // Stream the response to the client using SSE
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          // Send conversationId as the first chunk so the client knows which conversation
+      start(controller) {
+        // Send conversation metadata
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: "meta", conversationId })}\n\n`),
+        );
+
+        // Send the full response in chunks for a streaming feel
+        const chunkSize = 20;
+        for (let i = 0; i < agentResponse.length; i += chunkSize) {
+          const token = agentResponse.slice(i, i + chunkSize);
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "meta", conversationId })}\n\n`),
+            encoder.encode(`data: ${JSON.stringify({ type: "token", content: token })}\n\n`),
           );
-
-          for await (const chunk of stream) {
-            const token = typeof chunk.content === "string"
-              ? chunk.content
-              : String(chunk.content);
-            fullResponse += token;
-
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ type: "token", content: token })}\n\n`),
-            );
-          }
-
-          // Extract citations and save assistant message
-          const citations = extractCitations(fullResponse, chunks);
-
-          await admin.from("messages").insert({
-            conversation_id: conversationId,
-            role: "assistant",
-            content: fullResponse,
-            citations,
-            tool_calls: [],
-          });
-
-          // Send citations at the end
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: "citations", citations })}\n\n`,
-            ),
-          );
-
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
-        } catch (error) {
-          console.error("[chat] Streaming error", error);
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: "error", content: "An error occurred while generating the response." })}\n\n`,
-            ),
-          );
-          controller.close();
         }
+
+        // Send agent debug info
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              type: "agent_debug",
+              nodesVisited,
+              queryType: result.queryType,
+              retrievalAttempts: result.retrievalAttempts,
+              chunkCount: result.retrievedChunks?.length ?? 0,
+            })}\n\n`,
+          ),
+        );
+
+        // Send citations
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({ type: "citations", citations })}\n\n`,
+          ),
+        );
+
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
       },
     });
 
