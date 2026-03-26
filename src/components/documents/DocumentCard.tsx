@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -57,7 +58,12 @@ export function DocumentCard({
             />
           )}
           <div className="space-y-2">
-            <p className="text-lg font-semibold text-foreground">{document.filename}</p>
+            <Link
+              href={`/dashboard/${document.id}` as never}
+              className="text-lg font-semibold text-foreground hover:text-primary hover:underline"
+            >
+              {document.filename}
+            </Link>
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
               <span>{createdDate}</span>
               <span>{document.page_count ?? "?"} pages</span>
@@ -78,7 +84,7 @@ export function DocumentCard({
       </div>
       <div className="flex items-center justify-between gap-4 text-sm text-slate-600">
         <div className="flex items-center gap-4">
-          <p>{document.summary ?? "Summary generation arrives in a later week."}</p>
+          <p className="line-clamp-2">{document.summary ?? "Click filename to view details and generate summary."}</p>
         </div>
         <div className="flex items-center gap-2">
           {document.upload_status === "ready" && (
