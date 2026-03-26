@@ -1,6 +1,7 @@
 import { Annotation } from "@langchain/langgraph";
 
 import type { Citation, MessageRecord, RetrievedChunk } from "@/types/conversation";
+import type { ToolResult } from "@/lib/agent/tools/mcp-tools";
 
 export type QueryType =
   | "simple_factual"
@@ -48,6 +49,14 @@ export const AgentState = Annotation.Root({
   tableData: Annotation<TableQueryResult | null>({
     reducer: (_prev, next) => next,
     default: () => null,
+  }),
+  toolResults: Annotation<ToolResult[]>({
+    reducer: (prev, next) => [...prev, ...next],
+    default: () => [],
+  }),
+  toolsCalled: Annotation<boolean>({
+    reducer: (_prev, next) => next,
+    default: () => false,
   }),
   contextSufficient: Annotation<boolean>({
     reducer: (_prev, next) => next,
