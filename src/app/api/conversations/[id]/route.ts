@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getUserId } from "@/lib/auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // Get a conversation with its messages.
 export async function GET(
@@ -8,23 +9,15 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
-
+    const userId = await getUserId();
+    const supabase = createSupabaseAdminClient();
     const { id } = await context.params;
 
     const { data: conversation, error: convError } = await supabase
       .from("conversations")
       .select("*")
       .eq("id", id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (convError || !conversation) {
@@ -51,28 +44,21 @@ export async function GET(
   }
 }
 
-// Delete a conversation owned by the authenticated user.
+// Delete a conversation.
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
-
+    const userId = await getUserId();
+    const supabase = createSupabaseAdminClient();
     const { id } = await context.params;
+
     const { error } = await supabase
       .from("conversations")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,29 +1,22 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getUserId } from "@/lib/auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-// This route lists the authenticated user's uploaded documents for the dashboard.
+// This route lists the user's uploaded documents for the dashboard.
 export async function GET() {
   console.info("[api/documents] Listing documents");
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error("[api/documents] Authentication failed", authError);
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
+    const userId = await getUserId();
+    const supabase = createSupabaseAdminClient();
 
     const { data, error } = await supabase
       .from("documents")
       .select(
         "id, filename, file_size, document_type, upload_status, page_count, summary, created_at, updated_at",
       )
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -37,4 +30,3 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to load documents." }, { status: 500 });
   }
 }
-

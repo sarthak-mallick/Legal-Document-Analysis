@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { getUserId } from "@/lib/auth";
 import { getLLM } from "@/lib/langchain/model";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 // Coverage checklist categories per document type for gap analysis.
 const GAP_CHECKLISTS: Record<string, string[]> = {
@@ -193,16 +193,6 @@ export async function POST(
   context: { params: Promise<{ documentId: string }> },
 ) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
-
     const { documentId } = await context.params;
     const admin = createSupabaseAdminClient();
 
@@ -261,23 +251,15 @@ export async function GET(
   context: { params: Promise<{ documentId: string }> },
 ) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
-
+    const userId = await getUserId();
+    const supabase = createSupabaseAdminClient();
     const { documentId } = await context.params;
 
     const { data: document, error: docError } = await supabase
       .from("documents")
       .select("id, summary")
       .eq("id", documentId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (docError || !document) {

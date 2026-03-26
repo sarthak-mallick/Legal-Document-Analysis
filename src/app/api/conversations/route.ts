@@ -1,24 +1,18 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getUserId } from "@/lib/auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-// List all conversations for the authenticated user.
+// List all conversations for the user.
 export async function GET() {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
+    const userId = await getUserId();
+    const supabase = createSupabaseAdminClient();
 
     const { data: conversations, error } = await supabase
       .from("conversations")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("updated_at", { ascending: false });
 
     if (error) {

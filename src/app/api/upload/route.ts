@@ -1,25 +1,16 @@
 import { NextResponse } from "next/server";
 
+import { getUserId } from "@/lib/auth";
 import { getNumberEnv } from "@/lib/env";
 import { ingestDocument } from "@/lib/ingestion/pipeline";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 // This route validates a PDF upload, creates a document record, and runs ingestion.
 export async function POST(request: Request) {
   console.info("[api/upload] Upload received");
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error("[api/upload] Authentication failed", authError);
-      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
-    }
+    const userId = await getUserId();
 
     const formData = await request.formData();
     const file = formData.get("file");
@@ -49,7 +40,7 @@ export async function POST(request: Request) {
         filename: file.name,
         file_size: file.size,
         upload_status: "processing",
-        user_id: user.id,
+        user_id: userId,
       })
       .select("id")
       .single();
