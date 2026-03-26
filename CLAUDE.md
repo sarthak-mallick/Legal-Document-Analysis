@@ -14,7 +14,7 @@ Full spec: `docs/project-spec.md`
 - **Database:** Supabase (Postgres + pgvector), Supabase Auth
 - **LLM:** Google Gemini 2.5 Flash via `@langchain/google-genai`
 - **Embeddings:** Gemini `text-embedding-004` (768 dimensions)
-- **PDF Parsing:** `pdf-parse`
+- **PDF Parsing:** `pdf-parse` + LlamaParse (optional, for table extraction)
 - **External Tools:** Custom MCP servers (glossary, web search)
 - **Hosting:** Vercel
 
@@ -32,13 +32,14 @@ npm run typecheck  # TypeScript check (tsc --noEmit)
 - `src/lib/agent/` — LangGraph agent (graph, nodes, tools, prompts)
 - `src/lib/langchain/` — LLM and embeddings config (swap models here)
 - `src/lib/supabase/` — Supabase clients (browser, server, admin)
-- `src/app/api/` — API routes (upload, chat, documents, conversations)
+- `src/app/api/` — API routes (upload, chat, documents, conversations, summary)
 - `mcp-servers/` — MCP server packages (glossary, web search)
 - `docs/` — Project spec, weekly execution plans, agent workflow
 
 ## Conventions
 
 - Use App Router patterns (server components by default, `"use client"` only when needed)
-- Environment variables: `GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- Required env vars: `GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- Optional env vars: `LLAMA_PARSE_API_KEY` (table extraction), `BRAVE_SEARCH_API_KEY` (web search)
 - Never commit `.env.local` or secrets
 - Embeddings are 768-dimensional vectors — if changing embedding provider, update DB column size
