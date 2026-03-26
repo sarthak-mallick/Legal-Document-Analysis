@@ -1,3 +1,4 @@
+import type { ToolResult } from "@/lib/agent/tools/mcp-tools";
 import type { MessageRecord, RetrievedChunk } from "@/types/conversation";
 
 // Format retrieved chunks into context for the synthesis prompt.
@@ -32,11 +33,21 @@ function formatHistory(messages: MessageRecord[]): string {
     .join("\n\n");
 }
 
-// Build the full synthesis prompt with retrieved context and conversation history.
+// Format tool results for the synthesis prompt.
+function formatToolResults(toolResults: ToolResult[]): string {
+  if (toolResults.length === 0) return "";
+
+  return toolResults
+    .map((r) => `--- ${r.tool} ---\n${r.output}`)
+    .join("\n\n");
+}
+
+// Build the full synthesis prompt with retrieved context, tool results, and conversation history.
 export function buildSynthesisPrompt(
   query: string,
   chunks: RetrievedChunk[],
   history: MessageRecord[],
+  toolResults: ToolResult[] = [],
 ): string {
   const parts: string[] = [];
 
@@ -46,14 +57,24 @@ export function buildSynthesisPrompt(
 
   parts.push(`## Retrieved Document Context\n${formatChunkContext(chunks)}`);
 
-  parts.push(
-    `## Instructions
-Answer the user's question based on the document context provided above. Follow these rules:
-1. Cite your sources using [Section: <title>, Page: <number>] format.
-2. If the context does not contain enough information to fully answer, say so explicitly.
-3. For table data, reference specific values from the table.
-4. Keep your answer focused and relevant to the question.`,
-  );
+  if (toolResults.length > 0) {
+    parts.push(`## External Tool Results\n${formatToolResults(toolResults)}`);
+  }
+
+  const instructions = [
+    "1. Cite your sources using [Section: <title>, Page: <number>] format.",
+    "2. If the context does not contain enough information to fully answer, say so explicitly.",
+    "3. For table data, reference specific values from the table.",
+    "4. Keep your answer focused and relevant to the question.",
+  ];
+
+  if (toolResults.length > 0) {
+    instructions.push(
+      "5. Clearly distinguish between information from the document and information from external sources (glossary, web search).",
+    );
+  }
+
+  parts.push(`## Instructions\nAnswer the user's question based on the context provided above.\n${instructions.join("\n")}`);
 
   parts.push(`## User Question\n${query}`);
 

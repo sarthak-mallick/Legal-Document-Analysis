@@ -121,6 +121,10 @@ export async function POST(request: Request) {
     const agentResponse = result.response ?? "I was unable to generate a response.";
     const citations = result.citations ?? [];
     const nodesVisited = result.nodesVisited ?? [];
+    const toolResults = (result.toolResults ?? []).map((r: { tool: string; input: Record<string, unknown> }) => ({
+      tool: r.tool,
+      input: r.input,
+    }));
 
     // Save assistant message with agent execution trace
     await admin.from("messages").insert({
@@ -136,6 +140,8 @@ export async function POST(request: Request) {
           retrievalAttempts: result.retrievalAttempts,
           chunkCount: result.retrievedChunks?.length ?? 0,
           hasTableData: !!result.tableData,
+          toolsCalled: result.toolsCalled ?? false,
+          toolResults,
           contextSufficient: result.contextSufficient,
         },
       ],

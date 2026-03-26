@@ -57,15 +57,17 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
   console.info("[agent:synthesize] Generating response", {
     chunkCount: state.retrievedChunks.length,
     hasTableData: !!state.tableData,
+    toolResultCount: state.toolResults?.length ?? 0,
   });
 
   const llm = getLLM();
 
-  // Build the synthesis prompt with all context
+  // Build the synthesis prompt with all context including tool results
   let prompt = buildSynthesisPrompt(
     state.query,
     state.retrievedChunks,
     state.conversationHistory,
+    state.toolResults ?? [],
   );
 
   // Append table query result if available
