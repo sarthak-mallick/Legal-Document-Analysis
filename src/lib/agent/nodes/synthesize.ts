@@ -1,5 +1,5 @@
 import { getLLM } from "@/lib/langchain/model";
-import { SYSTEM_PROMPT } from "@/lib/agent/prompts/system";
+import { buildSystemPrompt } from "@/lib/agent/prompts/system";
 import { buildSynthesisPrompt } from "@/lib/agent/prompts/synthesis";
 import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
 import type { Citation } from "@/types/conversation";
@@ -62,12 +62,23 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
 
   const llm = getLLM();
 
+  // Build adaptive system prompt based on document types
+  const docTypes = (state.documentMetas ?? [])
+    .map((d) => d.documentType)
+    .filter((t): t is string => !!t);
+  const systemPrompt = buildSystemPrompt(docTypes);
+
+  // The compare node stores its analysis in refinedQuery
+  const comparisonContext = state.queryType === "cross_document" ? state.refinedQuery : null;
+
   // Build the synthesis prompt with all context including tool results
   let prompt = buildSynthesisPrompt(
     state.query,
     state.retrievedChunks,
     state.conversationHistory,
     state.toolResults ?? [],
+    state.documentMetas ?? [],
+    comparisonContext,
   );
 
   // Append table query result if available
@@ -76,7 +87,7 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
   }
 
   const response = await llm.invoke([
-    { role: "system", content: SYSTEM_PROMPT },
+    { role: "system", content: systemPrompt },
     { role: "user", content: prompt },
   ]);
 

@@ -1,27 +1,66 @@
+import type { DocumentMeta } from "@/lib/agent/state";
 import type { ToolResult } from "@/lib/agent/tools/mcp-tools";
 import type { MessageRecord, RetrievedChunk } from "@/types/conversation";
 
-// Format retrieved chunks into context for the synthesis prompt.
-function formatChunkContext(chunks: RetrievedChunk[]): string {
+// Format retrieved chunks into context, grouped by document for multi-doc queries.
+function formatChunkContext(
+  chunks: RetrievedChunk[],
+  documentMetas: DocumentMeta[],
+  isMultiDoc: boolean,
+): string {
   if (chunks.length === 0) {
     return "No relevant document sections were found for this question.";
   }
 
-  return chunks
-    .map((chunk, i) => {
+  if (!isMultiDoc) {
+    return chunks
+      .map((chunk, i) => {
+        const section = chunk.section_title ? `Section: ${chunk.section_title}` : "Section: Unknown";
+        const page = chunk.page_number ? `Page: ${chunk.page_number}` : "Page: Unknown";
+        const type = chunk.chunk_type === "table" ? " [TABLE]" : "";
+
+        let content = chunk.content;
+        if (chunk.chunk_type === "table" && chunk.metadata?.table_markdown) {
+          content += `\n\nTable data:\n${chunk.metadata.table_markdown}`;
+        }
+
+        return `--- Source ${i + 1} (${section}, ${page})${type} ---\n${content}`;
+      })
+      .join("\n\n");
+  }
+
+  // Multi-document: group by document
+  const byDoc = new Map<string, RetrievedChunk[]>();
+  for (const chunk of chunks) {
+    const existing = byDoc.get(chunk.document_id) ?? [];
+    existing.push(chunk);
+    byDoc.set(chunk.document_id, existing);
+  }
+
+  const sections: string[] = [];
+  let sourceIdx = 1;
+
+  for (const [docId, docChunks] of byDoc) {
+    const meta = documentMetas.find((d) => d.id === docId);
+    const docName = meta?.filename ?? "Unknown document";
+
+    const chunkTexts = docChunks.map((chunk) => {
       const section = chunk.section_title ? `Section: ${chunk.section_title}` : "Section: Unknown";
       const page = chunk.page_number ? `Page: ${chunk.page_number}` : "Page: Unknown";
       const type = chunk.chunk_type === "table" ? " [TABLE]" : "";
 
       let content = chunk.content;
-      // For table chunks, also include the raw markdown if available
       if (chunk.chunk_type === "table" && chunk.metadata?.table_markdown) {
         content += `\n\nTable data:\n${chunk.metadata.table_markdown}`;
       }
 
-      return `--- Source ${i + 1} (${section}, ${page})${type} ---\n${content}`;
-    })
-    .join("\n\n");
+      return `  --- Source ${sourceIdx++} (${section}, ${page})${type} ---\n  ${content}`;
+    });
+
+    sections.push(`### Document: ${docName}\n${chunkTexts.join("\n\n")}`);
+  }
+
+  return sections.join("\n\n---\n\n");
 }
 
 // Format conversation history for context.
@@ -48,29 +87,44 @@ export function buildSynthesisPrompt(
   chunks: RetrievedChunk[],
   history: MessageRecord[],
   toolResults: ToolResult[] = [],
+  documentMetas: DocumentMeta[] = [],
+  comparisonContext: string | null = null,
 ): string {
+  const isMultiDoc = documentMetas.length > 1;
   const parts: string[] = [];
 
   if (history.length > 0) {
     parts.push(`## Conversation History\n${formatHistory(history)}`);
   }
 
-  parts.push(`## Retrieved Document Context\n${formatChunkContext(chunks)}`);
+  parts.push(`## Retrieved Document Context\n${formatChunkContext(chunks, documentMetas, isMultiDoc)}`);
+
+  if (comparisonContext) {
+    parts.push(`## Cross-Document Comparison Analysis\n${comparisonContext}`);
+  }
 
   if (toolResults.length > 0) {
     parts.push(`## External Tool Results\n${formatToolResults(toolResults)}`);
   }
 
-  const instructions = [
-    "1. Cite your sources using [Section: <title>, Page: <number>] format.",
-    "2. If the context does not contain enough information to fully answer, say so explicitly.",
-    "3. For table data, reference specific values from the table.",
-    "4. Keep your answer focused and relevant to the question.",
-  ];
+  const instructions = isMultiDoc
+    ? [
+        "1. Cite your sources using [Document: <name>, Section: <title>, Page: <number>] format.",
+        "2. Clearly label which information comes from which document.",
+        "3. If the context does not contain enough information to fully answer, say so explicitly.",
+        "4. For comparison questions, organize your answer by topic, not by document.",
+        "5. For table data, reference specific values from the table.",
+      ]
+    : [
+        "1. Cite your sources using [Section: <title>, Page: <number>] format.",
+        "2. If the context does not contain enough information to fully answer, say so explicitly.",
+        "3. For table data, reference specific values from the table.",
+        "4. Keep your answer focused and relevant to the question.",
+      ];
 
   if (toolResults.length > 0) {
     instructions.push(
-      "5. Clearly distinguish between information from the document and information from external sources (glossary, web search).",
+      `${instructions.length + 1}. Clearly distinguish between information from the document and information from external sources (glossary, web search).`,
     );
   }
 

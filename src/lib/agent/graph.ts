@@ -7,19 +7,22 @@ import { evaluateContext } from "@/lib/agent/nodes/evaluate-context";
 import { queryTable } from "@/lib/agent/nodes/query-table";
 import { synthesize } from "@/lib/agent/nodes/synthesize";
 import { callTools } from "@/lib/agent/nodes/call-tools";
+import { compare } from "@/lib/agent/nodes/compare";
 
 /*
   Agent graph:
 
   START → classifyQuery
-  classifyQuery → callTools       (if term_explanation or needs external context)
+  classifyQuery → callTools       (if term_explanation)
   classifyQuery → retrieve        (for document-focused queries)
   callTools → retrieve
   retrieve → evaluateContext
   evaluateContext → retrieve       (if not sufficient, attempts < 3)
   evaluateContext → callTools      (if not sufficient and tools not yet called)
+  evaluateContext → compare        (if sufficient + cross_document)
   evaluateContext → queryTable     (if sufficient + table chunks)
   evaluateContext → synthesize     (if sufficient)
+  compare → synthesize
   queryTable → synthesize → END
 */
 
@@ -31,16 +34,23 @@ function afterClassify(state: AgentStateType): "callTools" | "retrieve" {
   return "retrieve";
 }
 
-// Route after evaluateContext based on sufficiency, tools, and table presence.
+// Route after evaluateContext based on sufficiency, tools, table, and comparison needs.
 function afterEvaluate(
   state: AgentStateType,
-): "retrieve" | "callTools" | "queryTable" | "synthesize" {
+): "retrieve" | "callTools" | "compare" | "queryTable" | "synthesize" {
   if (!state.contextSufficient) {
-    // If tools haven't been called yet and might help, try tools before retrying retrieval
     if (!state.toolsCalled && state.queryType === "multi_section") {
       return "callTools";
     }
     return "retrieve";
+  }
+
+  // Cross-document comparison when multiple documents are involved
+  if (
+    state.queryType === "cross_document" &&
+    state.documentIds.length > 1
+  ) {
+    return "compare";
   }
 
   const hasTableChunks = state.retrievedChunks.some((c) => c.chunk_type === "table");
@@ -61,6 +71,7 @@ export function buildAgentGraph() {
     .addNode("callTools", callTools)
     .addNode("retrieve", retrieve)
     .addNode("evaluateContext", evaluateContext)
+    .addNode("compare", compare)
     .addNode("queryTable", queryTable)
     .addNode("synthesize", synthesize)
     .addEdge(START, "classifyQuery")
@@ -73,9 +84,11 @@ export function buildAgentGraph() {
     .addConditionalEdges("evaluateContext", afterEvaluate, [
       "retrieve",
       "callTools",
+      "compare",
       "queryTable",
       "synthesize",
     ])
+    .addEdge("compare", "synthesize")
     .addEdge("queryTable", "synthesize")
     .addEdge("synthesize", END);
 
