@@ -109,12 +109,25 @@ export async function POST(request: Request) {
     const history = (historyRows ?? []) as MessageRecord[];
     const priorHistory = history.slice(0, -1);
 
+    // Fetch document metadata for adaptive prompts and cross-doc attribution
+    const { data: docRows } = await admin
+      .from("documents")
+      .select("id, filename, document_type")
+      .in("id", documentIds);
+
+    const documentMetas = (docRows ?? []).map((d) => ({
+      id: d.id as string,
+      filename: d.filename as string,
+      documentType: (d.document_type as string) ?? null,
+    }));
+
     // Run the LangGraph agent
     const agent = buildAgentGraph();
     const result = await agent.invoke({
       query: message,
       queryType: "simple_factual",
       documentIds,
+      documentMetas,
       conversationHistory: priorHistory,
     });
 
