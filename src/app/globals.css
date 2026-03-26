@@ -4,17 +4,70 @@
 
 :root {
   color-scheme: light;
+  --color-background: #faf7ef;
+  --color-foreground: #17212b;
+  --color-primary: #1b3c53;
+  --color-primary-foreground: #faf7ef;
+  --color-secondary: #e8e0d0;
+  --color-secondary-foreground: #17212b;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-card-bg: rgba(255, 255, 255, 0.8);
+  --color-parchment: rgba(210, 193, 160, 0.15);
+}
+
+.dark {
+  color-scheme: dark;
+  --color-background: #0f1419;
+  --color-foreground: #e7e9ea;
+  --color-primary: #8ecdf7;
+  --color-primary-foreground: #0f1419;
+  --color-secondary: #2a2f35;
+  --color-secondary-foreground: #e7e9ea;
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-card-bg: rgba(30, 35, 42, 0.8);
+  --color-parchment: rgba(210, 193, 160, 0.05);
 }
 
 body {
   min-height: 100vh;
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+:root body {
   background:
     radial-gradient(circle at top center, rgba(210, 193, 160, 0.45), transparent 30%),
     linear-gradient(180deg, #faf7ef 0%, #f3ecde 100%);
-  color: #17212b;
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at top center, rgba(30, 60, 80, 0.3), transparent 30%),
+    linear-gradient(180deg, #0f1419 0%, #1a1f25 100%);
 }
 
 ::selection {
   background: rgba(27, 60, 83, 0.18);
 }
 
+.dark ::selection {
+  background: rgba(142, 205, 247, 0.25);
+}
+
+/* Skeleton loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, transparent 25%, rgba(0, 0, 0, 0.06) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.06) 50%, transparent 75%);
+  background-size: 200% 100%;
+}
