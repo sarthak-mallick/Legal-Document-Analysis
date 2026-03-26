@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { DocumentCardSkeleton } from "@/components/ui/skeleton";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { UploadDropzone } from "@/components/documents/UploadDropzone";
 import { Card } from "@/components/ui/card";
@@ -147,9 +148,10 @@ export function UploadDashboard() {
         </div>
       )}
       {isLoading ? (
-        <Card>
-          <p className="text-sm text-slate-600">Loading documents...</p>
-        </Card>
+        <div className="space-y-4">
+          <DocumentCardSkeleton />
+          <DocumentCardSkeleton />
+        </div>
       ) : (
         <DocumentList
           deletingId={deletingId}
