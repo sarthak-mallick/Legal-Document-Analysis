@@ -29,6 +29,21 @@ export interface ConversationDetailResponse {
   messages: MessageRecord[];
 }
 
+export interface SummaryResponse {
+  summary: string;
+  riskFlags: {
+    title: string;
+    description: string;
+    severity: "high" | "medium" | "low";
+    section: string | null;
+  }[];
+  gapAnalysis: {
+    category: string;
+    status: "covered" | "not_covered" | "partial";
+    details: string | null;
+  }[];
+}
+
 export interface ErrorResponse {
   error: string;
 }
