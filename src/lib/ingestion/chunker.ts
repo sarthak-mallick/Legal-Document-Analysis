@@ -1,4 +1,4 @@
-import type { DocumentChunkInput, ParsedDocument } from "@/lib/ingestion/types";
+import type { DocumentChunkInput, ExtractedTable, ParsedDocument } from "@/lib/ingestion/types";
 
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
@@ -65,22 +65,66 @@ function splitTextRecursively(text: string) {
   return chunks;
 }
 
+// Remove extracted table raw text from page text so tables aren't duplicated in text chunks.
+function removeTableRegions(pageText: string, pageTables: ExtractedTable[]): string {
+  let cleaned = pageText;
+  for (const table of pageTables) {
+    // Try to remove the raw text of the table from the page
+    const idx = cleaned.indexOf(table.rawText);
+    if (idx !== -1) {
+      cleaned = cleaned.slice(0, idx) + cleaned.slice(idx + table.rawText.length);
+    }
+  }
+  return cleaned;
+}
+
 // This helper turns parsed PDF pages into chunk records ready for embedding and storage.
 export async function chunkDocument(
   parsedDocument: ParsedDocument,
+  tables: ExtractedTable[] = [],
 ): Promise<DocumentChunkInput[]> {
   console.info("[ingestion] Chunking parsed document", {
     pageCount: parsedDocument.metadata.pageCount,
+    tableCount: tables.length,
   });
 
   const chunks: DocumentChunkInput[] = [];
 
+  // Index tables by page number for quick lookup
+  const tablesByPage = new Map<number, ExtractedTable[]>();
+  for (const table of tables) {
+    const pageTables = tablesByPage.get(table.pageNumber) ?? [];
+    pageTables.push(table);
+    tablesByPage.set(table.pageNumber, pageTables);
+  }
+
   for (const page of parsedDocument.pages) {
-    const pageChunks = splitTextRecursively(page.text);
+    const pageTables = tablesByPage.get(page.pageNumber) ?? [];
+
+    // Insert table chunks as atomic units first
+    for (const table of pageTables) {
+      const chunkIndex = chunks.length;
+      chunks.push({
+        chunkIndex,
+        chunkType: "table",
+        content: table.markdown, // Will be replaced by NL description in table-describer step
+        metadata: {
+          table_markdown: table.markdown,
+          table_data: { headers: table.headers, rows: table.rows },
+          preceding_context: table.precedingContext,
+        },
+        pageNumber: page.pageNumber,
+        sectionTitle: table.sectionTitle,
+      });
+    }
+
+    // Remove table regions from page text before splitting into text chunks
+    const cleanedText = removeTableRegions(page.text, pageTables);
+    const pageChunks = splitTextRecursively(cleanedText);
 
     pageChunks.forEach((chunkText) => {
       const chunkIndex = chunks.length;
-      const chunkPrefix = page.text.slice(0, page.text.indexOf(chunkText));
+      const chunkPrefix = cleanedText.slice(0, cleanedText.indexOf(chunkText));
 
       chunks.push({
         chunkIndex,
@@ -95,6 +139,8 @@ export async function chunkDocument(
 
   console.info("[ingestion] Created document chunks", {
     chunkCount: chunks.length,
+    tableChunks: tables.length,
+    textChunks: chunks.length - tables.length,
   });
 
   return chunks;

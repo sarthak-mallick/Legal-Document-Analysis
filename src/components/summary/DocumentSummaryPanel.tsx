@@ -1,0 +1,105 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { CoverageSummary } from "@/components/summary/CoverageSummary";
+import { GapAnalysis } from "@/components/summary/GapAnalysis";
+
+interface RiskFlag {
+  title: string;
+  description: string;
+  severity: "high" | "medium" | "low";
+  section: string | null;
+}
+
+interface GapItem {
+  category: string;
+  status: "covered" | "not_covered" | "partial";
+  details: string | null;
+}
+
+interface DocumentSummaryPanelProps {
+  documentId: string;
+  existingSummary: string | null;
+}
+
+// Panel that displays or generates the document summary, risk flags, and gap analysis.
+export function DocumentSummaryPanel({
+  documentId,
+  existingSummary,
+}: DocumentSummaryPanelProps) {
+  const [summary, setSummary] = useState<string | null>(existingSummary);
+  const [riskFlags, setRiskFlags] = useState<RiskFlag[]>([]);
+  const [gapAnalysis, setGapAnalysis] = useState<GapItem[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // If there's already a summary, we don't have risk/gap data cached,
+  // so we still show the generate button to get the full analysis
+  const hasFullAnalysis = summary && riskFlags.length > 0;
+
+  const handleGenerate = useCallback(async () => {
+    setGenerating(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/summary/${documentId}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Generation failed");
+      }
+
+      const data = await res.json();
+      setSummary(data.summary);
+      setRiskFlags(data.riskFlags ?? []);
+      setGapAnalysis(data.gapAnalysis ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate summary");
+    } finally {
+      setGenerating(false);
+    }
+  }, [documentId]);
+
+  // Auto-generate if no summary exists
+  useEffect(() => {
+    if (!existingSummary) return;
+    setSummary(existingSummary);
+  }, [existingSummary]);
+
+  return (
+    <div className="space-y-6">
+      {!hasFullAnalysis && (
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleGenerate}
+            disabled={generating}
+          >
+            {generating
+              ? "Generating analysis..."
+              : summary
+                ? "Regenerate Full Analysis"
+                : "Generate Summary & Analysis"}
+          </Button>
+          {error && <p className="text-sm text-rose-600">{error}</p>}
+        </div>
+      )}
+
+      {summary && <CoverageSummary summary={summary} riskFlags={riskFlags} />}
+      {gapAnalysis.length > 0 && <GapAnalysis items={gapAnalysis} />}
+
+      {hasFullAnalysis && (
+        <Button
+          onClick={handleGenerate}
+          disabled={generating}
+          variant="ghost"
+        >
+          {generating ? "Regenerating..." : "Regenerate Analysis"}
+        </Button>
+      )}
+    </div>
+  );
+}

@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { UploadDropzone } from "@/components/documents/UploadDropzone";
 import { Card } from "@/components/ui/card";
 import type { DocumentsResponse, ErrorResponse, UploadResponse } from "@/types/api";
 import type { DocumentRecord } from "@/types/document";
 
-// This component coordinates document loading, uploads, and deletes on the dashboard.
+// This component coordinates document loading, uploads, selection, and deletes on the dashboard.
 export function UploadDashboard() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -21,7 +23,6 @@ export function UploadDashboard() {
     void loadDocuments();
   }, []);
 
-  // This helper loads the current document list from the API.
   async function loadDocuments() {
     setIsLoading(true);
     setErrorMessage(null);
@@ -43,7 +44,6 @@ export function UploadDashboard() {
     }
   }
 
-  // This handler sends a selected PDF to the upload endpoint and refreshes the list.
   async function handleUpload(file: File) {
     setIsUploading(true);
     setErrorMessage(null);
@@ -74,7 +74,6 @@ export function UploadDashboard() {
     }
   }
 
-  // This handler deletes a document and refreshes the dashboard list.
   async function handleDelete(documentId: string) {
     setDeletingId(documentId);
     setErrorMessage(null);
@@ -89,9 +88,8 @@ export function UploadDashboard() {
         throw new Error("error" in payload ? payload.error : "Delete failed");
       }
 
-      setDocuments((currentDocuments) =>
-        currentDocuments.filter((document) => document.id !== documentId),
-      );
+      setDocuments((prev) => prev.filter((d) => d.id !== documentId));
+      setSelectedIds((prev) => prev.filter((id) => id !== documentId));
     } catch (error) {
       console.error("[dashboard] Delete failed", error);
       setErrorMessage(error instanceof Error ? error.message : "Delete failed");
@@ -99,6 +97,28 @@ export function UploadDashboard() {
       setDeletingId(null);
     }
   }
+
+  async function handleBatchDelete() {
+    if (selectedIds.length === 0) return;
+    setErrorMessage(null);
+
+    for (const id of selectedIds) {
+      try {
+        await fetch(`/api/documents/${id}`, { method: "DELETE" });
+      } catch {
+        // Continue deleting remaining
+      }
+    }
+
+    setDocuments((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
+    setSelectedIds([]);
+  }
+
+  const handleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
+    );
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -109,12 +129,35 @@ export function UploadDashboard() {
           {errorMessage && <p className="text-sm text-rose-700">{errorMessage}</p>}
         </Card>
       )}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-slate-600">{selectedIds.length} selected</span>
+          <Button
+            onClick={handleBatchDelete}
+            variant="destructive"
+          >
+            Delete Selected
+          </Button>
+          <Button
+            onClick={() => setSelectedIds([])}
+            variant="ghost"
+          >
+            Clear Selection
+          </Button>
+        </div>
+      )}
       {isLoading ? (
         <Card>
           <p className="text-sm text-slate-600">Loading documents...</p>
         </Card>
       ) : (
-        <DocumentList deletingId={deletingId} documents={documents} onDelete={handleDelete} />
+        <DocumentList
+          deletingId={deletingId}
+          documents={documents}
+          selectedIds={selectedIds}
+          onDelete={handleDelete}
+          onSelect={handleSelect}
+        />
       )}
     </div>
   );

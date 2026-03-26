@@ -5,14 +5,18 @@ import { DocumentCard } from "@/components/documents/DocumentCard";
 interface DocumentListProps {
   deletingId: string | null;
   documents: DocumentRecord[];
+  selectedIds?: string[];
   onDelete: (documentId: string) => Promise<void>;
+  onSelect?: (documentId: string) => void;
 }
 
-// This component renders the dashboard list of uploaded documents.
+// This component renders the dashboard list of uploaded documents with optional selection.
 export function DocumentList({
   deletingId,
   documents,
+  selectedIds = [],
   onDelete,
+  onSelect,
 }: DocumentListProps) {
   if (!documents.length) {
     return (
@@ -29,10 +33,11 @@ export function DocumentList({
           deleting={deletingId === document.id}
           document={document}
           key={document.id}
+          selected={selectedIds.includes(document.id)}
           onDelete={onDelete}
+          onSelect={onSelect}
         />
       ))}
     </div>
   );
 }
-

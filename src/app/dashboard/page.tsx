@@ -1,18 +1,28 @@
+import Link from "next/link";
+
 import { UploadDashboard } from "@/components/documents/UploadDashboard";
 
-// This page hosts the Week 1 upload dashboard experience.
+// This page hosts the document upload dashboard and links to chat.
 export default function DashboardPage() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
-      <div className="mb-8 space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-          Dashboard
-        </p>
-        <h1 className="font-serif text-4xl text-foreground">Document ingestion</h1>
-        <p className="max-w-3xl text-slate-600">
-          Upload a PDF to run the Week 1 ingestion pipeline. The API validates the file,
-          extracts text, splits it into chunks, creates embeddings, and stores the result.
-        </p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="space-y-3">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+            Dashboard
+          </p>
+          <h1 className="font-serif text-4xl text-foreground">Document ingestion</h1>
+          <p className="max-w-3xl text-slate-600">
+            Upload a PDF to process it into chunks with embeddings. Then open the chat
+            to ask questions about your documents.
+          </p>
+        </div>
+        <Link
+          className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
+          href={"/chat" as never}
+        >
+          Open Chat
+        </Link>
       </div>
       <UploadDashboard />
     </main>
