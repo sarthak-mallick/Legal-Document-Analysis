@@ -193,6 +193,11 @@ export async function POST(
   context: { params: Promise<{ documentId: string }> },
 ) {
   try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
     const { documentId } = await context.params;
     const admin = createSupabaseAdminClient();
 
@@ -252,6 +257,9 @@ export async function GET(
 ) {
   try {
     const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
     const supabase = createSupabaseAdminClient();
     const { documentId } = await context.params;
 

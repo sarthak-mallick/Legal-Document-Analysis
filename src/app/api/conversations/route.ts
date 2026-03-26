@@ -7,6 +7,9 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 export async function GET() {
   try {
     const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
     const supabase = createSupabaseAdminClient();
 
     const { data: conversations, error } = await supabase

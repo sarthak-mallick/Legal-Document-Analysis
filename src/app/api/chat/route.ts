@@ -34,6 +34,12 @@ interface ChatRequestBody {
 export async function POST(request: Request) {
   try {
     const userId = await getUserId();
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Authentication required." }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     const body = (await request.json()) as ChatRequestBody;
     const { message, documentIds } = body;

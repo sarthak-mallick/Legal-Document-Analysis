@@ -11,6 +11,9 @@ export async function POST(request: Request) {
 
   try {
     const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
 
     const formData = await request.formData();
     const file = formData.get("file");
