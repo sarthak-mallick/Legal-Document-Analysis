@@ -1,3 +1,4 @@
+import type { ConversationRecord, MessageRecord } from "@/types/conversation";
 import type { DocumentChunkRecord, DocumentRecord } from "@/types/document";
 
 export interface DocumentsResponse {
@@ -19,6 +20,22 @@ export interface DocumentDetailResponse {
   tableCount: number;
 }
 
+export interface ConversationsResponse {
+  conversations: ConversationRecord[];
+}
+
+export interface ConversationDetailResponse {
+  conversation: ConversationRecord;
+  messages: MessageRecord[];
+}
+
 export interface ErrorResponse {
   error: string;
 }
+
+// SSE event types from the chat streaming endpoint.
+export type ChatStreamEvent =
+  | { type: "meta"; conversationId: string }
+  | { type: "token"; content: string }
+  | { type: "citations"; citations: MessageRecord["citations"] }
+  | { type: "error"; content: string };
