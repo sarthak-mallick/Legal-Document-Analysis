@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
+
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
 import { DocumentSelector } from "@/components/chat/DocumentSelector";
@@ -118,13 +120,34 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
     );
   }
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="flex h-screen">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-slate-200 bg-white p-4">
-        <Link href={"/dashboard" as never} className="text-xs font-medium text-primary hover:underline">
-          Back to Dashboard
-        </Link>
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-slate-200 bg-white p-4 transition-transform dark:border-slate-700 dark:bg-slate-900 md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <div className="flex items-center justify-between">
+          <Link href={"/dashboard" as never} className="text-xs font-medium text-primary hover:underline">
+            Back to Dashboard
+          </Link>
+          <Button
+            className="md:hidden"
+            onClick={() => setSidebarOpen(false)}
+            variant="ghost"
+          >
+            Close
+          </Button>
+        </div>
         <DocumentSelector
           documents={documents}
           selectedIds={selectedDocIds}
@@ -139,10 +162,17 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
 
       {/* Chat area */}
       <main className="flex flex-1 flex-col">
-        <header className="border-b border-slate-200 bg-white px-6 py-3">
+        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900 md:px-6">
+          <Button
+            className="md:hidden"
+            onClick={() => setSidebarOpen(true)}
+            variant="ghost"
+          >
+            Menu
+          </Button>
           <h1 className="font-serif text-lg text-foreground">Chat</h1>
           {selectedDocIds.length === 0 && (
-            <p className="text-xs text-amber-600">Select a document from the sidebar to start chatting.</p>
+            <p className="text-xs text-amber-600">Select a document to start chatting.</p>
           )}
         </header>
         <div className="flex-1 overflow-hidden">
