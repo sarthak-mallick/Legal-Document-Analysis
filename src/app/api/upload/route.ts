@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    await ingestDocument({
+    const result = await ingestDocument({
       buffer,
       documentId: insertedDocument.id,
     });
@@ -68,6 +68,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       documentId: insertedDocument.id,
       status: "ready",
+      documentType: result.documentType,
+      chunkCount: result.chunkCount,
+      tableCount: result.tableCount,
     });
   } catch (error) {
     console.error("[api/upload] Upload processing failed", error);
