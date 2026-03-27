@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getUserId } from "@/lib/auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // This route returns a single document with all its chunks.
 export async function GET(
@@ -8,23 +9,18 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const userId = await getUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
-
+    const supabase = createSupabaseAdminClient();
     const { id } = await context.params;
 
     const { data: document, error: docError } = await supabase
       .from("documents")
       .select("*")
       .eq("id", id)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .single();
 
     if (docError || !document) {
@@ -56,7 +52,7 @@ export async function GET(
   }
 }
 
-// This route deletes a single document owned by the authenticated user.
+// This route deletes a single document.
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ id: string }> },
@@ -64,23 +60,18 @@ export async function DELETE(
   console.info("[api/documents] Deleting document");
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      console.error("[api/documents] Authentication failed", authError);
+    const userId = await getUserId();
+    if (!userId) {
       return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     }
-
+    const supabase = createSupabaseAdminClient();
     const { id } = await context.params;
+
     const { error } = await supabase
       .from("documents")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
     if (error) {
       console.error("[api/documents] Delete failed", error);

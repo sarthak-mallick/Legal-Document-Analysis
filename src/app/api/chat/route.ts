@@ -1,7 +1,7 @@
 import { getLLM } from "@/lib/langchain/model";
+import { getUserId } from "@/lib/auth";
 import { buildAgentGraph } from "@/lib/agent/graph";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { MessageRecord } from "@/types/conversation";
 
 // Generate a short title for a new conversation from the first message.
@@ -33,13 +33,8 @@ interface ChatRequestBody {
 // Streaming chat endpoint powered by the LangGraph agent.
 export async function POST(request: Request) {
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const userId = await getUserId();
+    if (!userId) {
       return new Response(JSON.stringify({ error: "Authentication required." }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
@@ -72,7 +67,7 @@ export async function POST(request: Request) {
       const { data: conversation, error: convError } = await admin
         .from("conversations")
         .insert({
-          user_id: user.id,
+          user_id: userId,
           title,
           document_ids: documentIds,
         })
@@ -164,12 +159,10 @@ export async function POST(request: Request) {
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       start(controller) {
-        // Send conversation metadata
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ type: "meta", conversationId })}\n\n`),
         );
 
-        // Send the full response in chunks for a streaming feel
         const chunkSize = 20;
         for (let i = 0; i < agentResponse.length; i += chunkSize) {
           const token = agentResponse.slice(i, i + chunkSize);
@@ -178,7 +171,6 @@ export async function POST(request: Request) {
           );
         }
 
-        // Send agent debug info
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({
@@ -191,7 +183,6 @@ export async function POST(request: Request) {
           ),
         );
 
-        // Send citations
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({ type: "citations", citations })}\n\n`,
