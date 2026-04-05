@@ -17,7 +17,7 @@ export async function getUserId(): Promise<string | null> {
     // Auth not available
   }
 
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.DEV_AUTH_BYPASS === "true") {
     return DEV_USER_ID;
   }
 
