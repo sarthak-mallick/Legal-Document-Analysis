@@ -24,16 +24,16 @@ Polish the UI, add dark mode, improve loading states and responsiveness, and fin
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W8-001 | Complete | CSS custom properties for light/dark, `.dark` class toggle, ThemeToggle component with localStorage persistence, fixed-position in root layout. |
-| W8-002 | Complete | Skeleton component with shimmer animation, DocumentCardSkeleton, MessageSkeleton. |
-| W8-003 | Complete | Landing page shows platform name, feature description, 6 feature cards, links to dashboard and chat. |
-| W8-004 | Complete | Removed "Week 1" references, text reflects table detection and document classification. |
-| W8-005 | Complete | Chat sidebar collapses on mobile with Menu button, overlay backdrop, Close button. Dark mode classes on sidebar and header. |
-| W8-006 | Complete | UploadDashboard shows DocumentCardSkeleton placeholders during loading. |
-| W8-007 | Complete | .env.example lists all required and optional vars with descriptions. |
-| W8-008 | Complete | README with features, architecture diagrams, pipeline flow, directory table, tech stack table, model swapping guide. |
+| Task ID | Status   | Note                                                                                                                                            |
+| ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| W8-001  | Complete | CSS custom properties for light/dark, `.dark` class toggle, ThemeToggle component with localStorage persistence, fixed-position in root layout. |
+| W8-002  | Complete | Skeleton component with shimmer animation, DocumentCardSkeleton, MessageSkeleton.                                                               |
+| W8-003  | Complete | Landing page shows platform name, feature description, 6 feature cards, links to dashboard and chat.                                            |
+| W8-004  | Complete | Removed "Week 1" references, text reflects table detection and document classification.                                                         |
+| W8-005  | Complete | Chat sidebar collapses on mobile with Menu button, overlay backdrop, Close button. Dark mode classes on sidebar and header.                     |
+| W8-006  | Complete | UploadDashboard shows DocumentCardSkeleton placeholders during loading.                                                                         |
+| W8-007  | Complete | .env.example lists all required and optional vars with descriptions.                                                                            |
+| W8-008  | Complete | README with features, architecture diagrams, pipeline flow, directory table, tech stack table, model swapping guide.                            |
 
 ## Session Log (Append-Only)
 

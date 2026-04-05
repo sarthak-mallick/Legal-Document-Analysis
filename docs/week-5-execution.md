@@ -23,15 +23,15 @@ Build and connect custom MCP servers (glossary, web search) that give the LangGr
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W5-001 | Complete | Glossary server with 50+ terms across general, liability, property, auto, employment categories. lookup_term with fuzzy matching (Levenshtein ≤ 2), list_terms_by_category. MCP SDK + stdio transport. |
-| W5-002 | Complete | Web search server with search_web (Brave Search API) and fetch_page_content (HTML-to-text extraction). Rate-limited, error-handled. |
-| W5-003 | Complete | In-app wrappers mirror MCP server logic: glossary lookup reads JSON directly, web search calls Brave API. No MCP client dependency needed. |
-| W5-004 | Complete | callTools node: term_explanation queries get glossary lookup + optional web search; multi_section queries get web search when BRAVE_SEARCH_API_KEY is set. |
-| W5-005 | Complete | AgentState extended with `toolResults: ToolResult[]` (append reducer) and `toolsCalled: boolean`. |
-| W5-006 | Complete | Graph: classifyQuery → callTools for term_explanation; evaluateContext → callTools if insufficient and tools not yet called. |
-| W5-007 | Complete | Synthesis prompt includes tool results section and instruction to distinguish document-sourced vs externally-sourced information. |
+| Task ID | Status   | Note                                                                                                                                                                                                   |
+| ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| W5-001  | Complete | Glossary server with 50+ terms across general, liability, property, auto, employment categories. lookup_term with fuzzy matching (Levenshtein ≤ 2), list_terms_by_category. MCP SDK + stdio transport. |
+| W5-002  | Complete | Web search server with search_web (Brave Search API) and fetch_page_content (HTML-to-text extraction). Rate-limited, error-handled.                                                                    |
+| W5-003  | Complete | In-app wrappers mirror MCP server logic: glossary lookup reads JSON directly, web search calls Brave API. No MCP client dependency needed.                                                             |
+| W5-004  | Complete | callTools node: term_explanation queries get glossary lookup + optional web search; multi_section queries get web search when BRAVE_SEARCH_API_KEY is set.                                             |
+| W5-005  | Complete | AgentState extended with `toolResults: ToolResult[]` (append reducer) and `toolsCalled: boolean`.                                                                                                      |
+| W5-006  | Complete | Graph: classifyQuery → callTools for term_explanation; evaluateContext → callTools if insufficient and tools not yet called.                                                                           |
+| W5-007  | Complete | Synthesis prompt includes tool results section and instruction to distinguish document-sourced vs externally-sourced information.                                                                      |
 
 ## New Env Vars
 

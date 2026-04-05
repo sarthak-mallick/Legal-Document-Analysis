@@ -72,10 +72,7 @@ export function ChunkDebugPanel({ documentId }: ChunkDebugPanelProps) {
       </div>
       <div className="max-h-96 space-y-2 overflow-y-auto">
         {chunks.map((chunk) => (
-          <div
-            key={chunk.id}
-            className="rounded-lg border border-slate-200 bg-white p-3 text-sm"
-          >
+          <div key={chunk.id} className="rounded-lg border border-slate-200 bg-white p-3 text-sm">
             <div className="mb-2 flex items-center gap-2">
               <span
                 className={cn(
@@ -104,9 +101,7 @@ export function ChunkDebugPanel({ documentId }: ChunkDebugPanelProps) {
               </details>
             )}
 
-            <p className="line-clamp-3 text-slate-700">
-              {chunk.content}
-            </p>
+            <p className="line-clamp-3 text-slate-700">{chunk.content}</p>
           </div>
         ))}
       </div>

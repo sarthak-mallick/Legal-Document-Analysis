@@ -13,10 +13,7 @@ async function sleep(durationMs: number) {
 }
 
 // This helper writes chunk embeddings and metadata into Supabase.
-export async function storeDocumentChunks(
-  documentId: string,
-  chunks: DocumentChunkInput[],
-) {
+export async function storeDocumentChunks(documentId: string, chunks: DocumentChunkInput[]) {
   console.info("[ingestion] Storing document chunks", {
     chunkCount: chunks.length,
     documentId,
@@ -58,4 +55,3 @@ export async function storeDocumentChunks(
 
   console.info("[ingestion] Stored document chunks successfully", { documentId });
 }
-

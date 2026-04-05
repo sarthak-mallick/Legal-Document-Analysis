@@ -25,10 +25,7 @@ export function ConversationSidebar({
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Conversations
         </p>
-        <Link
-          href={"/chat" as never}
-          className="text-xs font-medium text-primary hover:underline"
-        >
+        <Link href={"/chat" as never} className="text-xs font-medium text-primary hover:underline">
           New
         </Link>
       </div>

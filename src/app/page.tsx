@@ -55,12 +55,30 @@ export default function HomePage() {
       </div>
       <section className="mt-20 grid gap-4 sm:grid-cols-2 md:grid-cols-3" id="features">
         {[
-          { title: "Table-Aware Ingestion", desc: "Detects tables, generates NL descriptions, preserves structured data" },
-          { title: "Multi-Step Agent", desc: "Classifies queries, iterates on retrieval, extracts table values" },
-          { title: "Citations & Sources", desc: "Every answer references specific sections and page numbers" },
-          { title: "MCP Tools", desc: "Legal glossary with 50+ terms, optional web search integration" },
-          { title: "Document Comparison", desc: "Ask cross-document questions with per-document attribution" },
-          { title: "Risk & Gap Analysis", desc: "Auto-generated summaries with risk flags and coverage matrix" },
+          {
+            title: "Table-Aware Ingestion",
+            desc: "Detects tables, generates NL descriptions, preserves structured data",
+          },
+          {
+            title: "Multi-Step Agent",
+            desc: "Classifies queries, iterates on retrieval, extracts table values",
+          },
+          {
+            title: "Citations & Sources",
+            desc: "Every answer references specific sections and page numbers",
+          },
+          {
+            title: "MCP Tools",
+            desc: "Legal glossary with 50+ terms, optional web search integration",
+          },
+          {
+            title: "Document Comparison",
+            desc: "Ask cross-document questions with per-document attribution",
+          },
+          {
+            title: "Risk & Gap Analysis",
+            desc: "Auto-generated summaries with risk flags and coverage matrix",
+          },
         ].map((item) => (
           <Card className="min-h-32" key={item.title}>
             <p className="font-serif text-xl text-foreground">{item.title}</p>

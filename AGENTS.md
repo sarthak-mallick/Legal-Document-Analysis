@@ -16,6 +16,7 @@ You do not need to explicitly tell agents to use these files each time.
 5. `AGENTS.md` for top-level policy.
 
 If there is any conflict:
+
 - Product/timeline conflict: `docs/project-spec.md` wins.
 - Week execution conflict: active `docs/week-N-execution.md` wins.
 

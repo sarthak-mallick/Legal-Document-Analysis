@@ -21,9 +21,14 @@ Full spec: `docs/project-spec.md`
 ## Commands
 
 ```bash
-npm run dev        # Start dev server (Next.js)
-npm run build      # Production build
-npm run typecheck  # TypeScript check (tsc --noEmit)
+npm run dev            # Start dev server (Next.js)
+npm run build          # Production build
+npm run typecheck      # TypeScript check (tsc --noEmit)
+npm test               # Run unit tests
+npm run test:coverage  # Run tests with coverage report
+npm run lint           # Run ESLint
+npm run format         # Format code with Prettier
+npm run format:check   # Check formatting without writing
 ```
 
 ## Key Directories
@@ -40,6 +45,11 @@ npm run typecheck  # TypeScript check (tsc --noEmit)
 
 - Use App Router patterns (server components by default, `"use client"` only when needed)
 - Required env vars: `GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Optional env vars: `LLAMA_PARSE_API_KEY` (table extraction), `BRAVE_SEARCH_API_KEY` (web search)
+- Optional env vars: `LLAMA_PARSE_API_KEY` (table extraction), `BRAVE_SEARCH_API_KEY` (web search), `DEV_AUTH_BYPASS=true` (skip auth locally)
 - Never commit `.env.local` or secrets
 - Embeddings are 768-dimensional vectors — if changing embedding provider, update DB column size
+
+## Git
+
+- When committing, always break changes into multiple small, logically grouped commits — never one big commit
+- Each commit should focus on one concern (e.g., separate commits for config, bug fixes, features, docs)

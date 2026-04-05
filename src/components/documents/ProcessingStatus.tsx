@@ -23,4 +23,3 @@ export function ProcessingStatus({ status }: { status: UploadStatus }) {
     </span>
   );
 }
-

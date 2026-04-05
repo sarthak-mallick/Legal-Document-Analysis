@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import "@/lib/env-check";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/ui/user-menu";
 
@@ -7,7 +8,8 @@ import "@/app/globals.css";
 
 export const metadata: Metadata = {
   title: "Legal Document Analysis Platform",
-  description: "Upload legal PDFs and ask questions with AI-powered analysis, citations, and risk flagging.",
+  description:
+    "Upload legal PDFs and ask questions with AI-powered analysis, citations, and risk flagging.",
 };
 
 // Root layout with theme toggle, user menu, and shared shell.

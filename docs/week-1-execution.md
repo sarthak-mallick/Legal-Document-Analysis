@@ -25,17 +25,17 @@ Bootstrap the application and complete the first ingestion slice so a user can u
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W1-001 | Complete | Next.js 16 + TypeScript + Tailwind scaffold created with README and verification script. |
-| W1-002 | Complete | Browser, server, and admin Supabase client helpers added. |
-| W1-003 | Complete | Gemini chat and embeddings factories added under `src/lib/langchain/`. |
-| W1-004 | Complete | PDF parsing implemented with `pdf-parse` page extraction and error handling. |
-| W1-005 | Complete | Basic chunking implemented with section-title detection and overlap. |
-| W1-006 | Complete | Embedding batches and Supabase chunk persistence implemented. |
-| W1-007 | Complete | Ingestion pipeline added with document status transitions and error logging. |
-| W1-008 | Complete | Upload API route implemented with auth, validation, and pipeline execution. |
-| W1-009 | Complete | Dashboard upload/list/delete UI scaffold implemented. |
+| Task ID | Status   | Note                                                                                     |
+| ------- | -------- | ---------------------------------------------------------------------------------------- |
+| W1-001  | Complete | Next.js 16 + TypeScript + Tailwind scaffold created with README and verification script. |
+| W1-002  | Complete | Browser, server, and admin Supabase client helpers added.                                |
+| W1-003  | Complete | Gemini chat and embeddings factories added under `src/lib/langchain/`.                   |
+| W1-004  | Complete | PDF parsing implemented with `pdf-parse` page extraction and error handling.             |
+| W1-005  | Complete | Basic chunking implemented with section-title detection and overlap.                     |
+| W1-006  | Complete | Embedding batches and Supabase chunk persistence implemented.                            |
+| W1-007  | Complete | Ingestion pipeline added with document status transitions and error logging.             |
+| W1-008  | Complete | Upload API route implemented with auth, validation, and pipeline execution.              |
+| W1-009  | Complete | Dashboard upload/list/delete UI scaffold implemented.                                    |
 
 ## Session Log (Append-Only)
 

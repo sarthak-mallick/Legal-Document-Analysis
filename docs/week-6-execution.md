@@ -25,17 +25,17 @@ Enable multi-document support with cross-document comparison queries, adaptive a
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W6-001 | Complete | `buildSystemPrompt()` appends document-type-specific focus areas (insurance: coverage/exclusions/deductibles; lease: rent/obligations/termination; employment: compensation/non-compete; NDA: confidentiality/duration; ToS: liability/arbitration). |
-| W6-002 | Complete | `DocumentMeta` interface added to agent state with id, filename, documentType. Populated from documents table in chat API. |
-| W6-003 | Complete | `compare` node groups chunks by document, builds side-by-side context, uses Gemini to generate structured comparison analysis. |
-| W6-004 | Complete | Graph routes `cross_document` queries (when multiple docs) through compare → synthesize. All other flows unchanged. |
-| W6-005 | Complete | Synthesis prompt groups chunks by document with headers. Multi-doc uses `[Document: X, Section: Y, Page: Z]` citation format. Single-doc unchanged. |
-| W6-006 | Complete | Classification prompt expanded with comparison-detection examples ("compare", "difference between", "which document/policy"). |
-| W6-007 | Complete | Chat API fetches document records to build documentMetas array passed to agent invocation. |
-| W6-008 | Complete | DocumentCard supports checkbox selection with ring highlight. DocumentList passes selection state. |
-| W6-009 | Complete | UploadDashboard shows batch delete bar with count, delete, and clear selection when documents are selected. |
+| Task ID | Status   | Note                                                                                                                                                                                                                                                 |
+| ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W6-001  | Complete | `buildSystemPrompt()` appends document-type-specific focus areas (insurance: coverage/exclusions/deductibles; lease: rent/obligations/termination; employment: compensation/non-compete; NDA: confidentiality/duration; ToS: liability/arbitration). |
+| W6-002  | Complete | `DocumentMeta` interface added to agent state with id, filename, documentType. Populated from documents table in chat API.                                                                                                                           |
+| W6-003  | Complete | `compare` node groups chunks by document, builds side-by-side context, uses Gemini to generate structured comparison analysis.                                                                                                                       |
+| W6-004  | Complete | Graph routes `cross_document` queries (when multiple docs) through compare → synthesize. All other flows unchanged.                                                                                                                                  |
+| W6-005  | Complete | Synthesis prompt groups chunks by document with headers. Multi-doc uses `[Document: X, Section: Y, Page: Z]` citation format. Single-doc unchanged.                                                                                                  |
+| W6-006  | Complete | Classification prompt expanded with comparison-detection examples ("compare", "difference between", "which document/policy").                                                                                                                        |
+| W6-007  | Complete | Chat API fetches document records to build documentMetas array passed to agent invocation.                                                                                                                                                           |
+| W6-008  | Complete | DocumentCard supports checkbox selection with ring highlight. DocumentList passes selection state.                                                                                                                                                   |
+| W6-009  | Complete | UploadDashboard shows batch delete bar with count, delete, and clear selection when documents are selected.                                                                                                                                          |
 
 ## Session Log (Append-Only)
 

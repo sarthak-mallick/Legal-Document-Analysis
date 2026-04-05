@@ -62,7 +62,8 @@ export default function DocumentDetailPage() {
     );
   }
 
-  const docTypeLabel = DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "Unknown";
+  const docTypeLabel =
+    DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "Unknown";
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
@@ -90,16 +91,10 @@ export default function DocumentDetailPage() {
 
       {document.upload_status === "ready" && (
         <>
-          <DocumentSummaryPanel
-            documentId={document.id}
-            existingSummary={document.summary}
-          />
+          <DocumentSummaryPanel documentId={document.id} existingSummary={document.summary} />
 
           <div className="mt-8">
-            <Button
-              onClick={() => setShowChunks(!showChunks)}
-              variant="ghost"
-            >
+            <Button onClick={() => setShowChunks(!showChunks)} variant="ghost">
               {showChunks ? "Hide Chunks" : "View Document Chunks"}
             </Button>
             {showChunks && (

@@ -25,10 +25,7 @@ interface DocumentSummaryPanelProps {
 }
 
 // Panel that displays or generates the document summary, risk flags, and gap analysis.
-export function DocumentSummaryPanel({
-  documentId,
-  existingSummary,
-}: DocumentSummaryPanelProps) {
+export function DocumentSummaryPanel({ documentId, existingSummary }: DocumentSummaryPanelProps) {
   const [summary, setSummary] = useState<string | null>(existingSummary);
   const [riskFlags, setRiskFlags] = useState<RiskFlag[]>([]);
   const [gapAnalysis, setGapAnalysis] = useState<GapItem[]>([]);
@@ -74,10 +71,7 @@ export function DocumentSummaryPanel({
     <div className="space-y-6">
       {!hasFullAnalysis && (
         <div className="flex items-center gap-3">
-          <Button
-            onClick={handleGenerate}
-            disabled={generating}
-          >
+          <Button onClick={handleGenerate} disabled={generating}>
             {generating
               ? "Generating analysis..."
               : summary
@@ -92,11 +86,7 @@ export function DocumentSummaryPanel({
       {gapAnalysis.length > 0 && <GapAnalysis items={gapAnalysis} />}
 
       {hasFullAnalysis && (
-        <Button
-          onClick={handleGenerate}
-          disabled={generating}
-          variant="ghost"
-        >
+        <Button onClick={handleGenerate} disabled={generating} variant="ghost">
           {generating ? "Regenerating..." : "Regenerate Analysis"}
         </Button>
       )}

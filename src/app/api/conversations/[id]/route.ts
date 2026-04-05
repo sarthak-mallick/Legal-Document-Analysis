@@ -4,10 +4,7 @@ import { getUserId } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // Get a conversation with its messages.
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -48,10 +45,7 @@ export async function GET(
 }
 
 // Delete a conversation.
-export async function DELETE(
-  _request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const userId = await getUserId();
     if (!userId) {

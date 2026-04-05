@@ -18,9 +18,7 @@ export function MessageBubble({ role, content, citations }: MessageBubbleProps) 
       <div
         className={cn(
           "max-w-[80%] space-y-2 rounded-2xl px-4 py-3 text-sm",
-          isUser
-            ? "bg-primary text-primary-foreground"
-            : "bg-slate-100 text-slate-800",
+          isUser ? "bg-primary text-primary-foreground" : "bg-slate-100 text-slate-800",
         )}
       >
         <div className="whitespace-pre-wrap">{content}</div>
@@ -30,11 +28,7 @@ export function MessageBubble({ role, content, citations }: MessageBubbleProps) 
               Sources
             </p>
             {citations.map((citation, i) => (
-              <CitationCard
-                citation={citation}
-                index={i}
-                key={citation.chunk_id}
-              />
+              <CitationCard citation={citation} index={i} key={citation.chunk_id} />
             ))}
           </div>
         )}

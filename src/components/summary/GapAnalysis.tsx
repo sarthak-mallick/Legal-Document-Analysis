@@ -56,12 +56,7 @@ export function GapAnalysis({ items }: GapAnalysisProps) {
               key={i}
               className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm"
             >
-              <span
-                className={cn(
-                  "mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full",
-                  style.bg,
-                )}
-              />
+              <span className={cn("mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full", style.bg)} />
               <div className="min-w-0">
                 <p className="font-medium text-slate-800">{item.category}</p>
                 <p className="text-xs text-slate-500">

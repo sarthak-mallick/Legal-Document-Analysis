@@ -6,19 +6,19 @@ An AI-powered platform that helps users upload legal documents (insurance polici
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14+ (App Router) |
-| Hosting | Vercel (Hobby tier) |
-| Database | Supabase (Free tier) - Postgres + pgvector |
-| Auth | Supabase Auth |
-| LLM | Google Gemini 2.5 Flash (via LangChain) |
-| Embeddings | Google Gemini text-embedding-004 (via LangChain) |
-| Orchestration | LangGraph (TypeScript) |
-| Framework | LangChain.js |
-| External Tools | Custom MCP servers (TypeScript, MCP SDK) |
-| PDF Parsing | LlamaParse or pdf-parse + custom table detection |
-| Styling | Tailwind CSS + shadcn/ui |
+| Layer          | Technology                                       |
+| -------------- | ------------------------------------------------ |
+| Frontend       | Next.js 14+ (App Router)                         |
+| Hosting        | Vercel (Hobby tier)                              |
+| Database       | Supabase (Free tier) - Postgres + pgvector       |
+| Auth           | Supabase Auth                                    |
+| LLM            | Google Gemini 2.5 Flash (via LangChain)          |
+| Embeddings     | Google Gemini text-embedding-004 (via LangChain) |
+| Orchestration  | LangGraph (TypeScript)                           |
+| Framework      | LangChain.js                                     |
+| External Tools | Custom MCP servers (TypeScript, MCP SDK)         |
+| PDF Parsing    | LlamaParse or pdf-parse + custom table detection |
+| Styling        | Tailwind CSS + shadcn/ui                         |
 
 ## Architecture Summary
 
@@ -473,10 +473,17 @@ legal-doc-analyzer/
 **Tasks:**
 
 1. **Define agent state** (`src/lib/agent/state.ts`)
+
    ```typescript
    interface AgentState {
      query: string;
-     queryType: 'simple_factual' | 'table_lookup' | 'term_explanation' | 'multi_section' | 'cross_document' | 'general';
+     queryType:
+       | "simple_factual"
+       | "table_lookup"
+       | "term_explanation"
+       | "multi_section"
+       | "cross_document"
+       | "general";
      documentIds: string[];
      conversationHistory: Message[];
      retrievedChunks: ChunkWithScore[];
@@ -529,6 +536,7 @@ legal-doc-analyzer/
    - Set `response` and `citations` in state
 
 7. **Build the LangGraph graph** (`src/lib/agent/graph.ts`)
+
    ```
    START → classifyQuery
    classifyQuery → retrieve
@@ -539,6 +547,7 @@ legal-doc-analyzer/
    queryTable → synthesize
    synthesize → END
    ```
+
    - Use conditional edges based on state values
    - Compile the graph
 
@@ -834,6 +843,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 To switch from Gemini to another provider, only two files need to change:
 
 **`src/lib/langchain/model.ts`:**
+
 ```typescript
 // Current: Gemini
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
@@ -849,10 +859,12 @@ export const getLLM = () => new ChatGoogleGenerativeAI({ modelName: "gemini-2.5-
 ```
 
 **`src/lib/langchain/embeddings.ts`:**
+
 ```typescript
 // Current: Gemini (768 dimensions)
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-export const getEmbeddings = () => new GoogleGenerativeAIEmbeddings({ modelName: "text-embedding-004" });
+export const getEmbeddings = () =>
+  new GoogleGenerativeAIEmbeddings({ modelName: "text-embedding-004" });
 
 // To switch to OpenAI (1536 dimensions — update vector column size in DB):
 // import { OpenAIEmbeddings } from "@langchain/openai";

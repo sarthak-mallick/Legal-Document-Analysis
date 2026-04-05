@@ -7,7 +7,12 @@ import type { Citation } from "@/types/conversation";
 // Parse citation references from the response text.
 function extractCitations(
   text: string,
-  chunks: { id: string; section_title: string | null; page_number: number | null; content: string }[],
+  chunks: {
+    id: string;
+    section_title: string | null;
+    page_number: number | null;
+    content: string;
+  }[],
 ): Citation[] {
   const citations: Citation[] = [];
   const seen = new Set<string>();
@@ -19,12 +24,13 @@ function extractCitations(
     const sectionRef = match[1].trim();
     const pageRef = parseInt(match[2], 10);
 
-    const matchingChunk = chunks.find(
-      (c) =>
-        (c.section_title?.toLowerCase().includes(sectionRef.toLowerCase()) ||
-          sectionRef.toLowerCase().includes(c.section_title?.toLowerCase() ?? "")) &&
-        c.page_number === pageRef,
-    ) ?? chunks.find((c) => c.page_number === pageRef);
+    const matchingChunk =
+      chunks.find(
+        (c) =>
+          (c.section_title?.toLowerCase().includes(sectionRef.toLowerCase()) ||
+            sectionRef.toLowerCase().includes(c.section_title?.toLowerCase() ?? "")) &&
+          c.page_number === pageRef,
+      ) ?? chunks.find((c) => c.page_number === pageRef);
 
     if (matchingChunk && !seen.has(matchingChunk.id)) {
       seen.add(matchingChunk.id);
@@ -91,9 +97,8 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
     { role: "user", content: prompt },
   ]);
 
-  const content = typeof response.content === "string"
-    ? response.content
-    : String(response.content);
+  const content =
+    typeof response.content === "string" ? response.content : String(response.content);
 
   const citations = extractCitations(content, state.retrievedChunks);
 

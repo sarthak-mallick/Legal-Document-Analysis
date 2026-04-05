@@ -71,9 +71,7 @@ export function buildSystemPrompt(documentTypes: string[]): string {
 
   if (uniqueTypes.length === 0) return SYSTEM_PROMPT;
 
-  const profiles = uniqueTypes
-    .map((type) => DOC_TYPE_PROFILES[type])
-    .filter(Boolean);
+  const profiles = uniqueTypes.map((type) => DOC_TYPE_PROFILES[type]).filter(Boolean);
 
   if (profiles.length === 0) return SYSTEM_PROMPT;
 

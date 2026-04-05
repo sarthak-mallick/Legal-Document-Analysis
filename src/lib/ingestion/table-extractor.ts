@@ -125,7 +125,11 @@ async function extractTablesWithLlamaParse(
   console.info("[ingestion] Using LlamaParse for table extraction");
 
   const formData = new FormData();
-  formData.append("file", new Blob([new Uint8Array(buffer)], { type: "application/pdf" }), "document.pdf");
+  formData.append(
+    "file",
+    new Blob([new Uint8Array(buffer)], { type: "application/pdf" }),
+    "document.pdf",
+  );
   formData.append("result_type", "markdown");
 
   const uploadResponse = await fetch(`${LLAMA_PARSE_URL}/upload`, {

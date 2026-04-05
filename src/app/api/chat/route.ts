@@ -2,6 +2,8 @@ import { getLLM } from "@/lib/langchain/model";
 import { getUserId } from "@/lib/auth";
 import { buildAgentGraph } from "@/lib/agent/graph";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { chatRequestSchema } from "@/lib/validations/chat";
+import { parseBody } from "@/lib/validations";
 import type { MessageRecord } from "@/types/conversation";
 
 // Generate a short title for a new conversation from the first message.
@@ -11,23 +13,19 @@ async function generateTitle(message: string): Promise<string> {
     const response = await llm.invoke([
       {
         role: "system",
-        content: "Summarize this question in 5 words or less. Output only the summary, nothing else.",
+        content:
+          "Summarize this question in 5 words or less. Output only the summary, nothing else.",
       },
       { role: "user", content: message },
     ]);
-    const title = typeof response.content === "string"
-      ? response.content.trim()
-      : String(response.content).trim();
+    const title =
+      typeof response.content === "string"
+        ? response.content.trim()
+        : String(response.content).trim();
     return title.slice(0, 100);
   } catch {
     return message.slice(0, 50);
   }
-}
-
-interface ChatRequestBody {
-  message: string;
-  conversationId?: string;
-  documentIds: string[];
 }
 
 // Streaming chat endpoint powered by the LangGraph agent.
@@ -41,23 +39,12 @@ export async function POST(request: Request) {
       });
     }
 
-    const body = (await request.json()) as ChatRequestBody;
-    const { message, documentIds } = body;
-    let { conversationId } = body;
+    const rawBody = await request.json();
+    const parsed = parseBody(chatRequestSchema, rawBody);
+    if (!parsed.success) return parsed.response;
 
-    if (!message?.trim()) {
-      return new Response(JSON.stringify({ error: "Message is required." }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (!documentIds?.length) {
-      return new Response(JSON.stringify({ error: "At least one document must be selected." }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    const { message, documentIds } = parsed.data;
+    let { conversationId } = parsed.data;
 
     const admin = createSupabaseAdminClient();
 
@@ -129,10 +116,12 @@ export async function POST(request: Request) {
     const agentResponse = result.response ?? "I was unable to generate a response.";
     const citations = result.citations ?? [];
     const nodesVisited = result.nodesVisited ?? [];
-    const toolResults = (result.toolResults ?? []).map((r: { tool: string; input: Record<string, unknown> }) => ({
-      tool: r.tool,
-      input: r.input,
-    }));
+    const toolResults = (result.toolResults ?? []).map(
+      (r: { tool: string; input: Record<string, unknown> }) => ({
+        tool: r.tool,
+        input: r.input,
+      }),
+    );
 
     // Save assistant message with agent execution trace
     await admin.from("messages").insert({
@@ -184,9 +173,7 @@ export async function POST(request: Request) {
         );
 
         controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ type: "citations", citations })}\n\n`,
-          ),
+          encoder.encode(`data: ${JSON.stringify({ type: "citations", citations })}\n\n`),
         );
 
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));

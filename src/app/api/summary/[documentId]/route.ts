@@ -85,7 +85,13 @@ interface GapItem {
 
 // Generate a structured summary, risk flags, and gap analysis for a document.
 async function generateDocumentSummary(
-  chunks: { content: string; chunk_type: string; section_title: string | null; page_number: number | null; metadata: Record<string, unknown> }[],
+  chunks: {
+    content: string;
+    chunk_type: string;
+    section_title: string | null;
+    page_number: number | null;
+    metadata: Record<string, unknown>;
+  }[],
   documentType: string | null,
   filename: string,
 ): Promise<SummaryResult> {
@@ -121,9 +127,10 @@ Output in markdown format. Be specific and quote exact values from the document.
     { role: "user", content: `Document: ${filename}\n\n${context}` },
   ]);
 
-  const summary = typeof summaryResponse.content === "string"
-    ? summaryResponse.content
-    : String(summaryResponse.content);
+  const summary =
+    typeof summaryResponse.content === "string"
+      ? summaryResponse.content
+      : String(summaryResponse.content);
 
   // Generate risk flags
   const riskResponse = await llm.invoke([
@@ -143,9 +150,10 @@ If no risks are found, respond with: []`,
 
   let riskFlags: RiskFlag[] = [];
   try {
-    const riskContent = typeof riskResponse.content === "string"
-      ? riskResponse.content.trim()
-      : String(riskResponse.content).trim();
+    const riskContent =
+      typeof riskResponse.content === "string"
+        ? riskResponse.content.trim()
+        : String(riskResponse.content).trim();
     const jsonStr = riskContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
     riskFlags = JSON.parse(jsonStr) as RiskFlag[];
   } catch {
@@ -170,9 +178,10 @@ ${checklist.map((c) => `- ${c}`).join("\n")}`,
     ]);
 
     try {
-      const gapContent = typeof gapResponse.content === "string"
-        ? gapResponse.content.trim()
-        : String(gapResponse.content).trim();
+      const gapContent =
+        typeof gapResponse.content === "string"
+          ? gapResponse.content.trim()
+          : String(gapResponse.content).trim();
       const jsonStr = gapContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
       gapAnalysis = JSON.parse(jsonStr) as GapItem[];
     } catch {
@@ -224,7 +233,13 @@ export async function POST(
     }
 
     const result = await generateDocumentSummary(
-      chunks as { content: string; chunk_type: string; section_title: string | null; page_number: number | null; metadata: Record<string, unknown> }[],
+      chunks as {
+        content: string;
+        chunk_type: string;
+        section_title: string | null;
+        page_number: number | null;
+        metadata: Record<string, unknown>;
+      }[],
       document.document_type as string | null,
       document.filename as string,
     );
@@ -251,10 +266,7 @@ export async function POST(
 }
 
 // Get the existing summary for a document.
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ documentId: string }> },
-) {
+export async function GET(_request: Request, context: { params: Promise<{ documentId: string }> }) {
   try {
     const userId = await getUserId();
     if (!userId) {

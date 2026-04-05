@@ -6,14 +6,7 @@ interface SkeletonProps {
 
 // Animated placeholder for loading states.
 export function Skeleton({ className }: SkeletonProps) {
-  return (
-    <div
-      className={cn(
-        "skeleton h-4 w-full bg-slate-200 dark:bg-slate-700",
-        className,
-      )}
-    />
-  );
+  return <div className={cn("skeleton h-4 w-full bg-slate-200 dark:bg-slate-700", className)} />;
 }
 
 // Document card loading skeleton.

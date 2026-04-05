@@ -15,7 +15,9 @@ function formatChunkContext(
   if (!isMultiDoc) {
     return chunks
       .map((chunk, i) => {
-        const section = chunk.section_title ? `Section: ${chunk.section_title}` : "Section: Unknown";
+        const section = chunk.section_title
+          ? `Section: ${chunk.section_title}`
+          : "Section: Unknown";
         const page = chunk.page_number ? `Page: ${chunk.page_number}` : "Page: Unknown";
         const type = chunk.chunk_type === "table" ? " [TABLE]" : "";
 
@@ -76,9 +78,7 @@ function formatHistory(messages: MessageRecord[]): string {
 function formatToolResults(toolResults: ToolResult[]): string {
   if (toolResults.length === 0) return "";
 
-  return toolResults
-    .map((r) => `--- ${r.tool} ---\n${r.output}`)
-    .join("\n\n");
+  return toolResults.map((r) => `--- ${r.tool} ---\n${r.output}`).join("\n\n");
 }
 
 // Build the full synthesis prompt with retrieved context, tool results, and conversation history.
@@ -97,7 +97,9 @@ export function buildSynthesisPrompt(
     parts.push(`## Conversation History\n${formatHistory(history)}`);
   }
 
-  parts.push(`## Retrieved Document Context\n${formatChunkContext(chunks, documentMetas, isMultiDoc)}`);
+  parts.push(
+    `## Retrieved Document Context\n${formatChunkContext(chunks, documentMetas, isMultiDoc)}`,
+  );
 
   if (comparisonContext) {
     parts.push(`## Cross-Document Comparison Analysis\n${comparisonContext}`);
@@ -128,7 +130,9 @@ export function buildSynthesisPrompt(
     );
   }
 
-  parts.push(`## Instructions\nAnswer the user's question based on the context provided above.\n${instructions.join("\n")}`);
+  parts.push(
+    `## Instructions\nAnswer the user's question based on the context provided above.\n${instructions.join("\n")}`,
+  );
 
   parts.push(`## User Question\n${query}`);
 

@@ -12,4 +12,3 @@ export function getLLM() {
     temperature: 0.2,
   });
 }
-
