@@ -82,7 +82,11 @@ describe("buildSynthesisPrompt", () => {
 
   it("includes tool results when provided", () => {
     const tools: ToolResult[] = [
-      { tool: "glossary_lookup", input: "deductible", output: "Amount you pay before insurance kicks in." },
+      {
+        tool: "glossary_lookup",
+        input: { term: "deductible" },
+        output: "Amount you pay before insurance kicks in.",
+      },
     ];
     const result = buildSynthesisPrompt("test", [], [], tools);
     expect(result).toContain("External Tool Results");
@@ -92,10 +96,16 @@ describe("buildSynthesisPrompt", () => {
 
   it("adds external source distinction instruction when tools used", () => {
     const tools: ToolResult[] = [
-      { tool: "web_search", input: "average deductible", output: "National average is $750." },
+      {
+        tool: "web_search",
+        input: { query: "average deductible" },
+        output: "National average is $750.",
+      },
     ];
     const result = buildSynthesisPrompt("test", [], [], tools);
-    expect(result).toContain("distinguish between information from the document and information from external sources");
+    expect(result).toContain(
+      "distinguish between information from the document and information from external sources",
+    );
   });
 
   it("uses single-doc citation format for one document", () => {
@@ -118,7 +128,14 @@ describe("buildSynthesisPrompt", () => {
   });
 
   it("includes comparison context when provided", () => {
-    const result = buildSynthesisPrompt("compare", [], [], [], [], "Policy A has X, Policy B has Y.");
+    const result = buildSynthesisPrompt(
+      "compare",
+      [],
+      [],
+      [],
+      [],
+      "Policy A has X, Policy B has Y.",
+    );
     expect(result).toContain("Cross-Document Comparison Analysis");
     expect(result).toContain("Policy A has X, Policy B has Y.");
   });

@@ -24,6 +24,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [initialMessages, setInitialMessages] = useState<MessageRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Load documents and conversations on mount
   useEffect(() => {
@@ -80,9 +81,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
   }, [conversationId]);
 
   const handleDocToggle = useCallback((id: string) => {
-    setSelectedDocIds((prev) =>
-      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
-    );
+    setSelectedDocIds((prev) => (prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]));
   }, []);
 
   const handleConversationCreated = useCallback(
@@ -120,8 +119,6 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
     );
   }
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   return (
     <div className="flex h-screen">
       {/* Mobile sidebar overlay */}
@@ -137,14 +134,13 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
         className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-slate-200 bg-white p-4 transition-transform dark:border-slate-700 dark:bg-slate-900 md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between">
-          <Link href={"/dashboard" as never} className="text-xs font-medium text-primary hover:underline">
+          <Link
+            href={"/dashboard" as never}
+            className="text-xs font-medium text-primary hover:underline"
+          >
             Back to Dashboard
           </Link>
-          <Button
-            className="md:hidden"
-            onClick={() => setSidebarOpen(false)}
-            variant="ghost"
-          >
+          <Button className="md:hidden" onClick={() => setSidebarOpen(false)} variant="ghost">
             Close
           </Button>
         </div>
@@ -163,11 +159,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
       {/* Chat area */}
       <main className="flex flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900 md:px-6">
-          <Button
-            className="md:hidden"
-            onClick={() => setSidebarOpen(true)}
-            variant="ghost"
-          >
+          <Button className="md:hidden" onClick={() => setSidebarOpen(true)} variant="ghost">
             Menu
           </Button>
           <h1 className="font-serif text-lg text-foreground">Chat</h1>

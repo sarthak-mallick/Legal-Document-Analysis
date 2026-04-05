@@ -1,17 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Simple dark/light mode toggle button.
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
     const stored = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const isDark = stored === "dark" || (!stored && prefersDark);
-    setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
+    if (isDark) {
+      // Schedule state update for next tick to avoid synchronous setState in effect
+      queueMicrotask(() => setDark(true));
+    }
   }, []);
 
   function toggle() {
