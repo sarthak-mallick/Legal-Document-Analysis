@@ -17,7 +17,7 @@ AI-powered platform for uploading legal documents (insurance policies, leases, c
 
 ## Local Development
 
-No login required — auth is bypassed in development mode with a dev user ID.
+Auth is bypassed when `DEV_AUTH_BYPASS=true` is set (included in `.env.example`).
 
 ### 1. Install dependencies
 
@@ -64,6 +64,7 @@ Fill in the required values:
 | `SUPABASE_SERVICE_ROLE_KEY`     | Yes      | Supabase service role key                                  |
 | `LLAMA_PARSE_API_KEY`           | No       | Enables LlamaParse table extraction (falls back to Gemini) |
 | `BRAVE_SEARCH_API_KEY`          | No       | Enables web search tool in the agent                       |
+| `DEV_AUTH_BYPASS`               | No       | Set to `true` to skip auth in local dev                    |
 
 ### 5. Start the dev server
 
@@ -111,9 +112,14 @@ To prevent others from creating accounts, disable signups in Supabase dashboard:
 ## Commands
 
 ```bash
-npm run dev        # Start dev server (http://localhost:3000)
-npm run build      # Production build
-npm run typecheck  # TypeScript check (tsc --noEmit)
+npm run dev            # Start dev server (http://localhost:3000)
+npm run build          # Production build
+npm run typecheck      # TypeScript check (tsc --noEmit)
+npm test               # Run unit tests
+npm run test:coverage  # Run tests with coverage report
+npm run lint           # Run ESLint
+npm run format         # Format code with Prettier
+npm run format:check   # Check formatting without writing
 ```
 
 ## Architecture
