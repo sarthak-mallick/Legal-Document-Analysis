@@ -29,4 +29,3 @@ export interface ExtractedTable {
   precedingContext: string;
   sectionTitle: string | null;
 }
-

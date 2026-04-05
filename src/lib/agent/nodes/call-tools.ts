@@ -19,16 +19,10 @@ export async function callTools(state: AgentStateType): Promise<AgentUpdateType>
   }
 
   // For questions that might benefit from external context, try web search
-  if (
-    state.queryType === "term_explanation" ||
-    state.queryType === "multi_section"
-  ) {
+  if (state.queryType === "term_explanation" || state.queryType === "multi_section") {
     // Only search web if BRAVE_SEARCH_API_KEY is available
     if (process.env.BRAVE_SEARCH_API_KEY) {
-      const searchResult = await searchWeb(
-        `${state.query} legal insurance`,
-        3,
-      );
+      const searchResult = await searchWeb(`${state.query} legal insurance`, 3);
       results.push(searchResult);
     }
   }

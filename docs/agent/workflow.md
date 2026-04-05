@@ -9,6 +9,7 @@ Operational workflow for implementation threads in this repository.
 3. If any critical detail is unclear, ask clarification questions before implementation.
 
 Use minimal-read mode for `docs/week-N-execution.md`:
+
 1. `Objective`
 2. `In Scope` / `Out of Scope`
 3. `Live Task Status`
@@ -19,12 +20,14 @@ Use minimal-read mode for `docs/week-N-execution.md`:
 ## 2) Clarification Triggers (Ask First)
 
 Ask the user before proceeding when any of these are ambiguous:
+
 - Contract details (schema fields, queue/topic names, API behavior).
 - Implementation direction with meaningful tradeoffs.
 - Changes to acceptance criteria, task ordering, or timeline.
 - New external service/dependency, cost, security, or infra impact.
 
 Question style:
+
 - Keep questions short and decision-focused.
 - Offer options when helpful.
 - Wait for answer before assuming.
@@ -42,16 +45,19 @@ Question style:
 ## 4) Week Status Update Rules
 
 During execution, update active `docs/week-N-execution.md`:
+
 - `Live Task Status`
 - `Session Log (Append-Only)`
 - `Handoff Snapshot`
 
 Update points:
+
 - When a task starts.
 - When a task completes/fails/blocks.
 - Before thread close.
 
 Status entry style:
+
 - Keep entries short and factual (1-2 lines).
 - Prefer task IDs and outcome over long narrative.
 
@@ -66,6 +72,7 @@ Status entry style:
 ## 6) Week Transition Rule
 
 When moving from Week N to Week N+1:
+
 - Create `docs/week-(N+1)-execution.md` if missing.
 - Carry only unresolved blockers/risks from prior week.
 - Do not copy stale completed-task noise.

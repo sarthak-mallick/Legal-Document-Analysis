@@ -22,4 +22,3 @@ export interface DocumentChunkRecord {
   page_number: number | null;
   metadata: Record<string, unknown>;
 }
-

@@ -46,9 +46,7 @@ export default function LoginPage() {
     <Card className="space-y-6">
       <div className="space-y-2">
         <h1 className="font-serif text-2xl text-foreground">Sign in</h1>
-        <p className="text-sm text-slate-600">
-          Enter your credentials to access the platform.
-        </p>
+        <p className="text-sm text-slate-600">Enter your credentials to access the platform.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -82,9 +80,7 @@ export default function LoginPage() {
           />
         </div>
 
-        {error && (
-          <p className="text-sm text-rose-600">{error}</p>
-        )}
+        {error && <p className="text-sm text-rose-600">{error}</p>}
 
         <Button disabled={loading} className="w-full">
           {loading ? "Signing in..." : "Sign in"}

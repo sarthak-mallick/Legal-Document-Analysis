@@ -13,8 +13,8 @@ export default function DashboardPage() {
           </p>
           <h1 className="font-serif text-4xl text-foreground">Document ingestion</h1>
           <p className="max-w-3xl text-slate-600">
-            Upload a PDF to process it into chunks with embeddings. Then open the chat
-            to ask questions about your documents.
+            Upload a PDF to process it into chunks with embeddings. Then open the chat to ask
+            questions about your documents.
           </p>
         </div>
         <Link
@@ -28,4 +28,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-

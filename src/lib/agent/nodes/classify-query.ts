@@ -33,9 +33,10 @@ export async function classifyQuery(state: AgentStateType): Promise<AgentUpdateT
       { role: "user", content: state.query },
     ]);
 
-    const raw = typeof response.content === "string"
-      ? response.content.trim().toLowerCase()
-      : String(response.content).trim().toLowerCase();
+    const raw =
+      typeof response.content === "string"
+        ? response.content.trim().toLowerCase()
+        : String(response.content).trim().toLowerCase();
 
     const queryType: QueryType = VALID_TYPES.includes(raw as QueryType)
       ? (raw as QueryType)

@@ -46,10 +46,7 @@ function afterEvaluate(
   }
 
   // Cross-document comparison when multiple documents are involved
-  if (
-    state.queryType === "cross_document" &&
-    state.documentIds.length > 1
-  ) {
+  if (state.queryType === "cross_document" && state.documentIds.length > 1) {
     return "compare";
   }
 
@@ -75,10 +72,7 @@ export function buildAgentGraph() {
     .addNode("queryTable", queryTable)
     .addNode("synthesize", synthesize)
     .addEdge(START, "classifyQuery")
-    .addConditionalEdges("classifyQuery", afterClassify, [
-      "callTools",
-      "retrieve",
-    ])
+    .addConditionalEdges("classifyQuery", afterClassify, ["callTools", "retrieve"])
     .addEdge("callTools", "retrieve")
     .addEdge("retrieve", "evaluateContext")
     .addConditionalEdges("evaluateContext", afterEvaluate, [

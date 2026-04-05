@@ -4,10 +4,7 @@ import { getUserId } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // This route returns a single document with all its chunks.
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -29,7 +26,9 @@ export async function GET(
 
     const { data: chunks, error: chunksError } = await supabase
       .from("document_chunks")
-      .select("id, document_id, content, chunk_index, chunk_type, section_title, page_number, metadata")
+      .select(
+        "id, document_id, content, chunk_index, chunk_type, section_title, page_number, metadata",
+      )
       .eq("document_id", id)
       .order("chunk_index", { ascending: true });
 
@@ -53,10 +52,7 @@ export async function GET(
 }
 
 // This route deletes a single document.
-export async function DELETE(
-  _request: Request,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   console.info("[api/documents] Deleting document");
 
   try {
@@ -67,11 +63,7 @@ export async function DELETE(
     const supabase = createSupabaseAdminClient();
     const { id } = await context.params;
 
-    const { error } = await supabase
-      .from("documents")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId);
+    const { error } = await supabase.from("documents").delete().eq("id", id).eq("user_id", userId);
 
     if (error) {
       console.error("[api/documents] Delete failed", error);

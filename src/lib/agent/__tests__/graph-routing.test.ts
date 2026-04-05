@@ -13,7 +13,10 @@ function afterClassify(state: Pick<AgentStateType, "queryType">): "callTools" | 
 }
 
 function afterEvaluate(
-  state: Pick<AgentStateType, "contextSufficient" | "toolsCalled" | "queryType" | "documentIds" | "retrievedChunks">,
+  state: Pick<
+    AgentStateType,
+    "contextSufficient" | "toolsCalled" | "queryType" | "documentIds" | "retrievedChunks"
+  >,
 ): "retrieve" | "callTools" | "compare" | "queryTable" | "synthesize" {
   if (!state.contextSufficient) {
     if (!state.toolsCalled && state.queryType === "multi_section") {
@@ -27,7 +30,10 @@ function afterEvaluate(
   }
 
   const hasTableChunks = state.retrievedChunks.some((c) => c.chunk_type === "table");
-  if (hasTableChunks && (state.queryType === "table_lookup" || state.queryType === "simple_factual")) {
+  if (
+    hasTableChunks &&
+    (state.queryType === "table_lookup" || state.queryType === "simple_factual")
+  ) {
     return "queryTable";
   }
 
@@ -117,7 +123,16 @@ describe("afterEvaluate routing", () => {
       ...baseState,
       queryType: "table_lookup",
       retrievedChunks: [
-        { id: "c1", document_id: "d1", content: "", chunk_type: "table", section_title: null, page_number: 1, metadata: {}, similarity: 0.9 },
+        {
+          id: "c1",
+          document_id: "d1",
+          content: "",
+          chunk_type: "table",
+          section_title: null,
+          page_number: 1,
+          metadata: {},
+          similarity: 0.9,
+        },
       ],
     });
     expect(result).toBe("queryTable");
@@ -128,7 +143,16 @@ describe("afterEvaluate routing", () => {
       ...baseState,
       queryType: "simple_factual",
       retrievedChunks: [
-        { id: "c1", document_id: "d1", content: "", chunk_type: "table", section_title: null, page_number: 1, metadata: {}, similarity: 0.9 },
+        {
+          id: "c1",
+          document_id: "d1",
+          content: "",
+          chunk_type: "table",
+          section_title: null,
+          page_number: 1,
+          metadata: {},
+          similarity: 0.9,
+        },
       ],
     });
     expect(result).toBe("queryTable");
@@ -139,7 +163,16 @@ describe("afterEvaluate routing", () => {
       ...baseState,
       queryType: "multi_section",
       retrievedChunks: [
-        { id: "c1", document_id: "d1", content: "", chunk_type: "table", section_title: null, page_number: 1, metadata: {}, similarity: 0.9 },
+        {
+          id: "c1",
+          document_id: "d1",
+          content: "",
+          chunk_type: "table",
+          section_title: null,
+          page_number: 1,
+          metadata: {},
+          similarity: 0.9,
+        },
       ],
     });
     expect(result).toBe("synthesize");

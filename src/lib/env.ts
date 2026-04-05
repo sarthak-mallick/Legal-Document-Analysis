@@ -25,4 +25,3 @@ export function getNumberEnv(name: string, fallback: number) {
 
   return parsedValue;
 }
-

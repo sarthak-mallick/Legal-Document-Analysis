@@ -24,16 +24,16 @@ Add auto-generated document summaries with risk flagging and gap analysis, plus 
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W7-001 | Complete | POST `/api/summary/[documentId]` generates summary, risk flags, and gap analysis via 3 Gemini calls. Stores summary in documents.summary. GET returns existing summary. |
-| W7-002 | Complete | Checklists for insurance_policy (10 items), lease_agreement (10), employment_contract (10), nda (8), terms_of_service (8). |
-| W7-003 | Complete | CoverageSummary renders markdown summary with severity-colored risk flag cards (high=rose, medium=amber, low=blue). |
-| W7-004 | Complete | GapAnalysis shows coverage matrix grid with covered (green), partial (amber), not_covered (red) dots and counts. |
-| W7-005 | Complete | DocumentSummaryPanel handles generate/regenerate state, error display, and composes CoverageSummary + GapAnalysis. |
-| W7-006 | Complete | `/dashboard/[documentId]` page shows document metadata, summary panel, and collapsible chunk viewer. |
-| W7-007 | Complete | DocumentCard filename is now a link to the detail page. Summary text updated to prompt user to click. |
-| W7-008 | Complete | Added SummaryResponse type to api.ts with riskFlags and gapAnalysis shapes. |
+| Task ID | Status   | Note                                                                                                                                                                    |
+| ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W7-001  | Complete | POST `/api/summary/[documentId]` generates summary, risk flags, and gap analysis via 3 Gemini calls. Stores summary in documents.summary. GET returns existing summary. |
+| W7-002  | Complete | Checklists for insurance_policy (10 items), lease_agreement (10), employment_contract (10), nda (8), terms_of_service (8).                                              |
+| W7-003  | Complete | CoverageSummary renders markdown summary with severity-colored risk flag cards (high=rose, medium=amber, low=blue).                                                     |
+| W7-004  | Complete | GapAnalysis shows coverage matrix grid with covered (green), partial (amber), not_covered (red) dots and counts.                                                        |
+| W7-005  | Complete | DocumentSummaryPanel handles generate/regenerate state, error display, and composes CoverageSummary + GapAnalysis.                                                      |
+| W7-006  | Complete | `/dashboard/[documentId]` page shows document metadata, summary panel, and collapsible chunk viewer.                                                                    |
+| W7-007  | Complete | DocumentCard filename is now a link to the detail page. Summary text updated to prompt user to click.                                                                   |
+| W7-008  | Complete | Added SummaryResponse type to api.ts with riskFlags and gapAnalysis shapes.                                                                                             |
 
 ## Session Log (Append-Only)
 

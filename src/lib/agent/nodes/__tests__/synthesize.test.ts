@@ -23,12 +23,13 @@ function extractCitations(text: string, chunks: ChunkRef[]): Citation[] {
     const sectionRef = match[1].trim();
     const pageRef = parseInt(match[2], 10);
 
-    const matchingChunk = chunks.find(
-      (c) =>
-        (c.section_title?.toLowerCase().includes(sectionRef.toLowerCase()) ||
-          sectionRef.toLowerCase().includes(c.section_title?.toLowerCase() ?? "")) &&
-        c.page_number === pageRef,
-    ) ?? chunks.find((c) => c.page_number === pageRef);
+    const matchingChunk =
+      chunks.find(
+        (c) =>
+          (c.section_title?.toLowerCase().includes(sectionRef.toLowerCase()) ||
+            sectionRef.toLowerCase().includes(c.section_title?.toLowerCase() ?? "")) &&
+          c.page_number === pageRef,
+      ) ?? chunks.find((c) => c.page_number === pageRef);
 
     if (matchingChunk && !seen.has(matchingChunk.id)) {
       seen.add(matchingChunk.id);
@@ -89,7 +90,8 @@ describe("extractCitations", () => {
   });
 
   it("deduplicates citations by chunk id", () => {
-    const text = "See [Section: Coverage Details, Page: 3] and also [Section: Coverage Details, Page: 3].";
+    const text =
+      "See [Section: Coverage Details, Page: 3] and also [Section: Coverage Details, Page: 3].";
     const chunks = [makeChunk()];
 
     const citations = extractCitations(text, chunks);

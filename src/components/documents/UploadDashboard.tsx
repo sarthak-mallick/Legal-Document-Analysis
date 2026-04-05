@@ -116,9 +116,7 @@ export function UploadDashboard() {
   }
 
   const handleSelect = useCallback((id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
   }, []);
 
   return (
@@ -133,16 +131,10 @@ export function UploadDashboard() {
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-3 text-sm">
           <span className="text-slate-600">{selectedIds.length} selected</span>
-          <Button
-            onClick={handleBatchDelete}
-            variant="destructive"
-          >
+          <Button onClick={handleBatchDelete} variant="destructive">
             Delete Selected
           </Button>
-          <Button
-            onClick={() => setSelectedIds([])}
-            variant="ghost"
-          >
+          <Button onClick={() => setSelectedIds([])} variant="ghost">
             Clear Selection
           </Button>
         </div>

@@ -11,4 +11,3 @@ export function getEmbeddings() {
     model: process.env.GEMINI_EMBEDDING_MODEL || "text-embedding-004",
   });
 }
-

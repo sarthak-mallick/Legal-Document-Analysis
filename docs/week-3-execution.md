@@ -23,15 +23,15 @@ Add basic RAG chat so users can ask questions about uploaded documents and get s
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W3-001 | Complete | Retriever wraps `match_chunks` pgvector RPC with similarity threshold filtering (0.7). |
-| W3-002 | Complete | POST `/api/chat` performs RAG retrieval, builds synthesis prompt, streams Gemini response via SSE. Saves user and assistant messages with citations. |
-| W3-003 | Complete | Parses `[Section: X, Page: Y]` patterns from response text, maps to retrieved chunks, stores in messages.citations jsonb. |
-| W3-004 | Complete | ChatWindow with SSE streaming, MessageBubble with expandable CitationCards, auto-resizing ChatInput with Enter shortcut. |
-| W3-005 | Complete | GET/DELETE `/api/conversations/[id]`, GET `/api/conversations`. Auto-generates 5-word title via Gemini. ConversationSidebar with delete. |
-| W3-006 | Complete | System prompt defines legal analyst persona with citation rules. Synthesis prompt formats retrieved context with section/page labels and conversation history. |
-| W3-007 | Complete | `/chat` and `/chat/[conversationId]` pages with document selector sidebar, conversation list, and dashboard Open Chat link. |
+| Task ID | Status   | Note                                                                                                                                                           |
+| ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W3-001  | Complete | Retriever wraps `match_chunks` pgvector RPC with similarity threshold filtering (0.7).                                                                         |
+| W3-002  | Complete | POST `/api/chat` performs RAG retrieval, builds synthesis prompt, streams Gemini response via SSE. Saves user and assistant messages with citations.           |
+| W3-003  | Complete | Parses `[Section: X, Page: Y]` patterns from response text, maps to retrieved chunks, stores in messages.citations jsonb.                                      |
+| W3-004  | Complete | ChatWindow with SSE streaming, MessageBubble with expandable CitationCards, auto-resizing ChatInput with Enter shortcut.                                       |
+| W3-005  | Complete | GET/DELETE `/api/conversations/[id]`, GET `/api/conversations`. Auto-generates 5-word title via Gemini. ConversationSidebar with delete.                       |
+| W3-006  | Complete | System prompt defines legal analyst persona with citation rules. Synthesis prompt formats retrieved context with section/page labels and conversation history. |
+| W3-007  | Complete | `/chat` and `/chat/[conversationId]` pages with document selector sidebar, conversation list, and dashboard Open Chat link.                                    |
 
 ## Session Log (Append-Only)
 

@@ -53,5 +53,11 @@ export type ChatStreamEvent =
   | { type: "meta"; conversationId: string }
   | { type: "token"; content: string }
   | { type: "citations"; citations: MessageRecord["citations"] }
-  | { type: "agent_debug"; nodesVisited: string[]; queryType: string; retrievalAttempts: number; chunkCount: number }
+  | {
+      type: "agent_debug";
+      nodesVisited: string[];
+      queryType: string;
+      retrievalAttempts: number;
+      chunkCount: number;
+    }
   | { type: "error"; content: string };

@@ -25,17 +25,17 @@ Add table-aware PDF processing to the ingestion pipeline so tables are extracted
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W2-001 | Complete | Added `ExtractedTable` interface; widened `chunkType` to `"text" \| "table" \| "heading" \| "list"`. |
-| W2-002 | Complete | Dual-path table extractor: LlamaParse via REST API with polling, fallback to pattern detection + Gemini confirmation. |
-| W2-003 | Complete | Chunker accepts extracted tables, removes table regions from page text, inserts table chunks as atomic units with structured metadata. |
-| W2-004 | Complete | Table describer generates 2-3 sentence NL descriptions via Gemini, replaces chunk content while preserving raw markdown in metadata. |
-| W2-005 | Complete | Doc type detector classifies into insurance_policy, lease_agreement, employment_contract, nda, terms_of_service, or other. |
-| W2-006 | Complete | Pipeline wired: parsePdf → extractTables → chunkDocument → generateTableDescriptions → detectDocumentType → storeDocumentChunks. |
-| W2-007 | Complete | GET `/api/documents/[id]` returns document + ordered chunks + aggregated chunk/table counts. |
-| W2-008 | Complete | Upload response includes `documentType`, `chunkCount`, `tableCount`. |
-| W2-009 | Complete | DocumentCard shows doc type badge and View Chunks toggle. ChunkDebugPanel lazy-loads chunks with type badges, page numbers, and expandable table markdown. |
+| Task ID | Status   | Note                                                                                                                                                       |
+| ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W2-001  | Complete | Added `ExtractedTable` interface; widened `chunkType` to `"text" \| "table" \| "heading" \| "list"`.                                                       |
+| W2-002  | Complete | Dual-path table extractor: LlamaParse via REST API with polling, fallback to pattern detection + Gemini confirmation.                                      |
+| W2-003  | Complete | Chunker accepts extracted tables, removes table regions from page text, inserts table chunks as atomic units with structured metadata.                     |
+| W2-004  | Complete | Table describer generates 2-3 sentence NL descriptions via Gemini, replaces chunk content while preserving raw markdown in metadata.                       |
+| W2-005  | Complete | Doc type detector classifies into insurance_policy, lease_agreement, employment_contract, nda, terms_of_service, or other.                                 |
+| W2-006  | Complete | Pipeline wired: parsePdf → extractTables → chunkDocument → generateTableDescriptions → detectDocumentType → storeDocumentChunks.                           |
+| W2-007  | Complete | GET `/api/documents/[id]` returns document + ordered chunks + aggregated chunk/table counts.                                                               |
+| W2-008  | Complete | Upload response includes `documentType`, `chunkCount`, `tableCount`.                                                                                       |
+| W2-009  | Complete | DocumentCard shows doc type badge and View Chunks toggle. ChunkDebugPanel lazy-loads chunks with type badges, page numbers, and expandable table markdown. |
 
 ## Session Log (Append-Only)
 

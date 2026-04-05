@@ -36,9 +36,10 @@ export async function queryTable(state: AgentStateType): Promise<AgentUpdateType
         },
       ]);
 
-      const answer = typeof response.content === "string"
-        ? response.content.trim()
-        : String(response.content).trim();
+      const answer =
+        typeof response.content === "string"
+          ? response.content.trim()
+          : String(response.content).trim();
 
       if (answer !== "NOT_FOUND") {
         const result: TableQueryResult = {

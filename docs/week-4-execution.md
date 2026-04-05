@@ -25,17 +25,17 @@ Replace the simple RAG chain from Week 3 with a multi-step LangGraph agent that 
 
 ## Live Task Status
 
-| Task ID | Status | Note |
-| --- | --- | --- |
-| W4-001 | Complete | `AgentState` with Annotation reducers for chunk dedup, node tracking, retrieval attempts, table data, and context sufficiency. |
-| W4-002 | Complete | `classifyQuery` sends query to Gemini for classification into simple_factual, table_lookup, term_explanation, multi_section, cross_document, or general. |
-| W4-003 | Complete | `retrieve` performs vector search; for multi_section/cross_document queries, generates 2-3 sub-queries and merges results with deduplication. |
-| W4-004 | Complete | `evaluateContext` asks Gemini to assess sufficiency; returns refined query if insufficient; caps at 3 attempts then proceeds. |
-| W4-005 | Complete | `queryTable` extracts specific values from structured table data in chunk metadata using Gemini. |
-| W4-006 | Complete | `synthesize` builds full prompt with all context (chunks + table data + history), generates response, extracts citations. |
-| W4-007 | Complete | Graph: START → classifyQuery → retrieve → evaluateContext → (retrieve \| queryTable \| synthesize) → END. Conditional edges based on state. |
-| W4-008 | Complete | Chat API now invokes compiled LangGraph agent instead of direct LLM chain. Response streamed via SSE in chunks. |
-| W4-009 | Complete | Agent trace (nodesVisited, queryType, retrievalAttempts, chunkCount, hasTableData) stored in messages.tool_calls and sent as agent_debug SSE event. |
+| Task ID | Status   | Note                                                                                                                                                     |
+| ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| W4-001  | Complete | `AgentState` with Annotation reducers for chunk dedup, node tracking, retrieval attempts, table data, and context sufficiency.                           |
+| W4-002  | Complete | `classifyQuery` sends query to Gemini for classification into simple_factual, table_lookup, term_explanation, multi_section, cross_document, or general. |
+| W4-003  | Complete | `retrieve` performs vector search; for multi_section/cross_document queries, generates 2-3 sub-queries and merges results with deduplication.            |
+| W4-004  | Complete | `evaluateContext` asks Gemini to assess sufficiency; returns refined query if insufficient; caps at 3 attempts then proceeds.                            |
+| W4-005  | Complete | `queryTable` extracts specific values from structured table data in chunk metadata using Gemini.                                                         |
+| W4-006  | Complete | `synthesize` builds full prompt with all context (chunks + table data + history), generates response, extracts citations.                                |
+| W4-007  | Complete | Graph: START → classifyQuery → retrieve → evaluateContext → (retrieve \| queryTable \| synthesize) → END. Conditional edges based on state.              |
+| W4-008  | Complete | Chat API now invokes compiled LangGraph agent instead of direct LLM chain. Response streamed via SSE in chunks.                                          |
+| W4-009  | Complete | Agent trace (nodesVisited, queryType, retrievalAttempts, chunkCount, hasTableData) stored in messages.tool_calls and sent as agent_debug SSE event.      |
 
 ## Session Log (Append-Only)
 

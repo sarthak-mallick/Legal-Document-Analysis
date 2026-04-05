@@ -54,9 +54,7 @@ export function CoverageSummary({ summary, riskFlags }: CoverageSummaryProps) {
                 </span>
               </div>
               <p className="mt-1 opacity-80">{flag.description}</p>
-              {flag.section && (
-                <p className="mt-1 text-xs opacity-60">Section: {flag.section}</p>
-              )}
+              {flag.section && <p className="mt-1 text-xs opacity-60">Section: {flag.section}</p>}
             </div>
           ))}
         </div>

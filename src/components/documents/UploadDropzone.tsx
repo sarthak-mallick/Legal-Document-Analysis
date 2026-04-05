@@ -44,8 +44,8 @@ export function UploadDropzone({ isUploading, onUpload }: UploadDropzoneProps) {
         <div className="space-y-2">
           <p className="font-serif text-2xl text-foreground">Upload a legal document</p>
           <p className="max-w-2xl text-sm text-slate-600">
-            PDF files up to 10MB. Documents are parsed with table detection,
-            classified by type, chunked, embedded, and stored for analysis.
+            PDF files up to 10MB. Documents are parsed with table detection, classified by type,
+            chunked, embedded, and stored for analysis.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -74,4 +74,3 @@ export function UploadDropzone({ isUploading, onUpload }: UploadDropzoneProps) {
     </Card>
   );
 }
-

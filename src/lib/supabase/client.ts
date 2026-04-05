@@ -9,4 +9,3 @@ export function createSupabaseBrowserClient() {
     getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
   );
 }
-

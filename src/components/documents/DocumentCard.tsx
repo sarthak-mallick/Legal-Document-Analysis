@@ -38,15 +38,11 @@ export function DocumentCard({
 }: DocumentCardProps) {
   const [showChunks, setShowChunks] = useState(false);
   const createdDate = new Date(document.created_at).toLocaleString();
-  const docTypeLabel = DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "unknown type";
+  const docTypeLabel =
+    DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "unknown type";
 
   return (
-    <Card
-      className={cn(
-        "space-y-4 transition",
-        selected && "ring-2 ring-primary ring-offset-2",
-      )}
-    >
+    <Card className={cn("space-y-4 transition", selected && "ring-2 ring-primary ring-offset-2")}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           {onSelect && (
@@ -84,22 +80,17 @@ export function DocumentCard({
       </div>
       <div className="flex items-center justify-between gap-4 text-sm text-slate-600">
         <div className="flex items-center gap-4">
-          <p className="line-clamp-2">{document.summary ?? "Click filename to view details and generate summary."}</p>
+          <p className="line-clamp-2">
+            {document.summary ?? "Click filename to view details and generate summary."}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {document.upload_status === "ready" && (
-            <Button
-              onClick={() => setShowChunks(!showChunks)}
-              variant="ghost"
-            >
+            <Button onClick={() => setShowChunks(!showChunks)} variant="ghost">
               {showChunks ? "Hide Chunks" : "View Chunks"}
             </Button>
           )}
-          <Button
-            disabled={deleting}
-            onClick={() => onDelete(document.id)}
-            variant="destructive"
-          >
+          <Button disabled={deleting} onClick={() => onDelete(document.id)} variant="destructive">
             {deleting ? "Deleting..." : "Delete"}
           </Button>
         </div>

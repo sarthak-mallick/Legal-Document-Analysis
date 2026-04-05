@@ -35,9 +35,7 @@ export async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
     };
   } catch (error) {
     console.error("[ingestion] PDF parsing failed", error);
-    throw new Error(
-      "Unable to parse PDF. Confirm the file is a readable, unprotected PDF.",
-    );
+    throw new Error("Unable to parse PDF. Confirm the file is a readable, unprotected PDF.");
   } finally {
     await parser.destroy();
   }

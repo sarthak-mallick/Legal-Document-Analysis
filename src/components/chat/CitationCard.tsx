@@ -35,9 +35,7 @@ export function CitationCard({ citation, index }: CitationCardProps) {
           <span className="text-slate-400">Page {citation.page_number}</span>
         )}
       </div>
-      {expanded && (
-        <p className="mt-2 text-slate-600">{citation.snippet}</p>
-      )}
+      {expanded && <p className="mt-2 text-slate-600">{citation.snippet}</p>}
     </button>
   );
 }

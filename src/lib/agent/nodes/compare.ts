@@ -50,9 +50,8 @@ export async function compare(state: AgentStateType): Promise<AgentUpdateType> {
       },
     ]);
 
-    const comparison = typeof response.content === "string"
-      ? response.content
-      : String(response.content);
+    const comparison =
+      typeof response.content === "string" ? response.content : String(response.content);
 
     console.info("[agent:compare] Comparison generated", {
       length: comparison.length,

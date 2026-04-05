@@ -36,7 +36,10 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
   try {
     const chunkSummary = state.retrievedChunks
       .slice(0, 8)
-      .map((c, i) => `[${i + 1}] (${c.section_title ?? "unknown"}, p${c.page_number ?? "?"}): ${c.content.slice(0, 200)}`)
+      .map(
+        (c, i) =>
+          `[${i + 1}] (${c.section_title ?? "unknown"}, p${c.page_number ?? "?"}): ${c.content.slice(0, 200)}`,
+      )
       .join("\n");
 
     const response = await llm.invoke([
@@ -51,9 +54,10 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
       },
     ]);
 
-    const content = typeof response.content === "string"
-      ? response.content.trim()
-      : String(response.content).trim();
+    const content =
+      typeof response.content === "string"
+        ? response.content.trim()
+        : String(response.content).trim();
 
     const jsonStr = content.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
     const evaluation = JSON.parse(jsonStr) as EvaluationResult;

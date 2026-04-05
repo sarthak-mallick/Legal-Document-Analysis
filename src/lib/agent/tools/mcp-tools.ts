@@ -47,9 +47,7 @@ export function lookupTerm(term: string): ToolResult {
 
   // Substring match
   if (!entry) {
-    entry = glossary.find(
-      (e) => e.term.includes(normalized) || normalized.includes(e.term),
-    );
+    entry = glossary.find((e) => e.term.includes(normalized) || normalized.includes(e.term));
   }
 
   // Fuzzy match (distance <= 2)
@@ -76,12 +74,8 @@ export function lookupTerm(term: string): ToolResult {
 
   const parts = [
     `**${entry.term}**: ${entry.definition}`,
-    entry.relatedTerms.length > 0
-      ? `Related terms: ${entry.relatedTerms.join(", ")}`
-      : "",
-    entry.examples.length > 0
-      ? `Example: ${entry.examples[0]}`
-      : "",
+    entry.relatedTerms.length > 0 ? `Related terms: ${entry.relatedTerms.join(", ")}` : "",
+    entry.examples.length > 0 ? `Example: ${entry.examples[0]}` : "",
   ].filter(Boolean);
 
   return {
@@ -92,10 +86,7 @@ export function lookupTerm(term: string): ToolResult {
 }
 
 // Search the web using Brave Search API.
-export async function searchWeb(
-  query: string,
-  count = 5,
-): Promise<ToolResult> {
+export async function searchWeb(query: string, count = 5): Promise<ToolResult> {
   const apiKey = process.env.BRAVE_SEARCH_API_KEY;
   if (!apiKey) {
     return {
@@ -126,7 +117,7 @@ export async function searchWeb(
       };
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       web?: { results?: Array<{ title: string; url: string; description: string }> };
     };
 

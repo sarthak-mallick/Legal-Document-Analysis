@@ -58,7 +58,9 @@ describe("chunkDocument", () => {
   it("detects ALL CAPS section titles from preceding text", async () => {
     // detectSectionTitle looks at text *before* the chunk, so the heading
     // must appear in a preceding portion of the page text.
-    const text = "COVERAGE LIMITS\nFirst paragraph of this section.\n\nYour policy covers up to $500,000 in damages. " + "Extra text. ".repeat(80);
+    const text =
+      "COVERAGE LIMITS\nFirst paragraph of this section.\n\nYour policy covers up to $500,000 in damages. " +
+      "Extra text. ".repeat(80);
     const doc = makeDoc([{ pageNumber: 1, text }]);
     const chunks = await chunkDocument(doc);
 
@@ -68,7 +70,9 @@ describe("chunkDocument", () => {
   });
 
   it("detects numbered section titles from preceding text", async () => {
-    const text = "3.1 Liability Coverage\nFirst paragraph.\n\nThe insurer will pay for damages. " + "More text. ".repeat(80);
+    const text =
+      "3.1 Liability Coverage\nFirst paragraph.\n\nThe insurer will pay for damages. " +
+      "More text. ".repeat(80);
     const doc = makeDoc([{ pageNumber: 1, text }]);
     const chunks = await chunkDocument(doc);
 
@@ -77,7 +81,9 @@ describe("chunkDocument", () => {
   });
 
   it("detects 'Section N' titles from preceding text", async () => {
-    const text = "Section 5 Exclusions\nFirst paragraph.\n\nThe following are excluded from coverage. " + "Details. ".repeat(80);
+    const text =
+      "Section 5 Exclusions\nFirst paragraph.\n\nThe following are excluded from coverage. " +
+      "Details. ".repeat(80);
     const doc = makeDoc([{ pageNumber: 1, text }]);
     const chunks = await chunkDocument(doc);
 

@@ -15,9 +15,8 @@ async function generateSubQueries(query: string): Promise<string[]> {
       { role: "user", content: query },
     ]);
 
-    const content = typeof response.content === "string"
-      ? response.content
-      : String(response.content);
+    const content =
+      typeof response.content === "string" ? response.content : String(response.content);
 
     return content
       .split("\n")
