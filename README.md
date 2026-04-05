@@ -1,5 +1,7 @@
 # Legal Document Analysis Platform
 
+[![CI](https://github.com/sarthak-mallick/Legal-Document-Analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/sarthak-mallick/Legal-Document-Analysis/actions/workflows/ci.yml)
+
 AI-powered platform for uploading legal documents (insurance policies, leases, contracts, NDAs) and asking natural language questions about them. Uses RAG with a multi-step LangGraph agent, table-aware PDF processing, MCP tool integration, and cross-document comparison.
 
 ## Features
@@ -54,14 +56,14 @@ cp .env.example .env.local
 
 Fill in the required values:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key |
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key |
-| `LLAMA_PARSE_API_KEY` | No | Enables LlamaParse table extraction (falls back to Gemini) |
-| `BRAVE_SEARCH_API_KEY` | No | Enables web search tool in the agent |
+| Variable                        | Required | Description                                                |
+| ------------------------------- | -------- | ---------------------------------------------------------- |
+| `GEMINI_API_KEY`                | Yes      | Google Gemini API key                                      |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Yes      | Supabase project URL                                       |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes      | Supabase anon key                                          |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Yes      | Supabase service role key                                  |
+| `LLAMA_PARSE_API_KEY`           | No       | Enables LlamaParse table extraction (falls back to Gemini) |
+| `BRAVE_SEARCH_API_KEY`          | No       | Enables web search tool in the agent                       |
 
 ### 5. Start the dev server
 
@@ -135,21 +137,22 @@ PDF Upload → Parse → Extract Tables → Chunk (table-aware) → Generate Tab
 
 ## Key Directories
 
-| Directory | Purpose |
-|-----------|---------|
+| Directory            | Purpose                                                     |
+| -------------------- | ----------------------------------------------------------- |
 | `src/lib/ingestion/` | PDF parsing, table extraction, chunking, embedding pipeline |
-| `src/lib/agent/` | LangGraph agent: graph, nodes, state, tools, prompts |
-| `src/lib/langchain/` | LLM and embeddings configuration |
-| `src/lib/supabase/` | Supabase clients (browser, server, admin) |
-| `src/app/api/` | API routes: upload, chat, documents, conversations, summary |
-| `src/app/(auth)/` | Login and signup pages |
-| `src/components/` | React components: chat, documents, summary, UI primitives |
-| `mcp-servers/` | MCP server packages: glossary, web search |
-| `docs/` | Project spec and weekly execution plans |
+| `src/lib/agent/`     | LangGraph agent: graph, nodes, state, tools, prompts        |
+| `src/lib/langchain/` | LLM and embeddings configuration                            |
+| `src/lib/supabase/`  | Supabase clients (browser, server, admin)                   |
+| `src/app/api/`       | API routes: upload, chat, documents, conversations, summary |
+| `src/app/(auth)/`    | Login and signup pages                                      |
+| `src/components/`    | React components: chat, documents, summary, UI primitives   |
+| `mcp-servers/`       | MCP server packages: glossary, web search                   |
+| `docs/`              | Project spec and weekly execution plans                     |
 
 ## Model Swapping
 
 To change LLM provider, edit only two files:
+
 - `src/lib/langchain/model.ts` — Chat model
 - `src/lib/langchain/embeddings.ts` — Embedding model
 
@@ -157,13 +160,13 @@ If switching embedding providers, re-embed all documents and update the `vector(
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui |
-| Backend | Next.js API routes, LangGraph (TypeScript), LangChain.js |
-| Database | Supabase (Postgres + pgvector) |
-| Auth | Supabase Auth (email/password) |
-| LLM | Google Gemini 2.5 Flash |
-| Embeddings | Gemini text-embedding-004 (768d) |
-| PDF Parsing | pdf-parse + LlamaParse (optional) |
-| External Tools | Custom MCP servers (glossary, web search) |
+| Layer          | Technology                                               |
+| -------------- | -------------------------------------------------------- |
+| Frontend       | Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui      |
+| Backend        | Next.js API routes, LangGraph (TypeScript), LangChain.js |
+| Database       | Supabase (Postgres + pgvector)                           |
+| Auth           | Supabase Auth (email/password)                           |
+| LLM            | Google Gemini 2.5 Flash                                  |
+| Embeddings     | Gemini text-embedding-004 (768d)                         |
+| PDF Parsing    | pdf-parse + LlamaParse (optional)                        |
+| External Tools | Custom MCP servers (glossary, web search)                |
