@@ -48,9 +48,11 @@ export async function retrieve(state: AgentStateType): Promise<AgentUpdateType> 
     }
   }
 
-  // Deduplicate by chunk id
+  // Filter out low-similarity chunks and deduplicate by chunk id
+  const SIMILARITY_THRESHOLD = 0.7;
   const seen = new Set<string>();
   const deduplicated = allChunks.filter((c) => {
+    if (c.similarity < SIMILARITY_THRESHOLD) return false;
     if (seen.has(c.id)) return false;
     seen.add(c.id);
     return true;
