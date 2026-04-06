@@ -28,6 +28,22 @@ async function generateSubQueries(query: string): Promise<string[]> {
   }
 }
 
+export const SIMILARITY_THRESHOLD = 0.7;
+
+// Filter chunks below the similarity threshold and deduplicate by id.
+export function filterAndDeduplicate(
+  chunks: { id: string; similarity: number }[],
+  threshold = SIMILARITY_THRESHOLD,
+) {
+  const seen = new Set<string>();
+  return chunks.filter((c) => {
+    if (c.similarity < threshold) return false;
+    if (seen.has(c.id)) return false;
+    seen.add(c.id);
+    return true;
+  });
+}
+
 // Perform vector search retrieval, with sub-query expansion for complex questions.
 export async function retrieve(state: AgentStateType): Promise<AgentUpdateType> {
   const searchQuery = state.refinedQuery ?? state.query;
@@ -48,13 +64,7 @@ export async function retrieve(state: AgentStateType): Promise<AgentUpdateType> 
     }
   }
 
-  // Deduplicate by chunk id
-  const seen = new Set<string>();
-  const deduplicated = allChunks.filter((c) => {
-    if (seen.has(c.id)) return false;
-    seen.add(c.id);
-    return true;
-  });
+  const deduplicated = filterAndDeduplicate(allChunks);
 
   console.info("[agent:retrieve] Retrieved chunks", {
     count: deduplicated.length,
