@@ -8,7 +8,7 @@ An AI-powered platform that helps users upload legal documents (insurance polici
 
 | Layer          | Technology                                       |
 | -------------- | ------------------------------------------------ |
-| Frontend       | Next.js 14+ (App Router)                         |
+| Frontend       | Next.js 16 (App Router)                          |
 | Hosting        | Vercel (Hobby tier)                              |
 | Database       | Supabase (Free tier) - Postgres + pgvector       |
 | Auth           | Supabase Auth                                    |
@@ -18,7 +18,10 @@ An AI-powered platform that helps users upload legal documents (insurance polici
 | Framework      | LangChain.js                                     |
 | External Tools | Custom MCP servers (TypeScript, MCP SDK)         |
 | PDF Parsing    | LlamaParse or pdf-parse + custom table detection |
-| Styling        | Tailwind CSS + shadcn/ui                         |
+| Styling        | Tailwind CSS v4 + shadcn/ui                      |
+| Testing        | Vitest + @vitest/coverage-v8                     |
+| Linting        | ESLint 9 + Prettier + husky/lint-staged          |
+| CI             | GitHub Actions (lint, typecheck, test)           |
 
 ## Architecture Summary
 
@@ -97,9 +100,10 @@ create table messages (
 
 -- Indexes
 create index idx_chunks_document on document_chunks(document_id);
-create index idx_chunks_embedding on document_chunks using ivfflat (embedding vector_cosine_ops) with (lists = 100);
+create index idx_chunks_embedding on document_chunks using hnsw (embedding vector_cosine_ops);
 create index idx_messages_conversation on messages(conversation_id);
 create index idx_documents_user on documents(user_id);
+create index idx_conversations_user on conversations(user_id);
 
 -- RLS policies
 alter table documents enable row level security;
@@ -166,6 +170,9 @@ legal-doc-analyzer/
 │   ├── app/                          # Next.js App Router
 │   │   ├── layout.tsx
 │   │   ├── page.tsx                  # Landing/home page
+│   │   ├── error.tsx                 # Global error boundary
+│   │   ├── not-found.tsx             # Custom 404 page
+│   │   ├── global-error.tsx          # Root layout error fallback
 │   │   ├── (auth)/
 │   │   │   ├── login/page.tsx
 │   │   │   └── signup/page.tsx
@@ -198,6 +205,7 @@ legal-doc-analyzer/
 │   │   │   ├── pdf-parser.ts         # PDF extraction with table detection
 │   │   │   ├── chunker.ts            # Table-aware chunking logic
 │   │   │   ├── table-extractor.ts    # Extract and structure tables from PDF
+│   │   │   ├── table-describer.ts   # Generate NL descriptions for tables
 │   │   │   ├── embedder.ts           # Generate embeddings via Gemini
 │   │   │   ├── doc-type-detector.ts  # Classify document type
 │   │   │   └── pipeline.ts           # Orchestrates the full ingestion flow
@@ -215,10 +223,9 @@ legal-doc-analyzer/
 │   │   │   ├── tools/
 │   │   │   │   ├── retriever-tool.ts     # Wraps pgvector retrieval as a tool
 │   │   │   │   ├── table-query-tool.ts   # Queries structured table data
-│   │   │   │   └── mcp-tools.ts          # Connects to MCP servers as LangGraph tools
+│   │   │   │   └── mcp-tools.ts          # In-app glossary lookup and web search (inlined, not separate MCP servers)
 │   │   │   └── prompts/
 │   │   │       ├── system.ts             # System prompts for different agent modes
-│   │   │       ├── classification.ts     # Query classification prompt
 │   │   │       └── synthesis.ts          # Answer synthesis prompt with citation instructions
 │   │   │
 │   │   ├── langchain/
@@ -226,37 +233,40 @@ legal-doc-analyzer/
 │   │   │   ├── embeddings.ts         # Gemini embeddings config (easy to swap)
 │   │   │   └── vectorstore.ts        # Supabase pgvector store setup
 │   │   │
-│   │   └── utils/
-│   │       ├── tokens.ts             # Token counting utilities
-│   │       └── errors.ts             # Custom error classes
+│   │   ├── validations/
+│   │   │   ├── index.ts              # Shared Zod helpers (parseBody, uuidSchema)
+│   │   │   └── chat.ts              # Chat request body schema
+│   │   │
+│   │   ├── env.ts                    # Environment variable helpers
+│   │   ├── env-check.ts             # Startup env validation (fails fast)
+│   │   ├── auth.ts                  # User ID resolution with dev bypass
+│   │   └── utils.ts                 # Tailwind class name utility
 │   │
 │   ├── components/
 │   │   ├── ui/                       # shadcn/ui components
 │   │   ├── chat/
+│   │   │   ├── ChatPageClient.tsx    # Chat page orchestrator
 │   │   │   ├── ChatWindow.tsx
 │   │   │   ├── MessageBubble.tsx
 │   │   │   ├── CitationCard.tsx      # Shows source section when clicked
 │   │   │   ├── StreamingMessage.tsx
-│   │   │   └── ChatInput.tsx
+│   │   │   ├── ConversationSidebar.tsx
+│   │   │   └── DocumentSelector.tsx
 │   │   ├── documents/
 │   │   │   ├── UploadDropzone.tsx
+│   │   │   ├── UploadDashboard.tsx
 │   │   │   ├── DocumentCard.tsx
-│   │   │   ├── DocumentList.tsx
 │   │   │   ├── ProcessingStatus.tsx
-│   │   │   └── DeleteConfirmDialog.tsx
-│   │   ├── summary/
-│   │   │   ├── CoverageSummary.tsx
-│   │   │   └── GapAnalysis.tsx
-│   │   └── layout/
-│   │       ├── Sidebar.tsx
-│   │       ├── Header.tsx
-│   │       └── AuthGuard.tsx
+│   │   │   └── ChunkDebugPanel.tsx
+│   │   └── summary/
+│   │       ├── CoverageSummary.tsx
+│   │       ├── DocumentSummaryPanel.tsx
+│   │       └── GapAnalysis.tsx
 │   │
 │   └── types/
 │       ├── document.ts
 │       ├── conversation.ts
-│       ├── agent.ts
-│       └── chunk.ts
+│       └── api.ts
 │
 ├── mcp-servers/
 │   ├── glossary-server/
@@ -286,7 +296,11 @@ legal-doc-analyzer/
 ├── package.json
 ├── tsconfig.json
 ├── tailwind.config.ts
-├── next.config.js
+├── next.config.ts
+├── eslint.config.mjs
+├── vitest.config.ts
+├── vercel.json
+├── .prettierrc
 └── README.md
 ```
 
@@ -303,7 +317,7 @@ legal-doc-analyzer/
 **Tasks:**
 
 1. **Project initialization**
-   - Create Next.js 14 app with App Router, TypeScript, Tailwind CSS, shadcn/ui
+   - Create Next.js 16 app with App Router, TypeScript, Tailwind CSS v4, shadcn/ui
    - Install dependencies: `@langchain/google-genai`, `@langchain/core`, `langchain`, `@supabase/supabase-js`, `@supabase/ssr`
    - Set up Supabase project (cloud, free tier) with pgvector extension enabled
    - Create `.env.local` with `GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
@@ -573,7 +587,7 @@ legal-doc-analyzer/
 
 1. **MCP Glossary Server** (`mcp-servers/glossary-server/`)
    - Create a new Node.js project with the MCP TypeScript SDK (`@modelcontextprotocol/sdk`)
-   - Curate a glossary JSON file with 200+ insurance and legal terms. Sources: public domain glossaries from state insurance departments, NAIC, and legal dictionaries.
+   - Curate a glossary JSON file with 50+ insurance and legal terms. Sources: public domain glossaries from state insurance departments, NAIC, and legal dictionaries.
    - Each entry: `{ term, definition, category, relatedTerms, examples? }`
    - Implement two MCP tools:
      - `lookup_term`: Input: `{ term: string }`. Output: definition, related terms, and examples. Use fuzzy matching so "deductable" matches "deductible".
@@ -589,10 +603,10 @@ legal-doc-analyzer/
      - `fetch_page_content`: Input: `{ url: string }`. Output: extracted text content from the URL (use a simple HTML-to-text extraction). Useful for diving deeper into a search result.
    - Include rate limiting and error handling
 
-3. **Connect MCP servers to LangGraph** (`src/lib/agent/tools/mcp-tools.ts`)
-   - Use `@modelcontextprotocol/client` to connect to the MCP servers
-   - Wrap each MCP tool as a LangChain tool using `DynamicStructuredTool`
-   - Each tool gets: name, description (used by the agent to decide when to call it), input schema, and an execute function that calls the MCP server
+3. **Connect MCP tools to LangGraph** (`src/lib/agent/tools/mcp-tools.ts`)
+   - Inline the MCP tool logic directly in the Next.js process (Option A — simplest for single-user deployment, no separate server needed)
+   - `lookupTerm()`: reads from the glossary JSON with fuzzy matching (Levenshtein distance)
+   - `searchWeb()`: calls Brave Search API when `BRAVE_SEARCH_API_KEY` is configured
 
 4. **Add tool-calling node to the graph** (`src/lib/agent/nodes/call-tools.ts`)
    - New node that the agent can route to when it decides external tools are needed
@@ -820,22 +834,27 @@ legal-doc-analyzer/
 ## Environment Variables
 
 ```env
-# Gemini
+# Required
 GEMINI_API_KEY=your_gemini_api_key
-
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# LlamaParse (optional, for better PDF parsing)
+# Optional — set to "true" to bypass auth in local development
+DEV_AUTH_BYPASS=true
+
+# Optional — model overrides
+GEMINI_CHAT_MODEL=gemini-2.5-flash
+GEMINI_EMBEDDING_MODEL=text-embedding-004
+
+# Optional — upload limits
+MAX_UPLOAD_SIZE_MB=10
+
+# Optional — enables LlamaParse table extraction (falls back to Gemini heuristic)
 LLAMA_PARSE_API_KEY=your_llamaparse_key
 
-# Brave Search (for web search MCP server)
+# Optional — enables web search tool in the agent
 BRAVE_SEARCH_API_KEY=your_brave_api_key
-
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ## Model Swapping Guide
