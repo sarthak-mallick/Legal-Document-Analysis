@@ -50,10 +50,13 @@ create index if not exists idx_chunks_document on document_chunks(document_id);
 create index if not exists idx_messages_conversation on messages(conversation_id);
 create index if not exists idx_documents_user on documents(user_id);
 
+-- Use HNSW instead of IVFFlat: works on empty tables (no training data needed)
+-- and provides better recall for small-to-medium datasets.
 create index if not exists idx_chunks_embedding
   on document_chunks
-  using ivfflat (embedding vector_cosine_ops)
-  with (lists = 100);
+  using hnsw (embedding vector_cosine_ops);
+
+create index if not exists idx_conversations_user on conversations(user_id);
 
 alter table documents enable row level security;
 alter table document_chunks enable row level security;
@@ -93,6 +96,25 @@ create policy "Users can manage own messages"
       select id from conversations where user_id = auth.uid()
     )
   );
+
+-- Auto-update updated_at on row modification.
+create or replace function update_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger documents_updated_at
+  before update on documents
+  for each row execute function update_updated_at();
+
+create trigger conversations_updated_at
+  before update on conversations
+  for each row execute function update_updated_at();
 
 create or replace function match_chunks(
   query_embedding vector(768),
