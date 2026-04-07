@@ -83,13 +83,13 @@ Auth is enforced in production — unauthenticated users are redirected to `/log
 
 ```bash
 git remote add origin <your-github-repo-url>
-git push -u origin feature
+git push -u origin main
 ```
 
 ### 2. Deploy on Vercel
 
 - Import the repo at [vercel.com](https://vercel.com) — Vercel auto-detects Next.js
-- Add all environment variables from `.env.example` in the Vercel dashboard (Settings > Environment Variables)
+- Add all **required** environment variables in the Vercel dashboard (Settings > Environment Variables). Do **not** set `DEV_AUTH_BYPASS` in production.
 - Enable **Fluid Compute** if ingestion or chat requests time out (the agent makes multiple LLM calls per request)
 
 ### 3. Configure Supabase for production
