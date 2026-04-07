@@ -140,6 +140,7 @@ export async function POST(request: Request) {
           toolsCalled: result.toolsCalled ?? false,
           toolResults,
           contextSufficient: result.contextSufficient,
+          tokenUsage: result.tokenUsage ?? { promptTokens: 0, completionTokens: 0 },
         },
       ],
     });

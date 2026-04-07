@@ -80,6 +80,14 @@ export const AgentState = Annotation.Root({
     reducer: (_prev, next) => next,
     default: () => [],
   }),
+  // Token usage from LLM calls
+  tokenUsage: Annotation<{ promptTokens: number; completionTokens: number }>({
+    reducer: (prev, next) => ({
+      promptTokens: prev.promptTokens + next.promptTokens,
+      completionTokens: prev.completionTokens + next.completionTokens,
+    }),
+    default: () => ({ promptTokens: 0, completionTokens: 0 }),
+  }),
   // Track which nodes were visited for debug logging
   nodesVisited: Annotation<string[]>({
     reducer: (prev, next) => [...prev, ...next],

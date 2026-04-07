@@ -102,14 +102,23 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
 
   const citations = extractCitations(content, state.retrievedChunks);
 
+  // Extract token usage from LLM response metadata
+  const usage = response.usage_metadata;
+  const tokenUsage = {
+    promptTokens: usage?.input_tokens ?? 0,
+    completionTokens: usage?.output_tokens ?? 0,
+  };
+
   console.info("[agent:synthesize] Response generated", {
     responseLength: content.length,
     citationCount: citations.length,
+    tokenUsage,
   });
 
   return {
     response: content,
     citations,
+    tokenUsage,
     nodesVisited: ["synthesize"],
   };
 }
