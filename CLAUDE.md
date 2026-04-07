@@ -37,7 +37,8 @@ npm run format:check   # Check formatting without writing
 - `src/lib/agent/` — LangGraph agent (graph, nodes, tools, prompts)
 - `src/lib/langchain/` — LLM and embeddings config (swap models here)
 - `src/lib/supabase/` — Supabase clients (browser, server, admin)
-- `src/app/api/` — API routes (upload, chat, documents, conversations, summary)
+- `src/app/api/` — API routes (upload, chat, documents, conversations, summary, search)
+- `src/lib/validations/` — Zod request body schemas
 - `mcp-servers/` — MCP server packages (glossary, web search)
 - `docs/` — Project spec, weekly execution plans, agent workflow
 
@@ -45,7 +46,7 @@ npm run format:check   # Check formatting without writing
 
 - Use App Router patterns (server components by default, `"use client"` only when needed)
 - Required env vars: `GEMINI_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- Optional env vars: `LLAMA_PARSE_API_KEY` (table extraction), `BRAVE_SEARCH_API_KEY` (web search), `DEV_AUTH_BYPASS=true` (skip auth locally)
+- Optional env vars: `LLAMA_PARSE_API_KEY` (table extraction), `BRAVE_SEARCH_API_KEY` (web search), `DEV_AUTH_BYPASS=true` (skip auth locally), `CHUNK_SIZE` / `CHUNK_OVERLAP` (tuning)
 - Never commit `.env.local` or secrets
 - Embeddings are 768-dimensional vectors — if changing embedding provider, update DB column size
 

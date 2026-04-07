@@ -86,9 +86,40 @@ export function DocumentSummaryPanel({ documentId, existingSummary }: DocumentSu
       {gapAnalysis.length > 0 && <GapAnalysis items={gapAnalysis} />}
 
       {hasFullAnalysis && (
-        <Button onClick={handleGenerate} disabled={generating} variant="ghost">
-          {generating ? "Regenerating..." : "Regenerate Analysis"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleGenerate} disabled={generating} variant="ghost">
+            {generating ? "Regenerating..." : "Regenerate Analysis"}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const lines = ["# Document Summary\n", summary, ""];
+              if (riskFlags.length > 0) {
+                lines.push("## Risk Flags\n");
+                riskFlags.forEach((f) =>
+                  lines.push(`- **[${f.severity.toUpperCase()}]** ${f.title}: ${f.description}`),
+                );
+                lines.push("");
+              }
+              if (gapAnalysis.length > 0) {
+                lines.push("## Gap Analysis\n");
+                gapAnalysis.forEach((g) => {
+                  const icon = g.status === "covered" ? "+" : g.status === "partial" ? "~" : "-";
+                  lines.push(`- [${icon}] ${g.category}: ${g.details ?? g.status}`);
+                });
+              }
+              const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "document-analysis.md";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Download Report
+          </Button>
+        </div>
       )}
     </div>
   );

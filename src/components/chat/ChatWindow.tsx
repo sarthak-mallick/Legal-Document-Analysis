@@ -13,6 +13,7 @@ interface ChatWindowProps {
   documentIds: string[];
   initialMessages?: MessageRecord[];
   onConversationCreated?: (conversationId: string) => void;
+  onCitationClick?: (citation: Citation) => void;
 }
 
 interface DisplayMessage {
@@ -28,6 +29,7 @@ export function ChatWindow({
   documentIds,
   initialMessages = [],
   onConversationCreated,
+  onCitationClick,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<DisplayMessage[]>(
     initialMessages.map((m) => ({
@@ -177,6 +179,7 @@ export function ChatWindow({
             content={msg.content}
             key={msg.id}
             role={msg.role}
+            onCitationClick={onCitationClick}
           />
         ))}
         {isStreaming && <StreamingMessage content={streamingContent} />}

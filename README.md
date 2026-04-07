@@ -14,6 +14,11 @@ AI-powered platform for uploading legal documents (insurance policies, leases, c
 - **Risk & Gap Analysis** — Auto-generated summaries, severity-rated risk flags, coverage matrix per document type
 - **Adaptive Prompts** — System prompts tuned for insurance, lease, employment, NDA, and ToS documents
 - **Auth & Dark Mode** — Supabase Auth (email/password), dark/light theme toggle
+- **Global Search** — Search across all documents by content from the dashboard
+- **Citation Preview** — Click a citation to open a side panel with the source chunk
+- **Export Answers** — Copy assistant messages to clipboard or download summary reports as markdown
+- **Upload Progress** — Step-by-step progress indicator during PDF ingestion (parsing → chunking → embedding)
+- **Token Tracking** — LLM token usage tracked per conversation
 
 ## Local Development
 
@@ -65,6 +70,8 @@ Fill in the required values:
 | `LLAMA_PARSE_API_KEY`           | No       | Enables LlamaParse table extraction (falls back to Gemini) |
 | `BRAVE_SEARCH_API_KEY`          | No       | Enables web search tool in the agent                       |
 | `DEV_AUTH_BYPASS`               | No       | Set to `true` to skip auth in local dev                    |
+| `CHUNK_SIZE`                    | No       | Text chunk size in characters (default: 1000)              |
+| `CHUNK_OVERLAP`                 | No       | Overlap between chunks in characters (default: 200)        |
 
 ### 5. Start the dev server
 
