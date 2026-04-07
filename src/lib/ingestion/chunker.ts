@@ -1,7 +1,8 @@
+import { getNumberEnv } from "@/lib/env";
 import type { DocumentChunkInput, ExtractedTable, ParsedDocument } from "@/lib/ingestion/types";
 
-const CHUNK_SIZE = 1000;
-const CHUNK_OVERLAP = 200;
+const CHUNK_SIZE = getNumberEnv("CHUNK_SIZE", 1000);
+const CHUNK_OVERLAP = getNumberEnv("CHUNK_OVERLAP", 200);
 
 // This helper guesses the closest section heading from the text preceding a chunk.
 function detectSectionTitle(text: string) {
