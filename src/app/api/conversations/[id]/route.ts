@@ -44,6 +44,39 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   }
 }
 
+// Rename a conversation.
+export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+    const supabase = createSupabaseAdminClient();
+    const { id } = await context.params;
+    const body = await request.json();
+    const title = typeof body.title === "string" ? body.title.trim().slice(0, 100) : null;
+
+    if (!title) {
+      return NextResponse.json({ error: "Title is required." }, { status: 400 });
+    }
+
+    const { error } = await supabase
+      .from("conversations")
+      .update({ title })
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, title });
+  } catch (error) {
+    console.error("[api/conversations] Unexpected rename error", error);
+    return NextResponse.json({ error: "Failed to rename conversation." }, { status: 500 });
+  }
+}
+
 // Delete a conversation.
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {

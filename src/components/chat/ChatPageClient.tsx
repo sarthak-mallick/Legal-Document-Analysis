@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
+import { DocumentPreview } from "@/components/chat/DocumentPreview";
 import { DocumentSelector } from "@/components/chat/DocumentSelector";
-import type { ConversationRecord, MessageRecord } from "@/types/conversation";
+import type { Citation, ConversationRecord, MessageRecord } from "@/types/conversation";
 import type { DocumentRecord } from "@/types/document";
 
 interface ChatPageClientProps {
@@ -25,6 +26,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
   const [initialMessages, setInitialMessages] = useState<MessageRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [previewCitation, setPreviewCitation] = useState<Citation | null>(null);
 
   // Load documents and conversations on mount
   useEffect(() => {
@@ -111,6 +113,21 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
     [conversationId, router],
   );
 
+  const handleRenameConversation = useCallback(async (id: string, title: string) => {
+    try {
+      const res = await fetch(`/api/conversations/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (res.ok) {
+        setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
+      }
+    } catch (error) {
+      console.error("[chat] Failed to rename conversation", error);
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center text-sm text-slate-400">
@@ -153,6 +170,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
           conversations={conversations}
           activeId={conversationId}
           onDelete={handleDeleteConversation}
+          onRename={handleRenameConversation}
         />
       </aside>
 
@@ -167,13 +185,19 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
             <p className="text-xs text-amber-600">Select a document to start chatting.</p>
           )}
         </header>
-        <div className="flex-1 overflow-hidden">
-          <ChatWindow
-            conversationId={conversationId}
-            documentIds={selectedDocIds}
-            initialMessages={initialMessages}
-            onConversationCreated={handleConversationCreated}
-          />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            <ChatWindow
+              conversationId={conversationId}
+              documentIds={selectedDocIds}
+              initialMessages={initialMessages}
+              onConversationCreated={handleConversationCreated}
+              onCitationClick={setPreviewCitation}
+            />
+          </div>
+          {previewCitation && (
+            <DocumentPreview citation={previewCitation} onClose={() => setPreviewCitation(null)} />
+          )}
         </div>
       </main>
     </div>
