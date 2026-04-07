@@ -831,6 +831,57 @@ legal-doc-analyzer/
 
 ---
 
+### WEEK 9: Enhanced UX & Observability
+
+**Goal:** Add quality-of-life features that improve usability, demo experience, and operational visibility.
+
+**Tasks:**
+
+1. **Export/download answers**
+   - Add a "Copy as Markdown" button on each assistant message in the chat
+   - Add a "Download" button on the document summary panel that exports the summary, risk flags, and gap analysis as a markdown file
+   - Use the Clipboard API for copy, and `Blob` + `URL.createObjectURL` for download
+
+2. **Document preview alongside chat** (`src/components/chat/DocumentPreview.tsx`)
+   - When a citation `[Section: X, Page: Y]` is clicked, show the source chunk content in a slide-out side panel
+   - Display the chunk text, section title, page number, and similarity score
+   - Highlight the clicked citation in the panel
+   - This avoids needing a full PDF renderer while still making citations actionable
+
+3. **Global document search** (`src/app/api/search/route.ts`)
+   - Add a search bar on the dashboard page
+   - API endpoint accepts a query string and searches across all user's document chunks using vector similarity
+   - Returns matching chunks grouped by document with snippets
+   - Enables "which document covers X?" without selecting documents first
+
+4. **Upload progress indicator**
+   - Update the ingestion pipeline to report progress stages via a status field on the `documents` table
+   - Stages: `parsing` → `chunking` → `embedding` → `ready` (or `error`)
+   - Update the `upload_status` column to reflect the current stage instead of just `processing`
+   - Poll the document status from the dashboard UI and show a step indicator
+   - Show chunk count as it increases during embedding
+
+5. **Conversation rename**
+   - Add a PATCH endpoint to `/api/conversations/[id]` that updates the title
+   - Add an edit/pencil icon next to conversation titles in the sidebar
+   - Clicking it turns the title into an inline text input
+   - Press Enter or blur to save, Escape to cancel
+
+6. **Configurable chunk size** (`src/lib/ingestion/chunker.ts`)
+   - Read `CHUNK_SIZE` and `CHUNK_OVERLAP` from environment variables with current defaults (1000 / 200)
+   - Update `.env.example` with these optional vars
+   - This allows tuning for different document types without code changes
+
+7. **Token usage tracking**
+   - Add a `token_usage` jsonb column to the `messages` table (or store in existing `tool_calls` metadata)
+   - After each LLM call in the synthesize node, record prompt tokens and completion tokens
+   - Display total token count per conversation in the conversation sidebar
+   - Add a `token_count` field to the conversation list API response
+
+**Deliverable:** Chat answers can be copied/exported, citations open a preview panel, documents are searchable from the dashboard, upload shows real progress, conversations can be renamed, chunking is tunable, and token usage is tracked per conversation.
+
+---
+
 ## Environment Variables
 
 ```env
@@ -849,6 +900,10 @@ GEMINI_EMBEDDING_MODEL=text-embedding-004
 
 # Optional — upload limits
 MAX_UPLOAD_SIZE_MB=10
+
+# Optional — chunking tuning
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
 
 # Optional — enables LlamaParse table extraction (falls back to Gemini heuristic)
 LLAMA_PARSE_API_KEY=your_llamaparse_key
