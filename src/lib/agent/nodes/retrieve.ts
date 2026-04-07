@@ -31,10 +31,10 @@ async function generateSubQueries(query: string): Promise<string[]> {
 export const SIMILARITY_THRESHOLD = 0.7;
 
 // Filter chunks below the similarity threshold and deduplicate by id.
-export function filterAndDeduplicate(
-  chunks: { id: string; similarity: number }[],
+export function filterAndDeduplicate<T extends { id: string; similarity: number }>(
+  chunks: T[],
   threshold = SIMILARITY_THRESHOLD,
-) {
+): T[] {
   const seen = new Set<string>();
   return chunks.filter((c) => {
     if (c.similarity < threshold) return false;
