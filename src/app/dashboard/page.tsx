@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DocumentSearch } from "@/components/documents/DocumentSearch";
 import { UploadDashboard } from "@/components/documents/UploadDashboard";
 
 // This page hosts the document upload dashboard and links to chat.
@@ -24,6 +25,7 @@ export default function DashboardPage() {
           Open Chat
         </Link>
       </div>
+      <DocumentSearch />
       <UploadDashboard />
     </main>
   );
