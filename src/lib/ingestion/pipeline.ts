@@ -17,6 +17,19 @@ export interface IngestDocumentResult {
   tableCount: number;
 }
 
+// Update the document's upload_status to reflect the current pipeline stage.
+async function setStage(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  documentId: string,
+  stage: string,
+  extra: Record<string, unknown> = {},
+) {
+  await supabase
+    .from("documents")
+    .update({ upload_status: stage, ...extra })
+    .eq("id", documentId);
+}
+
 // This helper runs the full ingestion flow for one uploaded document.
 export async function ingestDocument({
   buffer,
@@ -28,12 +41,15 @@ export async function ingestDocument({
 
   try {
     // Step 1: Parse PDF
+    await setStage(supabase, documentId, "parsing");
     const parsedDocument = await parsePdf(buffer);
 
     // Step 2: Extract tables
+    await setStage(supabase, documentId, "extracting_tables");
     const tables = await extractTables(buffer, parsedDocument);
 
     // Step 3: Chunk document (table-aware)
+    await setStage(supabase, documentId, "chunking");
     const rawChunks = await chunkDocument(parsedDocument, tables);
 
     // Step 4: Generate NL descriptions for table chunks
@@ -42,31 +58,18 @@ export async function ingestDocument({
     // Step 5: Detect document type
     const typeResult = await detectDocumentType(parsedDocument);
 
-    await supabase
-      .from("documents")
-      .update({
-        document_type: typeResult.documentType,
-        page_count: parsedDocument.metadata.pageCount,
-        upload_status: "processing",
-      })
-      .eq("id", documentId);
+    await setStage(supabase, documentId, "embedding", {
+      document_type: typeResult.documentType,
+      page_count: parsedDocument.metadata.pageCount,
+    });
 
     // Step 6: Embed and store chunks
     await storeDocumentChunks(documentId, chunks);
 
-    const { error } = await supabase
-      .from("documents")
-      .update({
-        document_type: typeResult.documentType,
-        page_count: parsedDocument.metadata.pageCount,
-        upload_status: "ready",
-      })
-      .eq("id", documentId);
-
-    if (error) {
-      console.error("[ingestion] Failed to finalize document status", error);
-      throw new Error(error.message);
-    }
+    await setStage(supabase, documentId, "ready", {
+      document_type: typeResult.documentType,
+      page_count: parsedDocument.metadata.pageCount,
+    });
 
     const tableCount = chunks.filter((c) => c.chunkType === "table").length;
 
@@ -85,12 +88,7 @@ export async function ingestDocument({
   } catch (error) {
     console.error("[ingestion] Document pipeline failed", error);
 
-    await supabase
-      .from("documents")
-      .update({
-        upload_status: "error",
-      })
-      .eq("id", documentId);
+    await supabase.from("documents").update({ upload_status: "error" }).eq("id", documentId);
 
     throw error;
   }

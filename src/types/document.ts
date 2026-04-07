@@ -1,4 +1,11 @@
-export type UploadStatus = "processing" | "ready" | "error";
+export type UploadStatus =
+  | "processing"
+  | "parsing"
+  | "extracting_tables"
+  | "chunking"
+  | "embedding"
+  | "ready"
+  | "error";
 
 export interface DocumentRecord {
   id: string;
