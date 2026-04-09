@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { getNumberEnv } from "@/lib/env";
 import { getUserId } from "@/lib/auth";
 import { getLLM } from "@/lib/langchain/model";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+const SUMMARY_CONTEXT_CHUNKS = getNumberEnv("SUMMARY_CONTEXT_CHUNKS", 30);
 
 // Coverage checklist categories per document type for gap analysis.
 const GAP_CHECKLISTS: Record<string, string[]> = {
@@ -101,7 +104,7 @@ async function generateDocumentSummary(
 
   // Build context from all chunks (limit to avoid token overflow)
   const context = chunks
-    .slice(0, 30)
+    .slice(0, SUMMARY_CONTEXT_CHUNKS)
     .map((c) => {
       const section = c.section_title ?? "Unknown";
       const page = c.page_number ?? "?";
@@ -249,10 +252,14 @@ export async function POST(
       document.filename as string,
     );
 
-    // Store summary in the document record
+    // Store summary, risk flags, and gap analysis in the document record
     const { error: updateError } = await admin
       .from("documents")
-      .update({ summary: result.summary })
+      .update({
+        summary: result.summary,
+        risk_flags: result.riskFlags,
+        gap_analysis: result.gapAnalysis,
+      })
       .eq("id", documentId);
 
     if (updateError) {
@@ -282,7 +289,7 @@ export async function GET(_request: Request, context: { params: Promise<{ docume
 
     const { data: document, error: docError } = await supabase
       .from("documents")
-      .select("id, summary")
+      .select("id, summary, risk_flags, gap_analysis")
       .eq("id", documentId)
       .eq("user_id", userId)
       .single();
@@ -293,6 +300,8 @@ export async function GET(_request: Request, context: { params: Promise<{ docume
 
     return NextResponse.json({
       summary: document.summary,
+      riskFlags: document.risk_flags ?? [],
+      gapAnalysis: document.gap_analysis ?? [],
     });
   } catch (error) {
     console.error("[summary] Fetch failed", error);
