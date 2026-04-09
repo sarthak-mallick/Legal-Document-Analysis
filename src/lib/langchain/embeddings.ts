@@ -35,7 +35,7 @@ export async function embedQuery(text: string): Promise<number[]> {
   const response = await client.embedContent({
     content: { role: "user" as const, parts: [{ text }] },
     outputDimensionality: 768,
-  });
+  } as Parameters<typeof client.embedContent>[0]);
 
   return response.embedding.values ?? [];
 }

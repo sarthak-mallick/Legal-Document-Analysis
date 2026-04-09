@@ -2,15 +2,7 @@ import { embedTexts } from "@/lib/langchain/embeddings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { DocumentChunkInput } from "@/lib/ingestion/types";
 
-const BATCH_SIZE = 5;
-const BATCH_DELAY_MS = 1000;
-
-// This helper pauses between embedding batches to reduce provider rate pressure.
-async function sleep(durationMs: number) {
-  await new Promise((resolve) => {
-    setTimeout(resolve, durationMs);
-  });
-}
+const BATCH_SIZE = 50;
 
 // This helper writes chunk embeddings and metadata into Supabase.
 export async function storeDocumentChunks(documentId: string, chunks: DocumentChunkInput[]) {
@@ -58,10 +50,6 @@ export async function storeDocumentChunks(documentId: string, chunks: DocumentCh
     } catch (error) {
       console.error("[ingestion] Embedding batch failed", error);
       throw new Error("Failed to generate or store embeddings for the uploaded document.");
-    }
-
-    if (index + BATCH_SIZE < chunks.length) {
-      await sleep(BATCH_DELAY_MS);
     }
   }
 
