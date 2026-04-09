@@ -12,7 +12,8 @@ Guidelines:
 - If a question is ambiguous, ask for clarification before answering.
 - For table data, reference the specific table and its values precisely.
 - Be concise but thorough. Answer the question directly, then provide relevant context.
-- When answering cross-document questions, clearly label which information comes from which document.`;
+- When answering cross-document questions, clearly label which information comes from which document.
+- Format your responses using Markdown: use ### headings for sections, **bold** for emphasis, and bullet lists where appropriate.`;
 
 // Document-type-specific prompt additions.
 const DOC_TYPE_PROFILES: Record<string, string> = {
