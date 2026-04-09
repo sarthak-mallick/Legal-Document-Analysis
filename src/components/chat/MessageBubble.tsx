@@ -65,12 +65,32 @@ function countDocMatches(line: string, allTerms: string[][]): number[] {
   return matches;
 }
 
-// Annotate response text with per-document colors using heading-based sections.
+// Strip leading markdown bullet/list markers to get the content portion.
+function stripListPrefix(line: string): string {
+  return line.replace(/^(?:[*\-+]|\d+\.)\s+/, "").replace(/^\*{1,2}/, "");
+}
+
+// Detect if a line is a section boundary: markdown heading, or a line whose
+// content starts with a document filename (with or without bullet/bold markers).
+function isSectionBoundary(trimmed: string, allTerms: string[][]): boolean {
+  if (/^#{1,4}\s/.test(trimmed)) return true;
+  const content = stripListPrefix(trimmed).toLowerCase();
+  for (const terms of allTerms) {
+    if (content.startsWith(terms[0]) || content.startsWith(terms[1])) return true;
+  }
+  // Generic summary/comparison labels that reset to neutral
+  if (/^(comparison|summary|differences|conclusion)/i.test(content)) return true;
+  return false;
+}
+
+// Annotate response text with per-document colors using section boundaries.
 //
-// Strategy: markdown headings (### ...) act as section boundaries.
-//   - If a heading matches exactly one document → that document's color
-//   - If it matches zero or multiple → neutral (no color)
-//   - Content before the first heading is neutral
+// A boundary is a markdown heading (### ...) or a line that starts with a
+// document filename. Each boundary sets the color for all lines below it
+// until the next boundary.
+//   - Boundary matches exactly one document → that document's color
+//   - Boundary matches zero or multiple → neutral
+//   - Content before the first boundary is neutral
 function annotateParagraphs(
   content: string,
   filenames: string[],
@@ -82,16 +102,16 @@ function annotateParagraphs(
 
   const allTerms = filenames.map(buildSearchTerms);
 
-  // Check if response uses markdown headings
-  const hasHeadings = lines.some((l) => /^#{1,4}\s/.test(l.trim()));
-  if (!hasHeadings) return null;
+  // Check if response has any section boundaries at all
+  const hasBoundaries = lines.some((l) => isSectionBoundary(l.trim(), allTerms));
+  if (!hasBoundaries) return null;
 
-  // Tag each line based on the current section heading
+  // Tag each line based on the current section
   let sectionDocIndex: number | null = null;
   const tagged = lines.map((text) => {
     const trimmed = text.trim();
 
-    if (/^#{1,4}\s/.test(trimmed)) {
+    if (trimmed && isSectionBoundary(trimmed, allTerms)) {
       const matches = countDocMatches(trimmed, allTerms);
       sectionDocIndex = matches.length === 1 ? matches[0] : null;
     }
