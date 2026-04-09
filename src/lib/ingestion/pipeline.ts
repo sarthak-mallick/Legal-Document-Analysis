@@ -52,11 +52,11 @@ export async function ingestDocument({
     await setStage(supabase, documentId, "chunking");
     const rawChunks = await chunkDocument(parsedDocument, tables);
 
-    // Step 4: Generate NL descriptions for table chunks
-    const chunks = await generateTableDescriptions(rawChunks);
-
-    // Step 5: Detect document type
-    const typeResult = await detectDocumentType(parsedDocument);
+    // Steps 4 & 5 run in parallel: table descriptions and type detection are independent
+    const [chunks, typeResult] = await Promise.all([
+      generateTableDescriptions(rawChunks),
+      detectDocumentType(parsedDocument),
+    ]);
 
     await setStage(supabase, documentId, "embedding", {
       document_type: typeResult.documentType,
@@ -66,10 +66,7 @@ export async function ingestDocument({
     // Step 6: Embed and store chunks
     await storeDocumentChunks(documentId, chunks);
 
-    await setStage(supabase, documentId, "ready", {
-      document_type: typeResult.documentType,
-      page_count: parsedDocument.metadata.pageCount,
-    });
+    await setStage(supabase, documentId, "ready");
 
     const tableCount = chunks.filter((c) => c.chunkType === "table").length;
 

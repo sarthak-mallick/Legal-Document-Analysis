@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChunkDebugPanel } from "@/components/documents/ChunkDebugPanel";
 import { ProcessingStatus } from "@/components/documents/ProcessingStatus";
 import type { DocumentRecord } from "@/types/document";
 
@@ -36,7 +34,6 @@ export function DocumentCard({
   onDelete,
   onSelect,
 }: DocumentCardProps) {
-  const [showChunks, setShowChunks] = useState(false);
   const createdDate = new Date(document.created_at).toLocaleString();
   const docTypeLabel =
     DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "unknown type";
@@ -84,18 +81,10 @@ export function DocumentCard({
             {document.summary ?? "Click filename to view details and generate summary."}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {document.upload_status === "ready" && (
-            <Button onClick={() => setShowChunks(!showChunks)} variant="ghost">
-              {showChunks ? "Hide Chunks" : "View Chunks"}
-            </Button>
-          )}
-          <Button disabled={deleting} onClick={() => onDelete(document.id)} variant="destructive">
-            {deleting ? "Deleting..." : "Delete"}
-          </Button>
-        </div>
+        <Button disabled={deleting} onClick={() => onDelete(document.id)} variant="destructive">
+          {deleting ? "Deleting..." : "Delete"}
+        </Button>
       </div>
-      {showChunks && <ChunkDebugPanel documentId={document.id} />}
     </Card>
   );
 }

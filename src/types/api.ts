@@ -52,6 +52,7 @@ export interface ErrorResponse {
 export type ChatStreamEvent =
   | { type: "meta"; conversationId: string }
   | { type: "token"; content: string }
+  | { type: "response"; content: string }
   | { type: "citations"; citations: MessageRecord["citations"] }
   | {
       type: "agent_debug";

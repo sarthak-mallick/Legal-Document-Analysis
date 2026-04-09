@@ -115,3 +115,76 @@ Hard-won fixes and non-obvious issues encountered during development.
 **Root cause:** The chunker's `detectSectionTitle` function only detects ALL-CAPS headings or numbered sections via regex. Chunks without those patterns in their preceding text get `null`. Since sections in legal documents span many chunks, most chunks after the first in a section had no heading in their prefix.
 
 **Fix:** Two changes: (1) Section titles now carry forward during chunking — if a chunk has no detected heading, it inherits the last known section title. (2) The UI falls back to "Page X" when the section title is still null, instead of showing "Unknown section".
+
+---
+
+## LLM and Supabase clients recreated on every call
+
+**Date:** 2026-04-09
+**Symptom:** `[langchain] Initializing chat model` appears 6+ times per chat message in server logs. Each agent node (classify, evaluate, synthesize, etc.) creates a new `ChatGoogleGenerativeAI` instance. Same issue with the Supabase admin client and embedding model — all recreated on every function call.
+
+**Root cause:** `getLLM()`, `model()`, and `createSupabaseAdminClient()` were factory functions that constructed a new client instance every time. No caching or reuse.
+
+**Fix:** Cached all three as module-level singletons. Each client is created once on first use and reused for the lifetime of the server process. The `[langchain] Initializing chat model` log now appears only once per server restart.
+
+**Why a singleton works here:** All three clients are HTTP-based (Gemini REST API, Supabase PostgREST). HTTP clients handle concurrent requests internally and get connection reuse via Node.js `keep-alive`. A connection pool would only be needed for direct Postgres TCP connections (e.g., `pg`, `prisma`).
+
+---
+
+## Fake streaming added perceived latency
+
+**Date:** 2026-04-09
+**Symptom:** Users wait 5-15 seconds with no visible output before the entire response appears at once. The chat feels unresponsive even though the LLM is generating tokens the whole time.
+
+**Root cause:** The chat route called `agent.invoke()` which buffers the full agent pipeline to completion, then fake-streamed the response in 20-character SSE chunks. The user saw nothing until classify → retrieve → evaluate (×3) → synthesize all finished.
+
+**Fix:** Switched to LangGraph's `graph.streamEvents()` with version `"v2"`. Changed the synthesize node to use `llm.stream()` instead of `llm.invoke()` so individual tokens emit `on_chat_model_stream` events. The route handler filters events by `metadata.langgraph_node === "synthesize"` to only forward tokens from the final synthesis step (not classify/evaluate). Citations, debug info, and DB persistence happen after the stream completes.
+
+**Trade-off:** The "Sources:" text at the end of the LLM response is visible briefly before the client renders citation cards. Stripping it server-side would require buffering the full response, defeating streaming. Accepted as a minor cosmetic issue.
+
+---
+
+## Redundant embedding API calls during retrieval retries
+
+**Date:** 2026-04-09
+**Symptom:** The same or similar queries get re-embedded on each retrieval attempt. With 3 retry attempts and sub-query expansion, a single chat message could trigger 5+ embedding API calls.
+
+**Root cause:** `embedQuery()` had no caching — every call hit the Gemini embedding API even for identical input strings.
+
+**Fix:** Added a bounded `Map` cache (max 50 entries) in `embedQuery()`. Identical queries return the cached embedding immediately. The cache persists across requests within the same server instance (safe because embeddings are deterministic for the same input text). Oldest entries are evicted when the cache is full.
+
+---
+
+## Unnecessary LLM evaluation calls for high-confidence retrieval
+
+**Date:** 2026-04-09
+**Symptom:** Even when all retrieved chunks have very high similarity scores (>0.8), the agent still spends 1-2 seconds calling the LLM to evaluate whether the context is sufficient.
+
+**Root cause:** The evaluate-context node always called the LLM regardless of retrieval confidence. The only early exit was when zero chunks were retrieved.
+
+**Fix:** Added a fast-path check: if 2+ chunks have similarity ≥ 0.8, skip the LLM evaluation and mark context as sufficient. Both thresholds are configurable via `HIGH_CONFIDENCE_THRESHOLD` and `HIGH_CONFIDENCE_MIN_CHUNKS` env vars.
+
+---
+
+## Sequential DB queries and ingestion steps
+
+**Date:** 2026-04-09
+**Symptom:** Chat route fetched conversation history and document metadata sequentially (~100ms each). Ingestion pipeline ran table description generation and document type detection sequentially (~2-5s each).
+
+**Root cause:** Awaited each query/step individually despite them being independent.
+
+**Fix:** Wrapped independent operations in `Promise.all`:
+
+- Chat route: history + document metadata fetched in parallel (saves ~50-100ms per request).
+- Ingestion pipeline: `generateTableDescriptions` + `detectDocumentType` run in parallel (saves ~2-5s per upload).
+
+---
+
+## New chat first message shows no response in UI
+
+**Date:** 2026-04-09
+**Symptom:** On a brand-new chat (no conversation ID), the first question shows the user message but no assistant response. The EventStream tab in DevTools shows all SSE events arriving correctly. Asking a second question works normally.
+
+**Root cause:** When the `meta` SSE event arrives with the new conversation ID, `onConversationCreated` fires `router.replace(`/chat/${newId}`)`. In Next.js App Router, this triggers a route navigation from `/chat` to `/chat/[id]`, which unmounts and remounts `ChatPageClient` and `ChatWindow`. The in-progress fetch stream continues in the background but its `setState` calls target the now-unmounted component instance — all tokens are silently discarded.
+
+**Fix:** Replaced `router.replace()` with `window.history.replaceState(null, "", `/chat/${newId}`)`. This updates the browser URL bar without triggering a Next.js navigation, so the component tree stays intact and the stream continues uninterrupted.

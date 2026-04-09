@@ -125,13 +125,13 @@ async function generateDocumentSummary(
     llm.invoke([
       {
         role: "system",
-        content: `You are a legal document analyst. Generate a structured summary of this ${documentType ?? "legal"} document. Include:
+        content: `You are a legal document analyst. Summarise this ${documentType ?? "legal"} document in **readable markdown prose** (headings, bullet points, bold values). Include:
 1. Document overview (1-2 sentences)
 2. Key terms and values (bullet points)
 3. Important dates and deadlines
 4. Parties involved
 
-Output in markdown format. Be specific and quote exact values from the document.`,
+IMPORTANT: Output ONLY human-readable markdown. Do NOT include any JSON, code blocks, or raw data structures.`,
       },
       { role: "user", content: `Document: ${filename}\n\n${context}` },
     ]),
@@ -166,19 +166,39 @@ ${checklist.map((c) => `- ${c}`).join("\n")}`,
       : null,
   ]);
 
-  const summary =
+  const rawSummary =
     typeof summaryResponse.content === "string"
       ? summaryResponse.content
       : String(summaryResponse.content);
+
+  // Strip any JSON/code blocks the LLM may have included in the summary.
+  const summary = rawSummary.replace(/```[\s\S]*?```/g, "").trim();
+
+  // Extract the first JSON array from an LLM response, ignoring markdown
+  // fences and surrounding prose.
+  function extractJsonArray(raw: string): unknown[] {
+    const text = raw.trim();
+    // Try direct parse first
+    try {
+      return JSON.parse(text) as unknown[];
+    } catch {
+      /* fall through */
+    }
+    // Extract first [...] block (handles fences and preamble text)
+    const match = text.match(/\[[\s\S]*\]/);
+    if (match) {
+      return JSON.parse(match[0]) as unknown[];
+    }
+    throw new Error("No JSON array found");
+  }
 
   let riskFlags: RiskFlag[] = [];
   try {
     const riskContent =
       typeof riskResponse.content === "string"
-        ? riskResponse.content.trim()
-        : String(riskResponse.content).trim();
-    const jsonStr = riskContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-    riskFlags = JSON.parse(jsonStr) as RiskFlag[];
+        ? riskResponse.content
+        : String(riskResponse.content);
+    riskFlags = extractJsonArray(riskContent) as RiskFlag[];
   } catch {
     riskFlags = [];
   }
@@ -187,11 +207,8 @@ ${checklist.map((c) => `- ${c}`).join("\n")}`,
   if (gapResponse) {
     try {
       const gapContent =
-        typeof gapResponse.content === "string"
-          ? gapResponse.content.trim()
-          : String(gapResponse.content).trim();
-      const jsonStr = gapContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-      gapAnalysis = JSON.parse(jsonStr) as GapItem[];
+        typeof gapResponse.content === "string" ? gapResponse.content : String(gapResponse.content);
+      gapAnalysis = extractJsonArray(gapContent) as GapItem[];
     } catch {
       gapAnalysis = checklist.map((c) => ({
         category: c,

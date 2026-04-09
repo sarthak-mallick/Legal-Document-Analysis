@@ -125,6 +125,10 @@ export function ChatWindow({
               } else if (event.type === "token") {
                 accumulated += event.content;
                 setStreamingContent(accumulated);
+              } else if (event.type === "response") {
+                // Server sends the cleaned response (sources stripped).
+                // Replace raw accumulated text for the final message.
+                accumulated = event.content;
               } else if (event.type === "citations") {
                 finalCitations = event.citations;
               } else if (event.type === "error") {

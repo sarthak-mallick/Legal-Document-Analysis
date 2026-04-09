@@ -1,10 +1,12 @@
-import { getNumberEnv } from "@/lib/env";
+import { getFloatEnv, getNumberEnv } from "@/lib/env";
 import { getLLM } from "@/lib/langchain/model";
 import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
 
 const MAX_RETRIEVAL_ATTEMPTS = getNumberEnv("MAX_RETRIEVAL_ATTEMPTS", 3);
 const EVAL_CHUNK_SAMPLE = getNumberEnv("EVAL_CHUNK_SAMPLE", 8);
 const EVAL_SNIPPET_LENGTH = getNumberEnv("EVAL_SNIPPET_LENGTH", 200);
+const HIGH_CONFIDENCE_THRESHOLD = getFloatEnv("HIGH_CONFIDENCE_THRESHOLD", 0.8);
+const HIGH_CONFIDENCE_MIN_CHUNKS = getNumberEnv("HIGH_CONFIDENCE_MIN_CHUNKS", 2);
 
 interface EvaluationResult {
   sufficient: boolean;
@@ -30,6 +32,20 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
     return {
       contextSufficient: false,
       refinedQuery: state.query,
+      nodesVisited: ["evaluateContext"],
+    };
+  }
+
+  // Fast-path: skip LLM evaluation when retrieval confidence is very high
+  const highConfChunks = state.retrievedChunks.filter(
+    (c) => c.similarity >= HIGH_CONFIDENCE_THRESHOLD,
+  );
+  if (highConfChunks.length >= HIGH_CONFIDENCE_MIN_CHUNKS) {
+    console.info("[agent:evaluate] High-confidence retrieval, skipping LLM evaluation", {
+      highConfCount: highConfChunks.length,
+    });
+    return {
+      contextSufficient: true,
       nodesVisited: ["evaluateContext"],
     };
   }
@@ -62,8 +78,10 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
         ? response.content.trim()
         : String(response.content).trim();
 
-    const jsonStr = content.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-    const evaluation = JSON.parse(jsonStr) as EvaluationResult;
+    // Extract the first JSON object, ignoring markdown fences or preamble text.
+    const objMatch = content.match(/\{[\s\S]*\}/);
+    if (!objMatch) throw new Error("No JSON object found in evaluation response");
+    const evaluation = JSON.parse(objMatch[0]) as EvaluationResult;
 
     // If max attempts reached, proceed regardless
     if (!evaluation.sufficient && state.retrievalAttempts >= MAX_RETRIEVAL_ATTEMPTS) {

@@ -5,10 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
-import { ChunkDebugPanel } from "@/components/documents/ChunkDebugPanel";
 import { DocumentSummaryPanel } from "@/components/summary/DocumentSummaryPanel";
 import { ProcessingStatus } from "@/components/documents/ProcessingStatus";
-import { Button } from "@/components/ui/button";
 import type { DocumentRecord } from "@/types/document";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
@@ -25,7 +23,6 @@ export default function DocumentDetailPage() {
   const params = useParams<{ documentId: string }>();
   const [document, setDocument] = useState<DocumentRecord | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showChunks, setShowChunks] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -90,20 +87,7 @@ export default function DocumentDetailPage() {
       </Card>
 
       {document.upload_status === "ready" && (
-        <>
-          <DocumentSummaryPanel documentId={document.id} existingSummary={document.summary} />
-
-          <div className="mt-8">
-            <Button onClick={() => setShowChunks(!showChunks)} variant="ghost">
-              {showChunks ? "Hide Chunks" : "View Document Chunks"}
-            </Button>
-            {showChunks && (
-              <div className="mt-4">
-                <ChunkDebugPanel documentId={document.id} />
-              </div>
-            )}
-          </div>
-        </>
+        <DocumentSummaryPanel documentId={document.id} existingSummary={document.summary} />
       )}
     </main>
   );
