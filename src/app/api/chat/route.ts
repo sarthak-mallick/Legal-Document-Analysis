@@ -83,22 +83,19 @@ export async function POST(request: Request) {
       tool_calls: [],
     });
 
-    // Load conversation history (last 10 messages)
-    const { data: historyRows } = await admin
-      .from("messages")
-      .select("id, conversation_id, role, content, citations, tool_calls, created_at")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true })
-      .limit(CONVERSATION_HISTORY_LIMIT);
+    // Load conversation history and document metadata in parallel
+    const [{ data: historyRows }, { data: docRows }] = await Promise.all([
+      admin
+        .from("messages")
+        .select("id, conversation_id, role, content, citations, tool_calls, created_at")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true })
+        .limit(CONVERSATION_HISTORY_LIMIT),
+      admin.from("documents").select("id, filename, document_type").in("id", documentIds),
+    ]);
 
     const history = (historyRows ?? []) as MessageRecord[];
     const priorHistory = history.slice(0, -1);
-
-    // Fetch document metadata for adaptive prompts and cross-doc attribution
-    const { data: docRows } = await admin
-      .from("documents")
-      .select("id, filename, document_type")
-      .in("id", documentIds);
 
     const documentMetas = (docRows ?? []).map((d) => ({
       id: d.id as string,
@@ -106,84 +103,131 @@ export async function POST(request: Request) {
       documentType: (d.document_type as string) ?? null,
     }));
 
-    // Run the LangGraph agent
+    // Stream the response to the client using SSE with real LLM token streaming
     const agent = buildAgentGraph();
-    const result = await agent.invoke({
-      query: message,
-      queryType: "simple_factual",
-      documentIds,
-      documentMetas,
-      conversationHistory: priorHistory,
-    });
-
-    const agentResponse = result.response ?? "I was unable to generate a response.";
-    const citations = result.citations ?? [];
-    const nodesVisited = result.nodesVisited ?? [];
-    const toolResults = (result.toolResults ?? []).map(
-      (r: { tool: string; input: Record<string, unknown> }) => ({
-        tool: r.tool,
-        input: r.input,
-      }),
-    );
-
-    // Save assistant message with agent execution trace
-    await admin.from("messages").insert({
-      conversation_id: conversationId,
-      role: "assistant",
-      content: agentResponse,
-      citations,
-      tool_calls: [
-        {
-          type: "agent_trace",
-          nodesVisited,
-          queryType: result.queryType,
-          retrievalAttempts: result.retrievalAttempts,
-          chunkCount: result.retrievedChunks?.length ?? 0,
-          hasTableData: !!result.tableData,
-          toolsCalled: result.toolsCalled ?? false,
-          toolResults,
-          contextSufficient: result.contextSufficient,
-          tokenUsage: result.tokenUsage ?? { promptTokens: 0, completionTokens: 0 },
-        },
-      ],
-    });
-
-    // Stream the response to the client using SSE
     const encoder = new TextEncoder();
-    const readable = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+
+    // Process agent events in the background while streaming to client
+    const streamPromise = (async () => {
+      let fullResponse = "";
+      let citations: Record<string, unknown>[] = [];
+      let nodesVisited: string[] = [];
+      let finalState: Record<string, unknown> = {};
+
+      try {
+        await writer.write(
           encoder.encode(`data: ${JSON.stringify({ type: "meta", conversationId })}\n\n`),
         );
 
-        const chunkSize = 20;
-        for (let i = 0; i < agentResponse.length; i += chunkSize) {
-          const token = agentResponse.slice(i, i + chunkSize);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "token", content: token })}\n\n`),
+        const eventStream = agent.streamEvents(
+          {
+            query: message,
+            queryType: "simple_factual",
+            documentIds,
+            documentMetas,
+            conversationHistory: priorHistory,
+          },
+          { version: "v2" },
+        );
+
+        for await (const event of eventStream) {
+          // Stream tokens from the synthesize node's LLM call
+          if (
+            event.event === "on_chat_model_stream" &&
+            event.metadata?.langgraph_node === "synthesize"
+          ) {
+            const token =
+              typeof event.data?.chunk?.content === "string" ? event.data.chunk.content : "";
+            if (token) {
+              fullResponse += token;
+              await writer.write(
+                encoder.encode(`data: ${JSON.stringify({ type: "token", content: token })}\n\n`),
+              );
+            }
+          }
+
+          // Capture final graph state when the graph ends
+          if (event.event === "on_chain_end" && event.name === "LangGraph") {
+            finalState = event.data?.output ?? {};
+          }
+        }
+
+        // Extract results from final state
+        const response = (finalState.response as string) ?? fullResponse;
+        citations = (finalState.citations as Record<string, unknown>[]) ?? [];
+        nodesVisited = (finalState.nodesVisited as string[]) ?? [];
+
+        // If streaming produced no tokens (fallback), send the full response
+        if (!fullResponse && response) {
+          fullResponse = response;
+          await writer.write(
+            encoder.encode(`data: ${JSON.stringify({ type: "token", content: response })}\n\n`),
           );
         }
 
-        controller.enqueue(
+        // Send debug info and citations
+        await writer.write(
           encoder.encode(
             `data: ${JSON.stringify({
               type: "agent_debug",
               nodesVisited,
-              queryType: result.queryType,
-              retrievalAttempts: result.retrievalAttempts,
-              chunkCount: result.retrievedChunks?.length ?? 0,
+              queryType: finalState.queryType,
+              retrievalAttempts: finalState.retrievalAttempts,
+              chunkCount: Array.isArray(finalState.retrievedChunks)
+                ? finalState.retrievedChunks.length
+                : 0,
             })}\n\n`,
           ),
         );
 
-        controller.enqueue(
+        await writer.write(
           encoder.encode(`data: ${JSON.stringify({ type: "citations", citations })}\n\n`),
         );
 
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-        controller.close();
-      },
-    });
+        // Save assistant message with agent execution trace
+        const toolResults = (
+          (finalState.toolResults as { tool: string; input: Record<string, unknown> }[]) ?? []
+        ).map((r) => ({ tool: r.tool, input: r.input }));
+
+        await admin.from("messages").insert({
+          conversation_id: conversationId,
+          role: "assistant",
+          content: fullResponse || response,
+          citations,
+          tool_calls: [
+            {
+              type: "agent_trace",
+              nodesVisited,
+              queryType: finalState.queryType,
+              retrievalAttempts: finalState.retrievalAttempts,
+              chunkCount: Array.isArray(finalState.retrievedChunks)
+                ? finalState.retrievedChunks.length
+                : 0,
+              hasTableData: !!finalState.tableData,
+              toolsCalled: finalState.toolsCalled ?? false,
+              toolResults,
+              contextSufficient: finalState.contextSufficient,
+              tokenUsage: finalState.tokenUsage ?? { promptTokens: 0, completionTokens: 0 },
+            },
+          ],
+        });
+      } catch (error) {
+        console.error("[chat] Stream error", error);
+        await writer.write(
+          encoder.encode(
+            `data: ${JSON.stringify({ type: "error", content: "An error occurred." })}\n\n`,
+          ),
+        );
+      } finally {
+        await writer.write(encoder.encode("data: [DONE]\n\n"));
+        await writer.close();
+      }
+    })();
+
+    // Don't await — let the stream flow to the client
+    streamPromise.catch((err) => console.error("[chat] Stream promise rejected", err));
 
     return new Response(readable, {
       headers: {

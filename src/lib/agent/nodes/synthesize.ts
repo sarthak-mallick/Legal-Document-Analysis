@@ -111,13 +111,23 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
     prompt += `\n\n## Table Query Result\nExtracted value for "${state.tableData.question}": ${state.tableData.answer}`;
   }
 
-  const response = await llm.invoke([
+  const stream = await llm.stream([
     { role: "system", content: systemPrompt },
     { role: "user", content: prompt },
   ]);
 
-  const content =
-    typeof response.content === "string" ? response.content : String(response.content);
+  let content = "";
+  let tokenUsage = { promptTokens: 0, completionTokens: 0 };
+  for await (const chunk of stream) {
+    const token = typeof chunk.content === "string" ? chunk.content : String(chunk.content);
+    content += token;
+    if (chunk.usage_metadata) {
+      tokenUsage = {
+        promptTokens: chunk.usage_metadata.input_tokens ?? 0,
+        completionTokens: chunk.usage_metadata.output_tokens ?? 0,
+      };
+    }
+  }
 
   const citations = extractCitations(content, state.retrievedChunks);
 
@@ -125,13 +135,6 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
   const displayContent = content
     .replace(/\n*\*{0,2}Sources:?\*{0,2}\n(\[\d+\][^\n]*\n?)+/i, "")
     .trimEnd();
-
-  // Extract token usage from LLM response metadata
-  const usage = response.usage_metadata;
-  const tokenUsage = {
-    promptTokens: usage?.input_tokens ?? 0,
-    completionTokens: usage?.output_tokens ?? 0,
-  };
 
   console.info("[agent:synthesize] Response generated", {
     responseLength: content.length,
