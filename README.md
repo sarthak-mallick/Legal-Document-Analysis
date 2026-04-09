@@ -22,8 +22,6 @@ AI-powered platform for uploading legal documents (insurance policies, leases, c
 
 ## Local Development
 
-Auth is bypassed when `DEV_AUTH_BYPASS=true` is set (included in `.env.example`).
-
 ### 1. Install dependencies
 
 ```bash
@@ -73,7 +71,6 @@ Fill in the required values:
 | `SUPABASE_SERVICE_ROLE_KEY`     | Yes      | Supabase service role key                                  |
 | `LLAMA_PARSE_API_KEY`           | No       | Enables LlamaParse table extraction (falls back to Gemini) |
 | `BRAVE_SEARCH_API_KEY`          | No       | Enables web search tool in the agent                       |
-| `DEV_AUTH_BYPASS`               | No       | Set to `true` to skip auth in local dev                    |
 | `CHUNK_SIZE`                    | No       | Text chunk size in characters (default: 1000)              |
 | `CHUNK_OVERLAP`                 | No       | Overlap between chunks in characters (default: 200)        |
 
@@ -100,7 +97,7 @@ git push -u origin main
 ### 2. Deploy on Vercel
 
 - Import the repo at [vercel.com](https://vercel.com) — Vercel auto-detects Next.js
-- Add all **required** environment variables in the Vercel dashboard (Settings > Environment Variables). Do **not** set `DEV_AUTH_BYPASS` in production.
+- Add all **required** environment variables in the Vercel dashboard (Settings > Environment Variables).
 - Enable **Fluid Compute** if ingestion or chat requests time out (the agent makes multiple LLM calls per request)
 
 ### 3. Configure Supabase for production

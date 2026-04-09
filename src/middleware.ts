@@ -34,11 +34,6 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p);
 
-  // Skip auth redirect when dev bypass is explicitly enabled
-  if (process.env.DEV_AUTH_BYPASS === "true") {
-    return supabaseResponse;
-  }
-
   // Redirect unauthenticated users to login (except public paths and static assets)
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
