@@ -177,3 +177,14 @@ Hard-won fixes and non-obvious issues encountered during development.
 
 - Chat route: history + document metadata fetched in parallel (saves ~50-100ms per request).
 - Ingestion pipeline: `generateTableDescriptions` + `detectDocumentType` run in parallel (saves ~2-5s per upload).
+
+---
+
+## New chat first message shows no response in UI
+
+**Date:** 2026-04-09
+**Symptom:** On a brand-new chat (no conversation ID), the first question shows the user message but no assistant response. The EventStream tab in DevTools shows all SSE events arriving correctly. Asking a second question works normally.
+
+**Root cause:** When the `meta` SSE event arrives with the new conversation ID, `onConversationCreated` fires `router.replace(`/chat/${newId}`)`. In Next.js App Router, this triggers a route navigation from `/chat` to `/chat/[id]`, which unmounts and remounts `ChatPageClient` and `ChatWindow`. The in-progress fetch stream continues in the background but its `setState` calls target the now-unmounted component instance — all tokens are silently discarded.
+
+**Fix:** Replaced `router.replace()` with `window.history.replaceState(null, "", `/chat/${newId}`)`. This updates the browser URL bar without triggering a Next.js navigation, so the component tree stays intact and the stream continues uninterrupted.
