@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef, type KeyboardEvent } from "react";
-
-import { Button } from "@/components/ui/button";
+import { ArrowUp } from "lucide-react";
 
 interface ChatInputProps {
   disabled: boolean;
@@ -39,19 +38,31 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
   }
 
   return (
-    <div className="flex items-end gap-2 border-t border-border bg-card-bg p-4">
-      <textarea
-        ref={textareaRef}
-        className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
-        disabled={disabled}
-        onInput={handleInput}
-        onKeyDown={handleKeyDown}
-        placeholder="Ask a question about your document..."
-        rows={1}
-      />
-      <Button disabled={disabled} onClick={handleSend}>
-        Send
-      </Button>
+    <div className="border-t border-border bg-background p-4">
+      <div className="mx-auto max-w-3xl">
+        <div className="relative flex items-end rounded-lg border border-input bg-background shadow-sm focus-within:ring-1 focus-within:ring-ring">
+          <textarea
+            ref={textareaRef}
+            className="flex-1 resize-none bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground"
+            disabled={disabled}
+            onInput={handleInput}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask a question about your document..."
+            rows={1}
+          />
+          <button
+            disabled={disabled}
+            onClick={handleSend}
+            className="m-1.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+            type="button"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Press Enter to send, Shift+Enter for new line
+        </p>
+      </div>
     </div>
   );
 }

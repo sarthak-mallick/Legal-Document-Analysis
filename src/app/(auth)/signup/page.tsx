@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Signup page with email/password form.
@@ -49,14 +48,12 @@ export default function SignupPage() {
         return;
       }
 
-      // If a session was returned, email confirmation is disabled — go straight to dashboard
       if (data.session) {
         router.push("/dashboard");
         router.refresh();
         return;
       }
 
-      // Otherwise email confirmation is required
       setConfirmationSent(true);
     } catch {
       setError("An unexpected error occurred.");
@@ -67,9 +64,9 @@ export default function SignupPage() {
 
   if (confirmationSent) {
     return (
-      <Card className="space-y-4">
+      <div className="space-y-4">
         <div className="space-y-2">
-          <h1 className="font-serif text-2xl text-foreground">Check your email</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Check your email</h1>
           <p className="text-sm text-muted-foreground">
             We sent a confirmation link to{" "}
             <span className="font-medium text-foreground">{email}</span>. Click the link to activate
@@ -78,24 +75,30 @@ export default function SignupPage() {
         </div>
         <p className="text-center text-sm text-muted-foreground">
           Already confirmed?{" "}
-          <Link href={"/login" as never} className="font-medium text-primary hover:underline">
+          <Link
+            href={"/login" as never}
+            className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+          >
             Sign in
           </Link>
         </p>
-      </Card>
+      </div>
     );
   }
 
+  const inputClassName =
+    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
+
   return (
-    <Card className="space-y-6">
+    <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="font-serif text-2xl text-foreground">Create account</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
         <p className="text-sm text-muted-foreground">Sign up to start analyzing legal documents.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium text-foreground">
             Email
           </label>
           <input
@@ -104,13 +107,13 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className={inputClassName}
             placeholder="you@example.com"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium text-foreground">
             Password
           </label>
           <input
@@ -119,13 +122,13 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className={inputClassName}
             placeholder="At least 6 characters"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="confirm" className="text-sm font-medium text-muted-foreground">
+        <div className="space-y-2">
+          <label htmlFor="confirm" className="text-sm font-medium text-foreground">
             Confirm password
           </label>
           <input
@@ -134,12 +137,14 @@ export default function SignupPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className={inputClassName}
             placeholder="Repeat your password"
           />
         </div>
 
-        {error && <p className="text-sm text-rose-600">{error}</p>}
+        {error && (
+          <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+        )}
 
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Creating account..." : "Sign up"}
@@ -148,10 +153,13 @@ export default function SignupPage() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href={"/login" as never} className="font-medium text-primary hover:underline">
+        <Link
+          href={"/login" as never}
+          className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+        >
           Sign in
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }

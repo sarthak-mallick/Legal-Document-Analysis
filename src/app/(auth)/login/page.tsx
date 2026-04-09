@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Login page with email/password form.
@@ -43,17 +42,17 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="space-y-6">
+    <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="font-serif text-2xl text-foreground">Sign in</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
         <p className="text-sm text-muted-foreground">
           Enter your credentials to access the platform.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium text-foreground">
             Email
           </label>
           <input
@@ -62,13 +61,13 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="you@example.com"
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium text-foreground">
             Password
           </label>
           <input
@@ -77,12 +76,14 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             placeholder="Your password"
           />
         </div>
 
-        {error && <p className="text-sm text-rose-600">{error}</p>}
+        {error && (
+          <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+        )}
 
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Signing in..." : "Sign in"}
@@ -91,10 +92,13 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-muted-foreground">
         No account?{" "}
-        <Link href={"/signup" as never} className="font-medium text-primary hover:underline">
+        <Link
+          href={"/signup" as never}
+          className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+        >
           Sign up
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }

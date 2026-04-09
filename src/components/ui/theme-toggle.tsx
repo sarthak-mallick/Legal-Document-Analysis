@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 
-// Simple dark/light mode toggle button.
+// Dark/light mode toggle with animated icons.
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
   const initialized = useRef(false);
@@ -16,7 +17,6 @@ export function ThemeToggle() {
     const isDark = stored === "dark" || (!stored && prefersDark);
     document.documentElement.classList.toggle("dark", isDark);
     if (isDark) {
-      // Schedule state update for next tick to avoid synchronous setState in effect
       queueMicrotask(() => setDark(true));
     }
   }, []);
@@ -31,11 +31,11 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm text-muted-foreground transition hover:bg-muted"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
       aria-label="Toggle theme"
       type="button"
     >
-      {dark ? "L" : "D"}
+      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
   );
 }

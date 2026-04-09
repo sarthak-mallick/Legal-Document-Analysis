@@ -12,7 +12,7 @@ export function Skeleton({ className }: SkeletonProps) {
 // Document card loading skeleton.
 export function DocumentCardSkeleton() {
   return (
-    <div className="rounded-[28px] border border-border/80 bg-card-bg p-6 shadow-panel backdrop-blur">
+    <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
       <div className="space-y-4">
         <div className="flex justify-between">
           <div className="space-y-2">
@@ -23,8 +23,8 @@ export function DocumentCardSkeleton() {
         </div>
         <Skeleton className="h-3 w-full" />
         <div className="flex justify-end gap-2">
-          <Skeleton className="h-8 w-24 rounded-full" />
-          <Skeleton className="h-8 w-20 rounded-full" />
+          <Skeleton className="h-9 w-24 rounded-md" />
+          <Skeleton className="h-9 w-20 rounded-md" />
         </div>
       </div>
     </div>
@@ -35,7 +35,7 @@ export function DocumentCardSkeleton() {
 export function MessageSkeleton() {
   return (
     <div className="flex justify-start">
-      <div className="max-w-[80%] space-y-2 rounded-2xl bg-muted px-4 py-3">
+      <div className="max-w-[80%] space-y-2 rounded-lg bg-muted px-4 py-3">
         <Skeleton className="h-3 w-64" />
         <Skeleton className="h-3 w-48" />
         <Skeleton className="h-3 w-56" />

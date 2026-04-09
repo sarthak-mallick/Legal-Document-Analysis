@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
+import { MessageSquare, Pencil, Trash2, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import type { ConversationRecord } from "@/types/conversation";
 
 import { cn } from "@/lib/utils";
@@ -44,29 +44,30 @@ export function ConversationSidebar({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Conversations
-        </p>
-        <Link href={"/chat" as never} className="text-xs font-medium text-primary hover:underline">
-          New
+        <p className="text-xs font-medium text-muted-foreground">Conversations</p>
+        <Link
+          href={"/chat" as never}
+          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <Plus className="h-3.5 w-3.5" />
         </Link>
       </div>
       {conversations.length === 0 && (
-        <p className="text-xs text-muted-foreground">No conversations yet.</p>
+        <p className="px-2 text-xs text-muted-foreground">No conversations yet.</p>
       )}
       {conversations.map((conv) => (
         <div
           key={conv.id}
           className={cn(
-            "group flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition",
+            "group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
             conv.id === activeId
-              ? "bg-primary/10 font-medium text-primary"
-              : "text-foreground hover:bg-muted",
+              ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+              : "text-sidebar-foreground hover:bg-sidebar-accent/50",
           )}
         >
           {editingId === conv.id ? (
             <input
-              className="flex-1 rounded border border-border bg-card-bg px-1.5 py-0.5 text-sm text-foreground outline-none focus:border-primary"
+              className="flex-1 rounded-md border border-input bg-background px-2 py-0.5 text-sm text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {
@@ -78,29 +79,30 @@ export function ConversationSidebar({
             />
           ) : (
             <>
-              <Link href={`/chat/${conv.id}` as never} className="flex-1 truncate">
+              <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <Link href={`/chat/${conv.id}` as never} className="min-w-0 flex-1 truncate">
                 {conv.title ?? "Untitled"}
               </Link>
-              <Button
-                className="hidden text-xs text-muted-foreground hover:text-primary group-hover:inline-flex"
+              <button
+                className="hidden h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground group-hover:inline-flex"
                 onClick={(e) => {
                   e.preventDefault();
                   startEditing(conv);
                 }}
-                variant="ghost"
+                type="button"
               >
-                Rename
-              </Button>
-              <Button
-                className="hidden text-xs text-muted-foreground hover:text-rose-600 group-hover:inline-flex"
+                <Pencil className="h-3 w-3" />
+              </button>
+              <button
+                className="hidden h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-destructive group-hover:inline-flex"
                 onClick={(e) => {
                   e.preventDefault();
                   onDelete(conv.id);
                 }}
-                variant="ghost"
+                type="button"
               >
-                Delete
-              </Button>
+                <Trash2 className="h-3 w-3" />
+              </button>
             </>
           )}
         </div>

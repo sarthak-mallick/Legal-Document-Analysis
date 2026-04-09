@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { DocumentCardSkeleton } from "@/components/ui/skeleton";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { UploadDropzone } from "@/components/documents/UploadDropzone";
-import { Card } from "@/components/ui/card";
 import type { DocumentsResponse, ErrorResponse, UploadResponse } from "@/types/api";
 import type { DocumentRecord } from "@/types/document";
 
@@ -123,10 +122,10 @@ export function UploadDashboard() {
     <div className="space-y-6">
       <UploadDropzone isUploading={isUploading} onUpload={handleUpload} />
       {(errorMessage || statusMessage) && (
-        <Card className="space-y-2">
+        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
           {statusMessage && <p className="text-sm text-foreground">{statusMessage}</p>}
-          {errorMessage && <p className="text-sm text-rose-700">{errorMessage}</p>}
-        </Card>
+          {errorMessage && <p className="text-sm text-destructive">{errorMessage}</p>}
+        </div>
       )}
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-3 text-sm">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MessageSquare } from "lucide-react";
 
 import { ChatInput } from "@/components/chat/ChatInput";
 import { MessageBubble } from "@/components/chat/MessageBubble";
@@ -44,7 +45,6 @@ export function ChatWindow({
   const [conversationId, setConversationId] = useState(initialConversationId);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Update messages when initialMessages change (e.g., loading existing conversation)
   useEffect(() => {
     setMessages(
       initialMessages.map((m) => ({
@@ -60,7 +60,6 @@ export function ChatWindow({
     setConversationId(initialConversationId);
   }, [initialConversationId]);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     scrollRef.current?.scrollTo({
       top: scrollRef.current.scrollHeight,
@@ -72,7 +71,6 @@ export function ChatWindow({
     async (message: string) => {
       if (isStreaming || documentIds.length === 0) return;
 
-      // Add user message to display
       const userMsg: DisplayMessage = {
         id: `temp-user-${Date.now()}`,
         role: "user",
@@ -126,8 +124,6 @@ export function ChatWindow({
                 accumulated += event.content;
                 setStreamingContent(accumulated);
               } else if (event.type === "response") {
-                // Server sends the cleaned response (sources stripped).
-                // Replace raw accumulated text for the final message.
                 accumulated = event.content;
               } else if (event.type === "citations") {
                 finalCitations = event.citations;
@@ -141,7 +137,6 @@ export function ChatWindow({
           }
         }
 
-        // Finalize the assistant message
         setMessages((prev) => [
           ...prev,
           {
@@ -171,24 +166,33 @@ export function ChatWindow({
 
   return (
     <div className="flex h-full flex-col">
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
-        {messages.length === 0 && !isStreaming && (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-muted-foreground">
-              Ask a question about your selected document.
-            </p>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        {messages.length === 0 && !isStreaming ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <MessageSquare className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground">Start a conversation</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Ask a question about your selected documents.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+            {messages.map((msg) => (
+              <MessageBubble
+                citations={msg.citations}
+                content={msg.content}
+                key={msg.id}
+                role={msg.role}
+                onCitationClick={onCitationClick}
+              />
+            ))}
+            {isStreaming && <StreamingMessage content={streamingContent} />}
           </div>
         )}
-        {messages.map((msg) => (
-          <MessageBubble
-            citations={msg.citations}
-            content={msg.content}
-            key={msg.id}
-            role={msg.role}
-            onCitationClick={onCitationClick}
-          />
-        ))}
-        {isStreaming && <StreamingMessage content={streamingContent} />}
       </div>
       <ChatInput disabled={isStreaming || documentIds.length === 0} onSend={handleSend} />
     </div>

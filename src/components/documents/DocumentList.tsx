@@ -20,14 +20,16 @@ export function DocumentList({
 }: DocumentListProps) {
   if (!documents.length) {
     return (
-      <div className="rounded-[28px] border border-dashed border-border bg-card-bg/40 p-8 text-sm text-muted-foreground">
-        No documents uploaded yet. Add a PDF to start the ingestion pipeline.
+      <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border py-12 text-center">
+        <p className="text-sm text-muted-foreground">
+          No documents uploaded yet. Add a PDF to start the ingestion pipeline.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {documents.map((document) => (
         <DocumentCard
           deleting={deletingId === document.id}

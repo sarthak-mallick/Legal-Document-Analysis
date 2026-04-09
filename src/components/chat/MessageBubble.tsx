@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Copy, Check } from "lucide-react";
 
 import { CitationCard } from "@/components/chat/CitationCard";
 import type { Citation } from "@/types/conversation";
@@ -14,7 +15,7 @@ interface MessageBubbleProps {
   onCitationClick?: (citation: Citation) => void;
 }
 
-// Renders a single chat message with optional citation cards and copy button.
+// Renders a single chat message bubble, user on the right, assistant on the left.
 export function MessageBubble({ role, content, citations, onCitationClick }: MessageBubbleProps) {
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
@@ -41,16 +42,15 @@ export function MessageBubble({ role, content, citations, onCitationClick }: Mes
         {!isUser && (
           <button
             onClick={handleCopy}
-            className="absolute right-2 top-2 hidden rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition hover:bg-secondary hover:text-foreground group-hover:inline-block"
+            className="absolute right-2 top-2 hidden rounded-md p-1 text-muted-foreground transition-colors hover:bg-background/50 hover:text-foreground group-hover:inline-flex"
+            type="button"
           >
-            {copied ? "Copied" : "Copy"}
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           </button>
         )}
         {citations && citations.length > 0 && (
-          <div className="mt-3 space-y-1.5 border-t border-border/50 pt-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Sources
-            </p>
+          <div className="mt-3 space-y-1.5 border-t border-border/30 pt-3">
+            <p className="text-xs font-medium text-muted-foreground">Sources</p>
             {citations.map((citation, i) => (
               <CitationCard
                 citation={citation}
