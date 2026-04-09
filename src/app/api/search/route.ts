@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { getUserId } from "@/lib/auth";
+import { getFloatEnv, getNumberEnv } from "@/lib/env";
 import { matchDocumentChunks } from "@/lib/langchain/vectorstore";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+const SEARCH_TOP_K = getNumberEnv("SEARCH_TOP_K", 10);
+const SEARCH_SIMILARITY_THRESHOLD = getFloatEnv("SEARCH_SIMILARITY_THRESHOLD", 0.7);
 
 // Search across all user's documents by vector similarity.
 export async function GET(request: Request) {
@@ -36,11 +40,10 @@ export async function GET(request: Request) {
     // Vector search across all documents
     const chunks = await matchDocumentChunks(query, {
       documentIds: docIds,
-      matchCount: 10,
+      matchCount: SEARCH_TOP_K,
     });
 
     // Filter by similarity threshold and group by document
-    const THRESHOLD = 0.7;
     const filtered = (
       chunks as {
         document_id: string;
@@ -49,7 +52,7 @@ export async function GET(request: Request) {
         page_number: number | null;
         similarity: number;
       }[]
-    ).filter((c) => c.similarity >= THRESHOLD);
+    ).filter((c) => c.similarity >= SEARCH_SIMILARITY_THRESHOLD);
 
     const grouped = new Map<string, typeof filtered>();
     for (const chunk of filtered) {

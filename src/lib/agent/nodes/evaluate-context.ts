@@ -1,7 +1,10 @@
+import { getNumberEnv } from "@/lib/env";
 import { getLLM } from "@/lib/langchain/model";
 import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
 
-const MAX_RETRIEVAL_ATTEMPTS = 3;
+const MAX_RETRIEVAL_ATTEMPTS = getNumberEnv("MAX_RETRIEVAL_ATTEMPTS", 3);
+const EVAL_CHUNK_SAMPLE = getNumberEnv("EVAL_CHUNK_SAMPLE", 8);
+const EVAL_SNIPPET_LENGTH = getNumberEnv("EVAL_SNIPPET_LENGTH", 200);
 
 interface EvaluationResult {
   sufficient: boolean;
@@ -35,10 +38,10 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
 
   try {
     const chunkSummary = state.retrievedChunks
-      .slice(0, 8)
+      .slice(0, EVAL_CHUNK_SAMPLE)
       .map(
         (c, i) =>
-          `[${i + 1}] (${c.section_title ?? "unknown"}, p${c.page_number ?? "?"}): ${c.content.slice(0, 200)}`,
+          `[${i + 1}] (${c.section_title ?? "unknown"}, p${c.page_number ?? "?"}): ${c.content.slice(0, EVAL_SNIPPET_LENGTH)}`,
       )
       .join("\n");
 

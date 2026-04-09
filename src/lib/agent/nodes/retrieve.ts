@@ -1,3 +1,4 @@
+import { getFloatEnv, getNumberEnv } from "@/lib/env";
 import { getLLM } from "@/lib/langchain/model";
 import { retrieveChunks } from "@/lib/agent/tools/retriever-tool";
 import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
@@ -22,13 +23,14 @@ async function generateSubQueries(query: string): Promise<string[]> {
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean)
-      .slice(0, 3);
+      .slice(0, MAX_SUB_QUERIES);
   } catch {
     return [query];
   }
 }
 
-export const SIMILARITY_THRESHOLD = 0.4;
+export const SIMILARITY_THRESHOLD = getFloatEnv("SIMILARITY_THRESHOLD", 0.4);
+const MAX_SUB_QUERIES = getNumberEnv("MAX_SUB_QUERIES", 3);
 
 // Filter chunks below the similarity threshold and deduplicate by id.
 export function filterAndDeduplicate<T extends { id: string; similarity: number }>(

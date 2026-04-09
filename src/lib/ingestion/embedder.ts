@@ -1,8 +1,9 @@
+import { getNumberEnv } from "@/lib/env";
 import { embedTexts } from "@/lib/langchain/embeddings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { DocumentChunkInput } from "@/lib/ingestion/types";
 
-const BATCH_SIZE = 50;
+const BATCH_SIZE = getNumberEnv("EMBEDDING_BATCH_SIZE", 50);
 
 // This helper writes chunk embeddings and metadata into Supabase.
 export async function storeDocumentChunks(documentId: string, chunks: DocumentChunkInput[]) {
