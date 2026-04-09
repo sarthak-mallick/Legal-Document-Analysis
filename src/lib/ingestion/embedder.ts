@@ -31,13 +31,6 @@ export async function storeDocumentChunks(documentId: string, chunks: DocumentCh
     try {
       const contents = batch.map((chunk) => chunk.content);
       const vectors = await embedTexts(contents);
-      console.info("[ingestion] Embedding batch result", {
-        batchIndex: index,
-        inputCount: contents.length,
-        vectorCount: vectors.length,
-        dimensions: vectors.map((v) => v?.length ?? 0),
-        sampleContentLengths: contents.map((c) => c.length),
-      });
 
       // Skip chunks whose embedding came back empty (API occasionally
       // returns zero-length vectors for very short or unusual input).

@@ -58,3 +58,25 @@ Hard-won fixes and non-obvious issues encountered during development.
 **Root cause:** Components used hardcoded `text-slate-*`, `bg-white`, `border-slate-*` classes instead of theme-aware semantic tokens. Additionally, the `.dark` CSS block in `globals.css` was missing overrides for `--color-muted`, `--color-muted-foreground`, and several other tokens.
 
 **Fix:** Replaced all hardcoded color classes across 28 files with semantic tokens (`text-foreground`, `text-muted-foreground`, `bg-card-bg`, `border-border`, `bg-muted`, etc.) and added missing dark mode CSS variable overrides.
+
+---
+
+## LangChain GoogleGenerativeAIEmbeddings returns empty vectors silently
+
+**Date:** 2026-04-08
+**Time spent:** ~1.5 hours
+**Symptom:** All embeddings come back as 0-dimension vectors. No error thrown. Supabase rejects inserts with "vector must have at least 1 dimension".
+
+**Root cause:** Multiple layered issues:
+
+1. `@langchain/google-genai`'s `GoogleGenerativeAIEmbeddings` wrapper uses `Promise.allSettled` internally, so API errors (404, rate limits) are silently caught and replaced with empty arrays.
+2. The `@google/generative-ai` SDK defaults to API version `v1beta`. The embedding model `text-embedding-004` was no longer available on the user's project — the available models had changed to `gemini-embedding-001`.
+3. The wrapper doesn't expose the `apiVersion` or `outputDimensionality` options needed to configure the SDK correctly.
+
+**What didn't work:**
+
+- Overriding the private `client` property on the LangChain wrapper — TS private field, and Turbopack may cache the old reference
+
+**Fix:** Bypassed the LangChain wrapper entirely. Called the `@google/generative-ai` SDK directly with `apiVersion: "v1beta"`, model `gemini-embedding-001`, and `outputDimensionality: 768` (to match the DB's `vector(768)` column). Created `embedTexts()` and `embedQuery()` functions as direct replacements.
+
+**Lesson:** Silent failure is worse than loud failure. `Promise.allSettled` in a library wrapper should at least log rejections.
