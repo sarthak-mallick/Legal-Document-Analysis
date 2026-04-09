@@ -46,12 +46,14 @@ export default function LoginPage() {
     <Card className="space-y-6">
       <div className="space-y-2">
         <h1 className="font-serif text-2xl text-foreground">Sign in</h1>
-        <p className="text-sm text-slate-600">Enter your credentials to access the platform.</p>
+        <p className="text-sm text-muted-foreground">
+          Enter your credentials to access the platform.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label htmlFor="email" className="text-sm font-medium text-slate-700">
+          <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
             Email
           </label>
           <input
@@ -60,13 +62,13 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             placeholder="you@example.com"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-slate-700">
+          <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
             Password
           </label>
           <input
@@ -75,19 +77,19 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             placeholder="Your password"
           />
         </div>
 
         {error && <p className="text-sm text-rose-600">{error}</p>}
 
-        <Button disabled={loading} className="w-full">
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-muted-foreground">
         No account?{" "}
         <Link href={"/signup" as never} className="font-medium text-primary hover:underline">
           Sign up
