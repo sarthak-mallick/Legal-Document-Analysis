@@ -1,4 +1,4 @@
-import { getEmbeddings } from "@/lib/langchain/embeddings";
+import { embedTexts } from "@/lib/langchain/embeddings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { DocumentChunkInput } from "@/lib/ingestion/types";
 
@@ -19,7 +19,6 @@ export async function storeDocumentChunks(documentId: string, chunks: DocumentCh
     documentId,
   });
 
-  const embeddings = getEmbeddings();
   const supabase = createSupabaseAdminClient();
 
   // Filter out chunks with empty content — the embedding API returns
@@ -31,7 +30,7 @@ export async function storeDocumentChunks(documentId: string, chunks: DocumentCh
 
     try {
       const contents = batch.map((chunk) => chunk.content);
-      const vectors = await embeddings.embedDocuments(contents);
+      const vectors = await embedTexts(contents);
       console.info("[ingestion] Embedding batch result", {
         batchIndex: index,
         inputCount: contents.length,
