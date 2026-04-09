@@ -16,8 +16,9 @@ describe("filterAndDeduplicate", () => {
     const chunks = [makeChunk("a", 0.9), makeChunk("b", 0.5), makeChunk("c", 0.3)];
     const result = filterAndDeduplicate(chunks);
 
-    expect(result).toHaveLength(1);
+    expect(result).toHaveLength(2);
     expect(result[0].id).toBe("a");
+    expect(result[1].id).toBe("b");
   });
 
   it("filters out chunks exactly at the threshold", () => {
@@ -60,14 +61,14 @@ describe("filterAndDeduplicate", () => {
     const chunks = [makeChunk("a", 0.5), makeChunk("a", 0.9)];
     const result = filterAndDeduplicate(chunks);
 
-    // First "a" is filtered (0.5 < 0.7), second "a" passes (0.9)
+    // First "a" passes (0.5 >= 0.4) and is kept; second "a" is deduplicated
     expect(result).toHaveLength(1);
-    expect(result[0].similarity).toBe(0.9);
+    expect(result[0].similarity).toBe(0.5);
   });
 });
 
 describe("SIMILARITY_THRESHOLD", () => {
-  it("is 0.7", () => {
-    expect(SIMILARITY_THRESHOLD).toBe(0.7);
+  it("is 0.4", () => {
+    expect(SIMILARITY_THRESHOLD).toBe(0.4);
   });
 });

@@ -80,3 +80,38 @@ Hard-won fixes and non-obvious issues encountered during development.
 **Fix:** Bypassed the LangChain wrapper entirely. Called the `@google/generative-ai` SDK directly with `apiVersion: "v1beta"`, model `gemini-embedding-001`, and `outputDimensionality: 768` (to match the DB's `vector(768)` column). Created `embedTexts()` and `embedQuery()` functions as direct replacements.
 
 **Lesson:** Silent failure is worse than loud failure. `Promise.allSettled` in a library wrapper should at least log rejections.
+
+---
+
+## pdf-parse v1 returns entire document as a single page
+
+**Date:** 2026-04-08
+**Symptom:** All document chunks have `page_number: 1` regardless of actual page. Retrieval for page-specific questions (e.g., "What is the policy term?") fails because the Policy Schedule on page 3 isn't distinguished from definitions on page 10.
+
+**Root cause:** `pdf-parse` v1 doesn't support per-page text extraction. It concatenates all pages into a single text blob. The chunker assigned every chunk to page 1.
+
+**Fix:** Replaced `pdf-parse` with `unpdf`, which wraps Mozilla's pdf.js and returns a `text: string[]` array with one entry per page. The parser now creates proper per-page `ParsedPage` objects. Result: a 29-page insurance policy went from all chunks on "Page 1" to chunks correctly distributed across 35 pages (unpdf extracts blank pages too, filtered by the parser).
+
+**Trade-off:** `unpdf` doesn't improve table extraction — structured tables are still extracted as fragmented text. LlamaParse or PDFExcavator would be needed for that.
+
+---
+
+## Citation snippets show fragmented PDF text
+
+**Date:** 2026-04-09
+**Symptom:** Citation card previews display broken text like `ed Insurance products- NA Clause 4.5.1 of Part D 06 Options available (in case of...` — fragments from table cells and form fields.
+
+**Root cause:** PDF tables and forms are extracted as line-broken text fragments by `unpdf`. The snippet used `chunk.content.slice(0, 200)` which blindly grabbed the first 200 characters regardless of readability.
+
+**Fix:** The `makeSnippet` function now extracts the first real prose sentence (starts with a capital letter, 7+ words, ends with punctuation). If no prose is found, the snippet is left empty and the UI shows just the section title and page number. The citation card and Source Preview handle empty snippets gracefully.
+
+---
+
+## Most chunks have "Unknown section" titles
+
+**Date:** 2026-04-09
+**Symptom:** Citation cards show "Unknown section" for the majority of chunks, providing no useful navigation context.
+
+**Root cause:** The chunker's `detectSectionTitle` function only detects ALL-CAPS headings or numbered sections via regex. Chunks without those patterns in their preceding text get `null`. Since sections in legal documents span many chunks, most chunks after the first in a section had no heading in their prefix.
+
+**Fix:** Two changes: (1) Section titles now carry forward during chunking — if a chunk has no detected heading, it inherits the last known section title. (2) The UI falls back to "Page X" when the section title is still null, instead of showing "Unknown section".
