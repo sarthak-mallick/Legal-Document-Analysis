@@ -70,6 +70,31 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Delete conversations that referenced this document
+    const { data: orphaned } = await supabase
+      .from("conversations")
+      .select("id, document_ids")
+      .eq("user_id", userId)
+      .contains("document_ids", [id]);
+
+    if (orphaned?.length) {
+      const toDelete = orphaned
+        .filter((c) => (c.document_ids as string[]).length === 1)
+        .map((c) => c.id);
+      const toUpdate = orphaned.filter((c) => (c.document_ids as string[]).length > 1);
+
+      // Delete conversations that only referenced this document
+      if (toDelete.length) {
+        await supabase.from("conversations").delete().in("id", toDelete);
+      }
+
+      // Remove the document ID from multi-document conversations
+      for (const conv of toUpdate) {
+        const remaining = (conv.document_ids as string[]).filter((d) => d !== id);
+        await supabase.from("conversations").update({ document_ids: remaining }).eq("id", conv.id);
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[api/documents] Unexpected delete failure", error);
