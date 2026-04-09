@@ -1,11 +1,14 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-import { getRequiredEnv } from "@/lib/env";
-
-// This factory creates the browser-side Supabase client for UI calls.
+// Browser client must reference NEXT_PUBLIC_ vars directly (not via a helper)
+// so that Next.js can inline them at build time.
 export function createSupabaseBrowserClient() {
-  return createBrowserClient(
-    getRequiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    getRequiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !anonKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  }
+
+  return createBrowserClient(url, anonKey);
 }
