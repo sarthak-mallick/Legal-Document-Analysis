@@ -28,6 +28,9 @@ export function DocumentPreview({ citation, onClose }: DocumentPreviewProps) {
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         <div className="mb-3 space-y-1">
+          {citation.filename && (
+            <p className="text-xs font-medium text-muted-foreground">{citation.filename}</p>
+          )}
           <p className="text-sm font-medium text-foreground">
             {citation.section_title ??
               (citation.page_number ? `Page ${citation.page_number}` : "Unknown Source")}
