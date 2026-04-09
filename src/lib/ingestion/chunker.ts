@@ -4,6 +4,21 @@ import type { DocumentChunkInput, ExtractedTable, ParsedDocument } from "@/lib/i
 const CHUNK_SIZE = getNumberEnv("CHUNK_SIZE", 1000);
 const CHUNK_OVERLAP = getNumberEnv("CHUNK_OVERLAP", 200);
 
+// Lines that superficially resemble headings but are document noise.
+function isNonHeading(line: string): boolean {
+  // Page indicators: "PAGE 1", "PAGE 1 OF 12"
+  if (/^page\s+\d+/i.test(line)) return true;
+  // Bare page numbers or dash-wrapped numbers: "- 1 -", "12"
+  if (/^[-–—]?\s*\d+\s*[-–—]?$/.test(line)) return true;
+  // Lines with fewer than 3 alphabetic characters (pure numbers, symbols)
+  if (line.replace(/[^A-Za-z]/g, "").length < 3) return true;
+  // Table-like rows containing pipe separators
+  if (line.includes("|")) return true;
+  // Common document footer/watermark text
+  if (/^(confidential|draft|copy|version|prepared|printed|revised)\b/i.test(line)) return true;
+  return false;
+}
+
 // This helper guesses the closest section heading from the text preceding a chunk.
 function detectSectionTitle(text: string) {
   const candidateLines = text
@@ -13,10 +28,19 @@ function detectSectionTitle(text: string) {
 
   for (let index = candidateLines.length - 1; index >= 0; index -= 1) {
     const line = candidateLines[index];
+
+    // Skip overly long lines — real headings are concise
+    if (line.length > 120) continue;
+
+    // Skip known non-heading patterns
+    if (isNonHeading(line)) continue;
+
     const looksLikeHeading =
-      /^[A-Z][A-Z\s\d\-&,]{5,}$/.test(line) ||
+      /^[A-Z][A-Z\s\d\-&,.:()/]{5,}$/.test(line) ||
       /^\d+(\.\d+)*\s+[A-Z]/.test(line) ||
-      /^section\s+\d+/i.test(line);
+      /^(section|article|part|chapter|schedule|exhibit|appendix|annex)\s+[\dIVXLCivxlc]+/i.test(
+        line,
+      );
 
     if (looksLikeHeading) {
       return line;

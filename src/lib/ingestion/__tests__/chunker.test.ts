@@ -91,6 +91,69 @@ describe("chunkDocument", () => {
     expect(chunks[1].sectionTitle).toBe("Section 5 Exclusions");
   });
 
+  it("rejects page indicators as section titles", async () => {
+    const text =
+      "PAGE 1 OF 12\nSome paragraph text that is long enough to split. " + "More text. ".repeat(80);
+    const doc = makeDoc([{ pageNumber: 1, text }]);
+    const chunks = await chunkDocument(doc);
+
+    for (const chunk of chunks) {
+      expect(chunk.sectionTitle).not.toBe("PAGE 1 OF 12");
+    }
+  });
+
+  it("rejects bare page numbers as section titles", async () => {
+    const text = "- 3 -\nSome paragraph text follows. " + "Details. ".repeat(80);
+    const doc = makeDoc([{ pageNumber: 1, text }]);
+    const chunks = await chunkDocument(doc);
+
+    for (const chunk of chunks) {
+      expect(chunk.sectionTitle).not.toBe("- 3 -");
+    }
+  });
+
+  it("rejects table-like lines with pipes as section titles", async () => {
+    const text = "TYPE | AMOUNT\nSome paragraph text follows. " + "Details. ".repeat(80);
+    const doc = makeDoc([{ pageNumber: 1, text }]);
+    const chunks = await chunkDocument(doc);
+
+    for (const chunk of chunks) {
+      expect(chunk.sectionTitle).not.toBe("TYPE | AMOUNT");
+    }
+  });
+
+  it("rejects footer-style lines as section titles", async () => {
+    const text = "CONFIDENTIAL DRAFT\nSome paragraph text follows. " + "Details. ".repeat(80);
+    const doc = makeDoc([{ pageNumber: 1, text }]);
+    const chunks = await chunkDocument(doc);
+
+    for (const chunk of chunks) {
+      expect(chunk.sectionTitle).not.toBe("CONFIDENTIAL DRAFT");
+    }
+  });
+
+  it("detects article-style headings", async () => {
+    const text =
+      "Article IV\nFirst paragraph of this section.\n\nThe board shall convene annually. " +
+      "Extra text. ".repeat(80);
+    const doc = makeDoc([{ pageNumber: 1, text }]);
+    const chunks = await chunkDocument(doc);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks[1].sectionTitle).toBe("Article IV");
+  });
+
+  it("detects headings containing colons and parentheses", async () => {
+    const text =
+      "ARTICLE I: DEFINITIONS\nFirst paragraph.\n\nThe following terms shall apply. " +
+      "Details. ".repeat(80);
+    const doc = makeDoc([{ pageNumber: 1, text }]);
+    const chunks = await chunkDocument(doc);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks[1].sectionTitle).toBe("ARTICLE I: DEFINITIONS");
+  });
+
   it("returns null sectionTitle when no heading is found", async () => {
     const text = "just some regular lowercase text without any heading patterns";
     const doc = makeDoc([{ pageNumber: 1, text }]);
