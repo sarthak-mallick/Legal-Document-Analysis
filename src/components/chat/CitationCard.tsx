@@ -19,8 +19,8 @@ export function CitationCard({ citation, index, onClick }: CitationCardProps) {
   return (
     <button
       className={cn(
-        "w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-xs transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700",
-        expanded && "bg-slate-50 dark:bg-slate-700",
+        "w-full rounded-lg border border-border px-3 py-2 text-left text-xs transition hover:bg-muted",
+        expanded && "bg-muted",
       )}
       onClick={() => {
         setExpanded(!expanded);
@@ -32,14 +32,14 @@ export function CitationCard({ citation, index, onClick }: CitationCardProps) {
         <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
           {index + 1}
         </span>
-        <span className="font-medium text-slate-700 dark:text-slate-300">
+        <span className="font-medium text-foreground">
           {citation.section_title ?? "Unknown section"}
         </span>
         {citation.page_number && (
-          <span className="text-slate-400">Page {citation.page_number}</span>
+          <span className="text-muted-foreground">Page {citation.page_number}</span>
         )}
       </div>
-      {expanded && <p className="mt-2 text-slate-600 dark:text-slate-400">{citation.snippet}</p>}
+      {expanded && <p className="mt-2 text-muted-foreground">{citation.snippet}</p>}
     </button>
   );
 }

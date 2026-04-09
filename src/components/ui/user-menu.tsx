@@ -28,10 +28,10 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="hidden text-xs text-slate-500 sm:inline">{email}</span>
+      <span className="hidden text-xs text-muted-foreground sm:inline">{email}</span>
       <button
         onClick={handleSignOut}
-        className="rounded-full px-3 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-200 dark:hover:bg-slate-700"
+        className="rounded-full px-3 py-1 text-xs font-medium text-muted-foreground transition hover:bg-muted"
         type="button"
       >
         Sign out

@@ -16,6 +16,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,9 +36,12 @@ export default function SignupPage() {
 
     try {
       const supabase = createSupabaseBrowserClient();
-      const { error: authError } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
 
       if (authError) {
@@ -45,8 +49,15 @@ export default function SignupPage() {
         return;
       }
 
-      router.push("/dashboard");
-      router.refresh();
+      // If a session was returned, email confirmation is disabled — go straight to dashboard
+      if (data.session) {
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+
+      // Otherwise email confirmation is required
+      setConfirmationSent(true);
     } catch {
       setError("An unexpected error occurred.");
     } finally {
@@ -54,16 +65,37 @@ export default function SignupPage() {
     }
   }
 
+  if (confirmationSent) {
+    return (
+      <Card className="space-y-4">
+        <div className="space-y-2">
+          <h1 className="font-serif text-2xl text-foreground">Check your email</h1>
+          <p className="text-sm text-muted-foreground">
+            We sent a confirmation link to{" "}
+            <span className="font-medium text-foreground">{email}</span>. Click the link to activate
+            your account.
+          </p>
+        </div>
+        <p className="text-center text-sm text-muted-foreground">
+          Already confirmed?{" "}
+          <Link href={"/login" as never} className="font-medium text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </Card>
+    );
+  }
+
   return (
     <Card className="space-y-6">
       <div className="space-y-2">
         <h1 className="font-serif text-2xl text-foreground">Create account</h1>
-        <p className="text-sm text-slate-600">Sign up to start analyzing legal documents.</p>
+        <p className="text-sm text-muted-foreground">Sign up to start analyzing legal documents.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label htmlFor="email" className="text-sm font-medium text-slate-700">
+          <label htmlFor="email" className="text-sm font-medium text-muted-foreground">
             Email
           </label>
           <input
@@ -72,13 +104,13 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             placeholder="you@example.com"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-slate-700">
+          <label htmlFor="password" className="text-sm font-medium text-muted-foreground">
             Password
           </label>
           <input
@@ -87,13 +119,13 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             placeholder="At least 6 characters"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="confirm" className="text-sm font-medium text-slate-700">
+          <label htmlFor="confirm" className="text-sm font-medium text-muted-foreground">
             Confirm password
           </label>
           <input
@@ -102,19 +134,19 @@ export default function SignupPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             placeholder="Repeat your password"
           />
         </div>
 
         {error && <p className="text-sm text-rose-600">{error}</p>}
 
-        <Button disabled={loading} className="w-full">
+        <Button type="submit" disabled={loading} className="w-full">
           {loading ? "Creating account..." : "Sign up"}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link href={"/login" as never} className="font-medium text-primary hover:underline">
           Sign in

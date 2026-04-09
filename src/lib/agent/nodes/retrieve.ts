@@ -28,7 +28,7 @@ async function generateSubQueries(query: string): Promise<string[]> {
   }
 }
 
-export const SIMILARITY_THRESHOLD = 0.7;
+export const SIMILARITY_THRESHOLD = 0.4;
 
 // Filter chunks below the similarity threshold and deduplicate by id.
 export function filterAndDeduplicate<T extends { id: string; similarity: number }>(

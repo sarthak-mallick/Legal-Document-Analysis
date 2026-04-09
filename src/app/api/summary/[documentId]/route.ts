@@ -7,16 +7,18 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 // Coverage checklist categories per document type for gap analysis.
 const GAP_CHECKLISTS: Record<string, string[]> = {
   insurance_policy: [
-    "Liability coverage",
-    "Collision coverage",
-    "Comprehensive coverage",
-    "Medical payments",
-    "Uninsured/underinsured motorist",
-    "Personal property coverage",
-    "Loss of use / rental reimbursement",
-    "Deductible amounts",
-    "Policy limits (per occurrence and aggregate)",
-    "Named perils vs open perils",
+    "Coverage scope and insured perils",
+    "Sum assured / benefit amounts",
+    "Premium terms and payment schedule",
+    "Policy term and renewal conditions",
+    "Exclusions and limitations",
+    "Claim filing process and deadlines",
+    "Deductibles and co-payments",
+    "Grace period and lapse conditions",
+    "Cancellation and refund terms",
+    "Nomination / beneficiary provisions",
+    "Dispute resolution and grievance redressal",
+    "Regulatory disclosures",
   ],
   lease_agreement: [
     "Rent amount and due date",
@@ -112,31 +114,29 @@ async function generateDocumentSummary(
     })
     .join("\n\n");
 
-  // Generate summary
-  const summaryResponse = await llm.invoke([
-    {
-      role: "system",
-      content: `You are a legal document analyst. Generate a structured summary of this ${documentType ?? "legal"} document. Include:
+  // Run all three LLM calls in parallel
+  const checklist = GAP_CHECKLISTS[documentType ?? ""] ?? [];
+
+  const [summaryResponse, riskResponse, gapResponse] = await Promise.all([
+    // Summary
+    llm.invoke([
+      {
+        role: "system",
+        content: `You are a legal document analyst. Generate a structured summary of this ${documentType ?? "legal"} document. Include:
 1. Document overview (1-2 sentences)
 2. Key terms and values (bullet points)
 3. Important dates and deadlines
 4. Parties involved
 
 Output in markdown format. Be specific and quote exact values from the document.`,
-    },
-    { role: "user", content: `Document: ${filename}\n\n${context}` },
-  ]);
-
-  const summary =
-    typeof summaryResponse.content === "string"
-      ? summaryResponse.content
-      : String(summaryResponse.content);
-
-  // Generate risk flags
-  const riskResponse = await llm.invoke([
-    {
-      role: "system",
-      content: `You are a legal risk analyst. Review this document content and identify concerning clauses or potential risks. For each risk, provide:
+      },
+      { role: "user", content: `Document: ${filename}\n\n${context}` },
+    ]),
+    // Risk flags
+    llm.invoke([
+      {
+        role: "system",
+        content: `You are a legal risk analyst. Review this document content and identify concerning clauses or potential risks. For each risk, provide:
 - title: Short name for the risk
 - description: Why this is concerning
 - severity: "high", "medium", or "low"
@@ -144,9 +144,29 @@ Output in markdown format. Be specific and quote exact values from the document.
 
 Respond with ONLY valid JSON array (no markdown fences): [{"title":"...","description":"...","severity":"...","section":"..."}]
 If no risks are found, respond with: []`,
-    },
-    { role: "user", content: context },
+      },
+      { role: "user", content: context },
+    ]),
+    // Gap analysis (returns null if no checklist)
+    checklist.length > 0
+      ? llm.invoke([
+          {
+            role: "system",
+            content: `You are a legal document coverage analyst. For each category below, determine if the document covers it. Respond with ONLY valid JSON array (no markdown fences):
+[{"category":"...","status":"covered"|"not_covered"|"partial","details":"brief note or null"}]
+
+Categories to check:
+${checklist.map((c) => `- ${c}`).join("\n")}`,
+          },
+          { role: "user", content: context },
+        ])
+      : null,
   ]);
+
+  const summary =
+    typeof summaryResponse.content === "string"
+      ? summaryResponse.content
+      : String(summaryResponse.content);
 
   let riskFlags: RiskFlag[] = [];
   try {
@@ -160,23 +180,8 @@ If no risks are found, respond with: []`,
     riskFlags = [];
   }
 
-  // Generate gap analysis if we have a checklist for this document type
   let gapAnalysis: GapItem[] = [];
-  const checklist = GAP_CHECKLISTS[documentType ?? ""] ?? [];
-
-  if (checklist.length > 0) {
-    const gapResponse = await llm.invoke([
-      {
-        role: "system",
-        content: `You are a legal document coverage analyst. For each category below, determine if the document covers it. Respond with ONLY valid JSON array (no markdown fences):
-[{"category":"...","status":"covered"|"not_covered"|"partial","details":"brief note or null"}]
-
-Categories to check:
-${checklist.map((c) => `- ${c}`).join("\n")}`,
-      },
-      { role: "user", content: context },
-    ]);
-
+  if (gapResponse) {
     try {
       const gapContent =
         typeof gapResponse.content === "string"

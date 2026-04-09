@@ -1,7 +1,7 @@
 import { matchDocumentChunks } from "@/lib/langchain/vectorstore";
 import type { RetrievedChunk } from "@/types/conversation";
 
-const SIMILARITY_THRESHOLD = 0.7;
+const SIMILARITY_THRESHOLD = 0.4;
 
 // Retrieve the most relevant document chunks for a query using vector search.
 export async function retrieveChunks(

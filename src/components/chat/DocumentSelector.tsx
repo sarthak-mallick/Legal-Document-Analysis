@@ -13,12 +13,16 @@ interface DocumentSelectorProps {
 // Allows selecting which documents to query in the chat.
 export function DocumentSelector({ documents, selectedIds, onToggle }: DocumentSelectorProps) {
   if (documents.length === 0) {
-    return <p className="text-sm text-slate-400">No documents available. Upload a PDF first.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">No documents available. Upload a PDF first.</p>
+    );
   }
 
   return (
     <div className="space-y-1.5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Documents</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Documents
+      </p>
       {documents.map((doc) => {
         const selected = selectedIds.includes(doc.id);
         return (
@@ -28,13 +32,15 @@ export function DocumentSelector({ documents, selectedIds, onToggle }: DocumentS
               "w-full rounded-lg px-3 py-2 text-left text-sm transition",
               selected
                 ? "bg-primary/10 font-medium text-primary"
-                : "text-slate-600 hover:bg-slate-100",
+                : "text-foreground hover:bg-muted",
             )}
             onClick={() => onToggle(doc.id)}
             type="button"
           >
             <p className="truncate">{doc.filename}</p>
-            {doc.document_type && <p className="text-xs text-slate-400">{doc.document_type}</p>}
+            {doc.document_type && (
+              <p className="text-xs text-muted-foreground">{doc.document_type}</p>
+            )}
           </button>
         );
       })}

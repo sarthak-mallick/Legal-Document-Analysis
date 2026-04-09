@@ -54,20 +54,28 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const result = await ingestDocument({
-      buffer,
-      documentId: insertedDocument.id,
-    });
 
-    return NextResponse.json({
-      documentId: insertedDocument.id,
-      status: "ready",
-      documentType: result.documentType,
-      chunkCount: result.chunkCount,
-      tableCount: result.tableCount,
-    });
+    try {
+      const result = await ingestDocument({
+        buffer,
+        documentId: insertedDocument.id,
+      });
+
+      return NextResponse.json({
+        documentId: insertedDocument.id,
+        status: "ready",
+        documentType: result.documentType,
+        chunkCount: result.chunkCount,
+        tableCount: result.tableCount,
+      });
+    } catch (pipelineError) {
+      console.error("[api/upload] Upload processing failed", pipelineError);
+      // Clean up the orphaned document row so it doesn't linger on the dashboard
+      await adminClient.from("documents").delete().eq("id", insertedDocument.id);
+      return NextResponse.json({ error: "Upload processing failed." }, { status: 500 });
+    }
   } catch (error) {
-    console.error("[api/upload] Upload processing failed", error);
+    console.error("[api/upload] Upload failed", error);
     return NextResponse.json({ error: "Upload processing failed." }, { status: 500 });
   }
 }

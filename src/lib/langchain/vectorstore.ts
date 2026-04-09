@@ -1,4 +1,4 @@
-import { getEmbeddings } from "@/lib/langchain/embeddings";
+import { embedQuery } from "@/lib/langchain/embeddings";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // This helper runs the spec-defined pgvector RPC against stored document chunks.
@@ -13,9 +13,8 @@ export async function matchDocumentChunks(
     matchCount: options?.matchCount ?? 5,
   });
 
-  const embeddings = getEmbeddings();
   const supabase = createSupabaseAdminClient();
-  const queryEmbedding = await embeddings.embedQuery(query);
+  const queryEmbedding = await embedQuery(query);
   const { data, error } = await supabase.rpc("match_chunks", {
     filter_document_ids: options?.documentIds ?? null,
     match_count: options?.matchCount ?? 5,

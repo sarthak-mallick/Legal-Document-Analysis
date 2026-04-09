@@ -170,7 +170,9 @@ export function ChatWindow({
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 && !isStreaming && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-slate-400">Ask a question about your selected document.</p>
+            <p className="text-sm text-muted-foreground">
+              Ask a question about your selected document.
+            </p>
           </div>
         )}
         {messages.map((msg) => (

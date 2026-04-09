@@ -50,7 +50,7 @@ export function DocumentCard({
               type="checkbox"
               checked={selected}
               onChange={() => onSelect(document.id)}
-              className="mt-1.5 h-4 w-4 rounded border-slate-300 accent-primary"
+              className="mt-1.5 h-4 w-4 rounded border-border accent-primary"
             />
           )}
           <div className="space-y-2">
@@ -60,7 +60,7 @@ export function DocumentCard({
             >
               {document.filename}
             </Link>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span>{createdDate}</span>
               <span>{document.page_count ?? "?"} pages</span>
               {document.document_type && (
@@ -78,7 +78,7 @@ export function DocumentCard({
         </div>
         <ProcessingStatus status={document.upload_status} />
       </div>
-      <div className="flex items-center justify-between gap-4 text-sm text-slate-600">
+      <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-4">
           <p className="line-clamp-2">
             {document.summary ?? "Click filename to view details and generate summary."}

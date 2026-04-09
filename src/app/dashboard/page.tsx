@@ -9,11 +9,11 @@ export default function DashboardPage() {
     <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div className="space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Dashboard
           </p>
           <h1 className="font-serif text-4xl text-foreground">Document ingestion</h1>
-          <p className="max-w-3xl text-slate-600">
+          <p className="max-w-3xl text-muted-foreground">
             Upload a PDF to process it into chunks with embeddings. Then open the chat to ask
             questions about your documents.
           </p>

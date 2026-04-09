@@ -1,10 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const DEV_USER_ID = "00000000-0000-0000-0000-000000000000";
-
-// Get the current user ID. Returns the authenticated user in production,
-// falls back to a dev user ID in development when auth is not configured.
-// Returns null if no user and not in dev mode.
+// Get the current authenticated user ID, or null if not signed in.
 export async function getUserId(): Promise<string | null> {
   try {
     const supabase = await createSupabaseServerClient();
@@ -12,14 +8,8 @@ export async function getUserId(): Promise<string | null> {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (user) return user.id;
+    return user?.id ?? null;
   } catch {
-    // Auth not available
+    return null;
   }
-
-  if (process.env.DEV_AUTH_BYPASS === "true") {
-    return DEV_USER_ID;
-  }
-
-  return null;
 }

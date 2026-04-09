@@ -38,7 +38,7 @@ export function ProcessingStatus({ status }: { status: UploadStatus }) {
               key={stage}
               className={cn(
                 "h-1 flex-1 rounded-full",
-                i <= currentStep ? "bg-amber-500" : "bg-slate-200 dark:bg-slate-700",
+                i <= currentStep ? "bg-amber-500" : "bg-muted",
               )}
             />
           ))}

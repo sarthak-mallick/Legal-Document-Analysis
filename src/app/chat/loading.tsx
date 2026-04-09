@@ -5,7 +5,7 @@ export default function ChatLoading() {
   return (
     <div className="flex h-screen">
       {/* Sidebar skeleton */}
-      <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 md:block">
+      <aside className="hidden w-64 shrink-0 border-r border-border bg-card-bg p-4 md:block">
         <div className="space-y-4">
           <Skeleton className="h-4 w-24" />
           <div className="space-y-2">
@@ -23,7 +23,7 @@ export default function ChatLoading() {
 
       {/* Chat area skeleton */}
       <main className="flex flex-1 flex-col">
-        <header className="border-b border-slate-200 bg-white px-6 py-3 dark:border-slate-700 dark:bg-slate-900">
+        <header className="border-b border-border bg-card-bg px-6 py-3">
           <Skeleton className="h-5 w-16" />
         </header>
         <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">

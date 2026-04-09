@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Public paths that don't require authentication.
-const PUBLIC_PATHS = ["/", "/login", "/signup"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth/callback"];
 
 // Refresh the Supabase session and redirect unauthenticated users to login.
 export async function middleware(request: NextRequest) {
@@ -33,11 +33,6 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p);
-
-  // Skip auth redirect when dev bypass is explicitly enabled
-  if (process.env.DEV_AUTH_BYPASS === "true") {
-    return supabaseResponse;
-  }
 
   // Redirect unauthenticated users to login (except public paths and static assets)
   if (!user && !isPublic) {

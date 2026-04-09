@@ -6,13 +6,13 @@ interface SkeletonProps {
 
 // Animated placeholder for loading states.
 export function Skeleton({ className }: SkeletonProps) {
-  return <div className={cn("skeleton h-4 w-full bg-slate-200 dark:bg-slate-700", className)} />;
+  return <div className={cn("skeleton h-4 w-full bg-muted", className)} />;
 }
 
 // Document card loading skeleton.
 export function DocumentCardSkeleton() {
   return (
-    <div className="rounded-[28px] border border-border/80 bg-white/80 p-6 shadow-panel backdrop-blur dark:bg-slate-800/80">
+    <div className="rounded-[28px] border border-border/80 bg-card-bg p-6 shadow-panel backdrop-blur">
       <div className="space-y-4">
         <div className="flex justify-between">
           <div className="space-y-2">
@@ -35,7 +35,7 @@ export function DocumentCardSkeleton() {
 export function MessageSkeleton() {
   return (
     <div className="flex justify-start">
-      <div className="max-w-[80%] space-y-2 rounded-2xl bg-slate-100 px-4 py-3 dark:bg-slate-800">
+      <div className="max-w-[80%] space-y-2 rounded-2xl bg-muted px-4 py-3">
         <Skeleton className="h-3 w-64" />
         <Skeleton className="h-3 w-48" />
         <Skeleton className="h-3 w-56" />
