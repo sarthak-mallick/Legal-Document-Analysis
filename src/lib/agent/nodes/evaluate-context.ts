@@ -78,8 +78,10 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
         ? response.content.trim()
         : String(response.content).trim();
 
-    const jsonStr = content.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-    const evaluation = JSON.parse(jsonStr) as EvaluationResult;
+    // Extract the first JSON object, ignoring markdown fences or preamble text.
+    const objMatch = content.match(/\{[\s\S]*\}/);
+    if (!objMatch) throw new Error("No JSON object found in evaluation response");
+    const evaluation = JSON.parse(objMatch[0]) as EvaluationResult;
 
     // If max attempts reached, proceed regardless
     if (!evaluation.sufficient && state.retrievalAttempts >= MAX_RETRIEVAL_ATTEMPTS) {
