@@ -24,15 +24,20 @@ export function DocumentPreview({ citation, onClose }: DocumentPreviewProps) {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="mb-3 space-y-1">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            {citation.section_title ?? "Unknown Section"}
+            {citation.section_title ??
+              (citation.page_number ? `Page ${citation.page_number}` : "Unknown Source")}
           </p>
           {citation.page_number && (
             <p className="text-xs text-muted-foreground">Page {citation.page_number}</p>
           )}
         </div>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-          {citation.snippet}
-        </p>
+        {citation.snippet ? (
+          <p className="text-sm leading-relaxed text-foreground">{citation.snippet}</p>
+        ) : (
+          <p className="text-sm italic text-muted-foreground">
+            Source content is structured data that cannot be previewed as text.
+          </p>
+        )}
       </div>
     </div>
   );
