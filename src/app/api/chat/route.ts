@@ -5,6 +5,7 @@ import { buildAgentGraph } from "@/lib/agent/graph";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { chatRequestSchema } from "@/lib/validations/chat";
 import { parseBody } from "@/lib/validations";
+import type { AgentStateType } from "@/lib/agent/state";
 import type { MessageRecord } from "@/types/conversation";
 
 const CONVERSATION_HISTORY_LIMIT = getNumberEnv("CONVERSATION_HISTORY_LIMIT", 10);
@@ -109,17 +110,16 @@ export async function POST(request: Request) {
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
 
+    const sendSSE = (data: unknown) =>
+      writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+
     // Process agent events in the background while streaming to client
     const streamPromise = (async () => {
       let fullResponse = "";
-      let citations: Record<string, unknown>[] = [];
-      let nodesVisited: string[] = [];
-      let finalState: Record<string, unknown> = {};
+      let finalState: Partial<AgentStateType> = {};
 
       try {
-        await writer.write(
-          encoder.encode(`data: ${JSON.stringify({ type: "meta", conversationId })}\n\n`),
-        );
+        await sendSSE({ type: "meta", conversationId });
 
         const eventStream = agent.streamEvents(
           {
@@ -133,7 +133,6 @@ export async function POST(request: Request) {
         );
 
         for await (const event of eventStream) {
-          // Stream tokens from the synthesize node's LLM call
           if (
             event.event === "on_chat_model_stream" &&
             event.metadata?.langgraph_node === "synthesize"
@@ -142,59 +141,49 @@ export async function POST(request: Request) {
               typeof event.data?.chunk?.content === "string" ? event.data.chunk.content : "";
             if (token) {
               fullResponse += token;
-              await writer.write(
-                encoder.encode(`data: ${JSON.stringify({ type: "token", content: token })}\n\n`),
-              );
+              await sendSSE({ type: "token", content: token });
             }
           }
 
-          // Capture final graph state when the graph ends
           if (event.event === "on_chain_end" && event.name === "LangGraph") {
-            finalState = event.data?.output ?? {};
+            finalState = (event.data?.output as Partial<AgentStateType>) ?? {};
           }
         }
 
-        // Extract results from final state
-        const response = (finalState.response as string) ?? fullResponse;
-        citations = (finalState.citations as Record<string, unknown>[]) ?? [];
-        nodesVisited = (finalState.nodesVisited as string[]) ?? [];
+        const agentResponse = finalState.response ?? fullResponse;
 
         // If streaming produced no tokens (fallback), send the full response
-        if (!fullResponse && response) {
-          fullResponse = response;
-          await writer.write(
-            encoder.encode(`data: ${JSON.stringify({ type: "token", content: response })}\n\n`),
-          );
+        if (!fullResponse && agentResponse) {
+          fullResponse = agentResponse;
+          await sendSSE({ type: "token", content: agentResponse });
         }
 
-        // Send debug info and citations
-        await writer.write(
-          encoder.encode(
-            `data: ${JSON.stringify({
-              type: "agent_debug",
-              nodesVisited,
-              queryType: finalState.queryType,
-              retrievalAttempts: finalState.retrievalAttempts,
-              chunkCount: Array.isArray(finalState.retrievedChunks)
-                ? finalState.retrievedChunks.length
-                : 0,
-            })}\n\n`,
-          ),
-        );
+        const citations = finalState.citations ?? [];
+        const nodesVisited = finalState.nodesVisited ?? [];
+        const chunkCount = finalState.retrievedChunks?.length ?? 0;
 
-        await writer.write(
-          encoder.encode(`data: ${JSON.stringify({ type: "citations", citations })}\n\n`),
-        );
+        await sendSSE({
+          type: "agent_debug",
+          nodesVisited,
+          queryType: finalState.queryType,
+          retrievalAttempts: finalState.retrievalAttempts,
+          chunkCount,
+        });
+
+        await sendSSE({ type: "citations", citations });
 
         // Save assistant message with agent execution trace
-        const toolResults = (
-          (finalState.toolResults as { tool: string; input: Record<string, unknown> }[]) ?? []
-        ).map((r) => ({ tool: r.tool, input: r.input }));
+        const toolResults = (finalState.toolResults ?? []).map(
+          (r: { tool: string; input: Record<string, unknown> }) => ({
+            tool: r.tool,
+            input: r.input,
+          }),
+        );
 
         await admin.from("messages").insert({
           conversation_id: conversationId,
           role: "assistant",
-          content: fullResponse || response,
+          content: fullResponse || agentResponse,
           citations,
           tool_calls: [
             {
@@ -202,9 +191,7 @@ export async function POST(request: Request) {
               nodesVisited,
               queryType: finalState.queryType,
               retrievalAttempts: finalState.retrievalAttempts,
-              chunkCount: Array.isArray(finalState.retrievedChunks)
-                ? finalState.retrievedChunks.length
-                : 0,
+              chunkCount,
               hasTableData: !!finalState.tableData,
               toolsCalled: finalState.toolsCalled ?? false,
               toolResults,
@@ -215,11 +202,7 @@ export async function POST(request: Request) {
         });
       } catch (error) {
         console.error("[chat] Stream error", error);
-        await writer.write(
-          encoder.encode(
-            `data: ${JSON.stringify({ type: "error", content: "An error occurred." })}\n\n`,
-          ),
-        );
+        await sendSSE({ type: "error", content: "An error occurred." });
       } finally {
         await writer.write(encoder.encode("data: [DONE]\n\n"));
         await writer.close();

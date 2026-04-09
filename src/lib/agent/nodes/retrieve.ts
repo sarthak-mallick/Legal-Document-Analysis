@@ -55,14 +55,15 @@ export async function retrieve(state: AgentStateType): Promise<AgentUpdateType> 
 
   let allChunks = await retrieveChunks(searchQuery, state.documentIds);
 
-  // For multi-section queries, also search with sub-queries
+  // For multi-section queries, also search with sub-queries in parallel
   if (state.queryType === "multi_section" || state.queryType === "cross_document") {
     const subQueries = await generateSubQueries(searchQuery);
-    for (const sub of subQueries) {
-      if (sub !== searchQuery) {
-        const subChunks = await retrieveChunks(sub, state.documentIds);
-        allChunks = [...allChunks, ...subChunks];
-      }
+    const uniqueSubs = subQueries.filter((sub) => sub !== searchQuery);
+    if (uniqueSubs.length > 0) {
+      const subResults = await Promise.all(
+        uniqueSubs.map((sub) => retrieveChunks(sub, state.documentIds)),
+      );
+      allChunks = [...allChunks, ...subResults.flat()];
     }
   }
 

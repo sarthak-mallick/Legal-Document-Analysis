@@ -66,10 +66,7 @@ export async function ingestDocument({
     // Step 6: Embed and store chunks
     await storeDocumentChunks(documentId, chunks);
 
-    await setStage(supabase, documentId, "ready", {
-      document_type: typeResult.documentType,
-      page_count: parsedDocument.metadata.pageCount,
-    });
+    await setStage(supabase, documentId, "ready");
 
     const tableCount = chunks.filter((c) => c.chunkType === "table").length;
 

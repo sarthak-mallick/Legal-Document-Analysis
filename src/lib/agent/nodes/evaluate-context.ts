@@ -21,20 +21,6 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
     attempt: state.retrievalAttempts,
   });
 
-  // Fast-path: skip LLM evaluation when retrieval confidence is very high
-  const highConfChunks = state.retrievedChunks.filter(
-    (c) => c.similarity >= HIGH_CONFIDENCE_THRESHOLD,
-  );
-  if (highConfChunks.length >= HIGH_CONFIDENCE_MIN_CHUNKS) {
-    console.info("[agent:evaluate] High-confidence retrieval, skipping LLM evaluation", {
-      highConfCount: highConfChunks.length,
-    });
-    return {
-      contextSufficient: true,
-      nodesVisited: ["evaluateContext"],
-    };
-  }
-
   // If no chunks retrieved at all, mark insufficient
   if (state.retrievedChunks.length === 0) {
     if (state.retrievalAttempts >= MAX_RETRIEVAL_ATTEMPTS) {
@@ -46,6 +32,20 @@ export async function evaluateContext(state: AgentStateType): Promise<AgentUpdat
     return {
       contextSufficient: false,
       refinedQuery: state.query,
+      nodesVisited: ["evaluateContext"],
+    };
+  }
+
+  // Fast-path: skip LLM evaluation when retrieval confidence is very high
+  const highConfChunks = state.retrievedChunks.filter(
+    (c) => c.similarity >= HIGH_CONFIDENCE_THRESHOLD,
+  );
+  if (highConfChunks.length >= HIGH_CONFIDENCE_MIN_CHUNKS) {
+    console.info("[agent:evaluate] High-confidence retrieval, skipping LLM evaluation", {
+      highConfCount: highConfChunks.length,
+    });
+    return {
+      contextSufficient: true,
       nodesVisited: ["evaluateContext"],
     };
   }
