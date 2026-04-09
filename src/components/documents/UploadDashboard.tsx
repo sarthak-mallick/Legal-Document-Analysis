@@ -63,7 +63,7 @@ export function UploadDashboard() {
         throw new Error("error" in payload ? payload.error : "Upload failed");
       }
 
-      setStatusMessage(`Document ${payload.documentId} accepted for processing.`);
+      setStatusMessage(`"${file.name}" accepted for processing.`);
       await loadDocuments();
     } catch (error) {
       console.error("[dashboard] Upload failed", error);
