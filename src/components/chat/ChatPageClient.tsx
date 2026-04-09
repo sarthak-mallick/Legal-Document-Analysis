@@ -86,17 +86,16 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
     setSelectedDocIds((prev) => (prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]));
   }, []);
 
-  const handleConversationCreated = useCallback(
-    (newId: string) => {
-      (router as { replace: (url: string) => void }).replace(`/chat/${newId}`);
-      // Refresh conversation list
-      fetch("/api/conversations", { cache: "no-store" })
-        .then((res) => res.json())
-        .then((data) => setConversations(data.conversations ?? []))
-        .catch(() => {});
-    },
-    [router],
-  );
+  const handleConversationCreated = useCallback((newId: string) => {
+    // Update the URL without triggering a Next.js navigation so the
+    // in-progress stream isn't killed by a component remount.
+    window.history.replaceState(null, "", `/chat/${newId}`);
+    // Refresh conversation list
+    fetch("/api/conversations", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => setConversations(data.conversations ?? []))
+      .catch(() => {});
+  }, []);
 
   const handleDeleteConversation = useCallback(
     async (id: string) => {
