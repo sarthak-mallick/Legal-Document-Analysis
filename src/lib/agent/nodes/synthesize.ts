@@ -5,6 +5,7 @@ import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
 import type { Citation } from "@/types/conversation";
 
 // Parse citation references from the response text.
+// Supports both footnote-style [1] with a Sources list, and inline [Section: ..., Page: ...] format.
 function extractCitations(
   text: string,
   chunks: {
@@ -17,41 +18,59 @@ function extractCitations(
   const citations: Citation[] = [];
   const seen = new Set<string>();
 
-  const pattern = /\[Section:\s*([^,\]]+),\s*Page:\s*(\d+)\]/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = pattern.exec(text)) !== null) {
-    const sectionRef = match[1].trim();
-    const pageRef = parseInt(match[2], 10);
-
-    const matchingChunk =
+  function findChunk(sectionRef: string, pageRef: number) {
+    return (
       chunks.find(
         (c) =>
           (c.section_title?.toLowerCase().includes(sectionRef.toLowerCase()) ||
             sectionRef.toLowerCase().includes(c.section_title?.toLowerCase() ?? "")) &&
           c.page_number === pageRef,
-      ) ?? chunks.find((c) => c.page_number === pageRef);
-
-    if (matchingChunk && !seen.has(matchingChunk.id)) {
-      seen.add(matchingChunk.id);
-      citations.push({
-        chunk_id: matchingChunk.id,
-        section_title: matchingChunk.section_title,
-        page_number: matchingChunk.page_number,
-        snippet: matchingChunk.content.slice(0, 200),
-      });
-    }
+      ) ?? chunks.find((c) => c.page_number === pageRef)
+    );
   }
 
-  for (const chunk of chunks) {
-    if (!seen.has(chunk.id)) {
+  function makeSnippet(content: string): string {
+    // Collapse line breaks and excess whitespace
+    const collapsed = content
+      .replace(/\n+/g, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+    // Extract sentences that look like real prose (start with capital, 7+ words, end with period)
+    const sentences = collapsed.match(/[A-Z][^.!?]*(?:[.!?](?:\s|$))/g) ?? [];
+    const prose = sentences.find((s) => s.split(/\s+/).length >= 7);
+
+    if (!prose) return "";
+
+    return prose.length > 200 ? prose.slice(0, 200).replace(/\s+\S*$/, "") + "…" : prose.trim();
+  }
+
+  function addChunk(chunk: (typeof chunks)[0] | undefined) {
+    if (chunk && !seen.has(chunk.id)) {
       seen.add(chunk.id);
       citations.push({
         chunk_id: chunk.id,
         section_title: chunk.section_title,
         page_number: chunk.page_number,
-        snippet: chunk.content.slice(0, 200),
+        snippet: makeSnippet(chunk.content),
       });
+    }
+  }
+
+  // Try footnote-style sources list: [1] Section: ..., Page: ... or [1] Document: ..., Section: ..., Page: ...
+  const footnotePattern =
+    /\[(\d+)\]\s*(?:Document:\s*[^,]+,\s*)?Section:\s*([^,\]]+),\s*Page:\s*(\d+)/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = footnotePattern.exec(text)) !== null) {
+    addChunk(findChunk(match[2].trim(), parseInt(match[3], 10)));
+  }
+
+  // Fallback: try inline [Section: ..., Page: ...] format
+  if (citations.length === 0) {
+    const inlinePattern = /\[Section:\s*([^,\]]+),\s*Page:\s*(\d+)\]/g;
+    while ((match = inlinePattern.exec(text)) !== null) {
+      addChunk(findChunk(match[1].trim(), parseInt(match[2], 10)));
     }
   }
 
@@ -102,6 +121,11 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
 
   const citations = extractCitations(content, state.retrievedChunks);
 
+  // Strip the "Sources:" list from the displayed response — the citation cards handle this.
+  const displayContent = content
+    .replace(/\n*\*{0,2}Sources:?\*{0,2}\n(\[\d+\][^\n]*\n?)+/i, "")
+    .trimEnd();
+
   // Extract token usage from LLM response metadata
   const usage = response.usage_metadata;
   const tokenUsage = {
@@ -116,7 +140,7 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
   });
 
   return {
-    response: content,
+    response: displayContent,
     citations,
     tokenUsage,
     nodesVisited: ["synthesize"],

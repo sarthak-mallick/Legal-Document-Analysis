@@ -111,17 +111,19 @@ export function buildSynthesisPrompt(
 
   const instructions = isMultiDoc
     ? [
-        "1. Cite your sources using [Document: <name>, Section: <title>, Page: <number>] format.",
-        "2. Clearly label which information comes from which document.",
-        "3. If the context does not contain enough information to fully answer, say so explicitly.",
-        "4. For comparison questions, organize your answer by topic, not by document.",
-        "5. For table data, reference specific values from the table.",
+        "1. Use numbered footnotes [1], [2], etc. to cite sources. At the end, list each source: [1] Document: <name>, Section: <title>, Page: <number>.",
+        "2. Reuse the same footnote number when citing the same source. Do not repeat citations on every line.",
+        "3. Clearly label which information comes from which document.",
+        "4. If the context does not contain enough information to fully answer, say so explicitly.",
+        "5. For comparison questions, organize your answer by topic, not by document.",
+        "6. For table data, reference specific values from the table.",
       ]
     : [
-        "1. Cite your sources using [Section: <title>, Page: <number>] format.",
-        "2. If the context does not contain enough information to fully answer, say so explicitly.",
-        "3. For table data, reference specific values from the table.",
-        "4. Keep your answer focused and relevant to the question.",
+        "1. Use numbered footnotes [1], [2], etc. to cite sources. At the end, list each source: [1] Section: <title>, Page: <number>.",
+        "2. Reuse the same footnote number when citing the same source. Do not repeat citations on every line.",
+        "3. If the context does not contain enough information to fully answer, say so explicitly.",
+        "4. For table data, reference specific values from the table.",
+        "5. Keep your answer focused and relevant to the question.",
       ];
 
   if (toolResults.length > 0) {
