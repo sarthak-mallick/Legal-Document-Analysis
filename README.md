@@ -14,7 +14,6 @@ AI-powered platform for uploading legal documents (insurance policies, leases, c
 - **Risk & Gap Analysis** — Auto-generated summaries, severity-rated risk flags, coverage matrix per document type
 - **Adaptive Prompts** — System prompts tuned for insurance, lease, employment, NDA, and ToS documents
 - **Auth & Dark Mode** — Supabase Auth (email/password), dark/light theme toggle
-- **Global Search** — Search across all documents by content from the dashboard
 - **Citation Preview** — Click a citation to open a side panel with the source chunk
 - **Export Answers** — Copy assistant messages to clipboard or download summary reports as markdown
 - **Upload Progress** — Step-by-step progress indicator during PDF ingestion (parsing → chunking → embedding)
@@ -84,22 +83,20 @@ cp .env.example .env.local
 
 All optional. Defaults work well out of the box — tune these when experimenting with retrieval quality.
 
-| Variable                      | Default | Range to try   | Description                                                                                                                                                                   |
-| ----------------------------- | ------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CHUNK_SIZE`                  | 1000    | 500, 800, 1200 | Target chunk size in characters. Smaller chunks give more precise retrieval but less context per chunk; larger chunks preserve more context but reduce retrieval granularity. |
-| `CHUNK_OVERLAP`               | 200     | 100, 200, 300  | Character overlap between consecutive chunks. Higher overlap reduces information loss at chunk boundaries but increases total chunk count and storage.                        |
-| `SIMILARITY_THRESHOLD`        | 0.4     | 0.3 - 0.6      | Minimum cosine similarity score for a retrieved chunk to be included. Too low introduces noise; too high drops relevant but loosely matching chunks.                          |
-| `RETRIEVAL_TOP_K`             | 5       | 5, 8, 10       | Number of top chunks returned per vector search query. More chunks improve recall but add noise and increase token usage in the synthesis prompt.                             |
-| `SEARCH_TOP_K`                | 10      | 5 - 20         | Number of top chunks returned by the global search API (dashboard search).                                                                                                    |
-| `SEARCH_SIMILARITY_THRESHOLD` | 0.7     | 0.5 - 0.8      | Minimum similarity for the global search API. Stricter than the agent threshold since search results are shown directly to the user.                                          |
-| `LLM_TEMPERATURE`             | 0.2     | 0, 0.1, 0.2    | Controls LLM response randomness. Lower values produce more deterministic, factual outputs — best for legal document extraction.                                              |
-| `MAX_RETRIEVAL_ATTEMPTS`      | 3       | 2 - 5          | Maximum retrieval-evaluation loop iterations before the agent proceeds with available context. Higher values improve recall for hard questions but increase latency.          |
-| `MAX_SUB_QUERIES`             | 3       | 2 - 5          | Maximum sub-queries generated for multi-section or cross-document questions. More sub-queries improve recall but add LLM calls and latency.                                   |
-| `EVAL_CHUNK_SAMPLE`           | 8       | 5 - 15         | Number of retrieved chunks shown to the sufficiency evaluator. More chunks give the evaluator a better picture but increase token usage.                                      |
-| `EVAL_SNIPPET_LENGTH`         | 200     | 150 - 500      | Characters per chunk shown to the sufficiency evaluator. Longer snippets help the evaluator judge relevance but cost more tokens.                                             |
-| `EMBEDDING_BATCH_SIZE`        | 50      | 20 - 100       | Chunks processed per embedding API call during ingestion. Larger batches are faster but may hit API rate limits or payload size limits.                                       |
-| `CONVERSATION_HISTORY_LIMIT`  | 10      | 6, 10, 20      | Number of recent messages loaded as context for follow-up questions. More history improves multi-turn coherence but increases token usage.                                    |
-| `SUMMARY_CONTEXT_CHUNKS`      | 30      | 20, 30, 50     | Number of document chunks fed to the summary/risk/gap generation prompts. More chunks produce richer analysis but risk exceeding model token limits.                          |
+| Variable                     | Default | Range to try   | Description                                                                                                                                                                   |
+| ---------------------------- | ------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHUNK_SIZE`                 | 1000    | 500, 800, 1200 | Target chunk size in characters. Smaller chunks give more precise retrieval but less context per chunk; larger chunks preserve more context but reduce retrieval granularity. |
+| `CHUNK_OVERLAP`              | 200     | 100, 200, 300  | Character overlap between consecutive chunks. Higher overlap reduces information loss at chunk boundaries but increases total chunk count and storage.                        |
+| `SIMILARITY_THRESHOLD`       | 0.4     | 0.3 - 0.6      | Minimum cosine similarity score for a retrieved chunk to be included. Too low introduces noise; too high drops relevant but loosely matching chunks.                          |
+| `RETRIEVAL_TOP_K`            | 5       | 5, 8, 10       | Number of top chunks returned per vector search query. More chunks improve recall but add noise and increase token usage in the synthesis prompt.                             |
+| `LLM_TEMPERATURE`            | 0.2     | 0, 0.1, 0.2    | Controls LLM response randomness. Lower values produce more deterministic, factual outputs — best for legal document extraction.                                              |
+| `MAX_RETRIEVAL_ATTEMPTS`     | 3       | 2 - 5          | Maximum retrieval-evaluation loop iterations before the agent proceeds with available context. Higher values improve recall for hard questions but increase latency.          |
+| `MAX_SUB_QUERIES`            | 3       | 2 - 5          | Maximum sub-queries generated for multi-section or cross-document questions. More sub-queries improve recall but add LLM calls and latency.                                   |
+| `EVAL_CHUNK_SAMPLE`          | 8       | 5 - 15         | Number of retrieved chunks shown to the sufficiency evaluator. More chunks give the evaluator a better picture but increase token usage.                                      |
+| `EVAL_SNIPPET_LENGTH`        | 200     | 150 - 500      | Characters per chunk shown to the sufficiency evaluator. Longer snippets help the evaluator judge relevance but cost more tokens.                                             |
+| `EMBEDDING_BATCH_SIZE`       | 50      | 20 - 100       | Chunks processed per embedding API call during ingestion. Larger batches are faster but may hit API rate limits or payload size limits.                                       |
+| `CONVERSATION_HISTORY_LIMIT` | 10      | 6, 10, 20      | Number of recent messages loaded as context for follow-up questions. More history improves multi-turn coherence but increases token usage.                                    |
+| `SUMMARY_CONTEXT_CHUNKS`     | 30      | 20, 30, 50     | Number of document chunks fed to the summary/risk/gap generation prompts. More chunks produce richer analysis but risk exceeding model token limits.                          |
 
 ### 5. Start the dev server
 
