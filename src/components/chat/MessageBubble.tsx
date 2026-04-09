@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Copy, Check, FileText } from "lucide-react";
 
 import { CitationCard } from "@/components/chat/CitationCard";
+import { Markdown } from "@/components/chat/Markdown";
 import type { Citation } from "@/types/conversation";
 
 import { cn } from "@/lib/utils";
@@ -156,22 +157,19 @@ export function MessageBubble({ role, content, citations, onCitationClick }: Mes
       >
         {/* Response text: annotated with colored borders for multi-doc, or plain */}
         {annotated ? (
-          <div className="space-y-2">
+          <div>
             {annotated.map((para, i) => {
               const color =
                 para.docIndex !== null ? DOC_COLORS[para.docIndex % DOC_COLORS.length] : null;
               return (
-                <div
-                  key={i}
-                  className={cn("whitespace-pre-wrap", color && "border-l-2 pl-3", color?.border)}
-                >
-                  {para.text}
+                <div key={i} className={cn(color && "border-l-2 pl-3", color?.border)}>
+                  <Markdown content={para.text} />
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="whitespace-pre-wrap">{content}</div>
+          <Markdown content={content} />
         )}
         {!isUser && (
           <button
