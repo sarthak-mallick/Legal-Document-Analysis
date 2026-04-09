@@ -38,13 +38,20 @@ function extractCitations(
       .replace(/\s{2,}/g, " ")
       .trim();
 
-    // Extract sentences that look like real prose (start with capital, 7+ words, end with period)
+    if (!collapsed) return "";
+
+    // Extract sentences that look like real prose (start with capital, 5+ words, end with period)
     const sentences = collapsed.match(/[A-Z][^.!?]*(?:[.!?](?:\s|$))/g) ?? [];
-    const prose = sentences.find((s) => s.split(/\s+/).length >= 7);
+    const prose = sentences.find((s) => s.split(/\s+/).length >= 5);
 
-    if (!prose) return "";
+    if (prose) {
+      return prose.length > 200 ? prose.slice(0, 200).replace(/\s+\S*$/, "") + "…" : prose.trim();
+    }
 
-    return prose.length > 200 ? prose.slice(0, 200).replace(/\s+\S*$/, "") + "…" : prose.trim();
+    // Fallback: return the beginning of the content when no prose sentence is found
+    return collapsed.length > 200
+      ? collapsed.slice(0, 200).replace(/\s+\S*$/, "") + "…"
+      : collapsed;
   }
 
   function addChunk(chunk: (typeof chunks)[0] | undefined) {
