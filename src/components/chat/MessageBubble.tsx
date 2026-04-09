@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { Copy, Check, User, Bot } from "lucide-react";
 
 import { CitationCard } from "@/components/chat/CitationCard";
 import type { Citation } from "@/types/conversation";
-
-import { cn } from "@/lib/utils";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -30,27 +29,33 @@ export function MessageBubble({ role, content, citations, onCitationClick }: Mes
   }, [content]);
 
   return (
-    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-      <div
-        className={cn(
-          "group relative max-w-[80%] space-y-2 rounded-2xl px-4 py-3 text-sm",
-          isUser ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+    <div className="group flex gap-3">
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-background">
+        {isUser ? (
+          <User className="h-3.5 w-3.5 text-foreground" />
+        ) : (
+          <Bot className="h-3.5 w-3.5 text-foreground" />
         )}
-      >
-        <div className="whitespace-pre-wrap">{content}</div>
-        {!isUser && (
-          <button
-            onClick={handleCopy}
-            className="absolute right-2 top-2 hidden rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition hover:bg-secondary hover:text-foreground group-hover:inline-block"
-          >
-            {copied ? "Copied" : "Copy"}
-          </button>
-        )}
+      </div>
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-foreground">
+            {isUser ? "You" : "Assistant"}
+          </span>
+          {!isUser && (
+            <button
+              onClick={handleCopy}
+              className="hidden rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground group-hover:inline-flex"
+              type="button"
+            >
+              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            </button>
+          )}
+        </div>
+        <div className="whitespace-pre-wrap text-sm text-foreground">{content}</div>
         {citations && citations.length > 0 && (
-          <div className="mt-3 space-y-1.5 border-t border-border/50 pt-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Sources
-            </p>
+          <div className="mt-3 space-y-1.5 border-t border-border pt-3">
+            <p className="text-xs font-medium text-muted-foreground">Sources</p>
             {citations.map((citation, i) => (
               <CitationCard
                 citation={citation}

@@ -1,5 +1,7 @@
 "use client";
 
+import { FileText } from "lucide-react";
+
 import type { DocumentRecord } from "@/types/document";
 
 import { cn } from "@/lib/utils";
@@ -20,27 +22,30 @@ export function DocumentSelector({ documents, selectedIds, onToggle }: DocumentS
 
   return (
     <div className="space-y-1.5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        Documents
-      </p>
+      <p className="text-xs font-medium text-muted-foreground">Documents</p>
       {documents.map((doc) => {
         const selected = selectedIds.includes(doc.id);
         return (
           <button
             key={doc.id}
             className={cn(
-              "w-full rounded-lg px-3 py-2 text-left text-sm transition",
+              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
               selected
-                ? "bg-primary/10 font-medium text-primary"
-                : "text-foreground hover:bg-muted",
+                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50",
             )}
             onClick={() => onToggle(doc.id)}
             type="button"
           >
-            <p className="truncate">{doc.filename}</p>
-            {doc.document_type && (
-              <p className="text-xs text-muted-foreground">{doc.document_type}</p>
-            )}
+            <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="truncate text-sm">{doc.filename}</p>
+              {doc.document_type && (
+                <p className="text-xs text-muted-foreground">
+                  {doc.document_type.replace(/_/g, " ")}
+                </p>
+              )}
+            </div>
           </button>
         );
       })}

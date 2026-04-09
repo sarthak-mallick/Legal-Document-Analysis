@@ -3,8 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { PanelLeft, Scale } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { UserMenu } from "@/components/ui/user-menu";
 
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { ConversationSidebar } from "@/components/chat/ConversationSidebar";
@@ -87,10 +90,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
   }, []);
 
   const handleConversationCreated = useCallback((newId: string) => {
-    // Update the URL without triggering a Next.js navigation so the
-    // in-progress stream isn't killed by a component remount.
     window.history.replaceState(null, "", `/chat/${newId}`);
-    // Refresh conversation list
     fetch("/api/conversations", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => setConversations(data.conversations ?? []))
@@ -136,69 +136,95 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
   }
 
   return (
-    <div className="flex h-screen">
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-card-bg p-4 transition-transform md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        <div className="flex items-center justify-between">
+    <div className="flex h-screen flex-col">
+      {/* Header */}
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+        <div className="flex items-center gap-2">
+          <Button
+            className="md:hidden"
+            onClick={() => setSidebarOpen(true)}
+            variant="ghost"
+            size="icon"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </Button>
+          <Link href="/" className="flex items-center gap-2">
+            <Scale className="h-5 w-5 text-foreground" />
+            <span className="text-sm font-semibold tracking-tight">Legal AI</span>
+          </Link>
+          <span className="text-border">/</span>
+          <span className="text-sm text-muted-foreground">Chat</span>
+          {selectedDocIds.length === 0 && (
+            <span className="ml-2 rounded-md bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600 dark:text-amber-400">
+              Select a document to start
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
           <Link
             href={"/dashboard" as never}
-            className="text-xs font-medium text-primary hover:underline"
+            className="inline-flex h-9 items-center rounded-md px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            Back to Dashboard
+            Dashboard
           </Link>
-          <Button className="md:hidden" onClick={() => setSidebarOpen(false)} variant="ghost">
-            Close
-          </Button>
+          <UserMenu />
+          <ThemeToggle />
         </div>
-        <DocumentSelector
-          documents={documents}
-          selectedIds={selectedDocIds}
-          onToggle={handleDocToggle}
-        />
-        <ConversationSidebar
-          conversations={conversations}
-          activeId={conversationId}
-          onDelete={handleDeleteConversation}
-          onRename={handleRenameConversation}
-        />
-      </aside>
+      </header>
 
-      {/* Chat area */}
-      <main className="flex flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-border bg-card-bg px-4 py-3 md:px-6">
-          <Button className="md:hidden" onClick={() => setSidebarOpen(true)} variant="ghost">
-            Menu
-          </Button>
-          <h1 className="font-serif text-lg text-foreground">Chat</h1>
-          {selectedDocIds.length === 0 && (
-            <p className="text-xs text-amber-600">Select a document to start chatting.</p>
-          )}
-        </header>
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <ChatWindow
-              conversationId={conversationId}
-              documentIds={selectedDocIds}
-              initialMessages={initialMessages}
-              onConversationCreated={handleConversationCreated}
-              onCitationClick={setPreviewCitation}
-            />
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/50 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-sidebar p-4 transition-transform md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          <div className="flex items-center justify-between md:hidden">
+            <span className="text-sm font-medium">Menu</span>
+            <Button onClick={() => setSidebarOpen(false)} variant="ghost" size="sm">
+              Close
+            </Button>
           </div>
-          {previewCitation && (
-            <DocumentPreview citation={previewCitation} onClose={() => setPreviewCitation(null)} />
-          )}
-        </div>
-      </main>
+          <DocumentSelector
+            documents={documents}
+            selectedIds={selectedDocIds}
+            onToggle={handleDocToggle}
+          />
+          <ConversationSidebar
+            conversations={conversations}
+            activeId={conversationId}
+            onDelete={handleDeleteConversation}
+            onRename={handleRenameConversation}
+          />
+        </aside>
+
+        {/* Chat area */}
+        <main className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden">
+              <ChatWindow
+                conversationId={conversationId}
+                documentIds={selectedDocIds}
+                initialMessages={initialMessages}
+                onConversationCreated={handleConversationCreated}
+                onCitationClick={setPreviewCitation}
+              />
+            </div>
+            {previewCitation && (
+              <DocumentPreview
+                citation={previewCitation}
+                onClose={() => setPreviewCitation(null)}
+              />
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
