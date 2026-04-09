@@ -34,6 +34,8 @@ npm install
 
 **Option A: Local Supabase (recommended)**
 
+> Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) running before you start.
+
 ```bash
 npx supabase start
 # Copy the output URLs and keys into .env.local
@@ -45,13 +47,15 @@ Create a project at [supabase.com](https://supabase.com), then copy credentials 
 
 ### 3. Run the database migration
 
-```bash
-# Local Supabase
-npx supabase db reset
+**Option A: Local Supabase**
 
-# Cloud Supabase — paste the contents of supabase/migrations/001_initial_schema.sql
-# into the SQL Editor in the Supabase dashboard
+```bash
+npx supabase db reset
 ```
+
+**Option B: Supabase Cloud**
+
+Open the [SQL Editor](https://supabase.com/dashboard/project/_/sql) in your Supabase dashboard, paste the contents of `supabase/migrations/001_initial_schema.sql`, and run it.
 
 ### 4. Configure environment variables
 
