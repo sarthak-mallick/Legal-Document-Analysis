@@ -24,6 +24,7 @@ interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
   citations?: Citation[];
+  documentNames?: string[];
   onCitationClick?: (citation: Citation) => void;
 }
 
@@ -67,14 +68,9 @@ function countDocMatches(line: string, allTerms: string[][]): number[] {
 // Annotate response text with per-document colors using heading-based sections.
 //
 // Strategy: markdown headings (### ...) act as section boundaries.
-//   - If a heading matches exactly one document, ALL content below it (including
-//     blank lines, bullets, sub-paragraphs) inherits that document's color until
-//     the next heading.
-//   - If a heading matches zero or multiple documents (e.g. "Summary of Differences"),
-//     the entire section is neutral — no per-line tagging within it.
-//   - Content before the first heading is neutral.
-//
-// Falls back to no annotation if there are no headings.
+//   - If a heading matches exactly one document → that document's color
+//   - If it matches zero or multiple → neutral (no color)
+//   - Content before the first heading is neutral
 function annotateParagraphs(
   content: string,
   filenames: string[],
@@ -95,10 +91,8 @@ function annotateParagraphs(
   const tagged = lines.map((text) => {
     const trimmed = text.trim();
 
-    // Detect heading lines
     if (/^#{1,4}\s/.test(trimmed)) {
       const matches = countDocMatches(trimmed, allTerms);
-      // Only color the section if exactly one document matches the heading
       sectionDocIndex = matches.length === 1 ? matches[0] : null;
     }
 
@@ -123,7 +117,13 @@ function annotateParagraphs(
 }
 
 // Renders a single chat message bubble, user on the right, assistant on the left.
-export function MessageBubble({ role, content, citations, onCitationClick }: MessageBubbleProps) {
+export function MessageBubble({
+  role,
+  content,
+  citations,
+  documentNames = [],
+  onCitationClick,
+}: MessageBubbleProps) {
   const isUser = role === "user";
   const [copied, setCopied] = useState(false);
 
@@ -140,12 +140,19 @@ export function MessageBubble({ role, content, citations, onCitationClick }: Mes
   const groups = citations && citations.length > 0 ? groupByDocument(citations) : [];
   const isMultiDoc = groups.length > 1;
 
+  // Use documentNames for text annotation when citation filenames are unavailable
+  // (e.g. messages saved before filename was added to citations)
+  const annotationNames = useMemo(() => {
+    if (isMultiDoc) return groups.map((g) => g.filename);
+    if (documentNames.length > 1) return documentNames;
+    return [];
+  }, [isMultiDoc, groups, documentNames]);
+
   // For multi-doc responses, annotate paragraphs with document colors
   const annotated = useMemo(() => {
-    if (!isMultiDoc) return null;
-    const filenames = groups.map((g) => g.filename);
-    return annotateParagraphs(content, filenames);
-  }, [content, groups, isMultiDoc]);
+    if (annotationNames.length < 2) return null;
+    return annotateParagraphs(content, annotationNames);
+  }, [content, annotationNames]);
 
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>

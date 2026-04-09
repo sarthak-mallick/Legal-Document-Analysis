@@ -163,7 +163,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
           <span className="text-sm text-muted-foreground">Chat</span>
           {selectedDocIds.length === 0 && (
             <span className="ml-2 rounded-md bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600 dark:text-amber-400">
-              Select a document to start
+              Select a documents to start
             </span>
           )}
         </div>
@@ -199,7 +199,9 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
             </Button>
           </div>
           <DocumentSelector
-            documents={documents}
+            documents={
+              docsLocked ? documents.filter((d) => selectedDocIds.includes(d.id)) : documents
+            }
             selectedIds={selectedDocIds}
             disabled={docsLocked}
             onToggle={handleDocToggle}
@@ -219,6 +221,9 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
               <ChatWindow
                 conversationId={conversationId}
                 documentIds={selectedDocIds}
+                documentNames={documents
+                  .filter((d) => selectedDocIds.includes(d.id))
+                  .map((d) => d.filename)}
                 initialMessages={initialMessages}
                 onConversationCreated={handleConversationCreated}
                 onCitationClick={setPreviewCitation}
