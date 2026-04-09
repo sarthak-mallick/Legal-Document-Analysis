@@ -22,21 +22,41 @@ export async function storeDocumentChunks(documentId: string, chunks: DocumentCh
   const embeddings = getEmbeddings();
   const supabase = createSupabaseAdminClient();
 
-  for (let index = 0; index < chunks.length; index += BATCH_SIZE) {
-    const batch = chunks.slice(index, index + BATCH_SIZE);
+  // Filter out chunks with empty content — the embedding API returns
+  // zero-dimension vectors for blank strings, which Supabase rejects.
+  const validChunks = chunks.filter((chunk) => chunk.content.trim().length > 0);
+
+  for (let index = 0; index < validChunks.length; index += BATCH_SIZE) {
+    const batch = validChunks.slice(index, index + BATCH_SIZE);
 
     try {
-      const vectors = await embeddings.embedDocuments(batch.map((chunk) => chunk.content));
-      const rows = batch.map((chunk, batchIndex) => ({
-        content: chunk.content,
-        chunk_index: chunk.chunkIndex,
-        chunk_type: chunk.chunkType,
-        document_id: documentId,
-        embedding: vectors[batchIndex],
-        metadata: chunk.metadata,
-        page_number: chunk.pageNumber,
-        section_title: chunk.sectionTitle,
-      }));
+      const contents = batch.map((chunk) => chunk.content);
+      const vectors = await embeddings.embedDocuments(contents);
+      console.info("[ingestion] Embedding batch result", {
+        batchIndex: index,
+        inputCount: contents.length,
+        vectorCount: vectors.length,
+        dimensions: vectors.map((v) => v?.length ?? 0),
+        sampleContentLengths: contents.map((c) => c.length),
+      });
+
+      // Skip chunks whose embedding came back empty (API occasionally
+      // returns zero-length vectors for very short or unusual input).
+      const rows = batch
+        .map((chunk, batchIndex) => ({
+          content: chunk.content,
+          chunk_index: chunk.chunkIndex,
+          chunk_type: chunk.chunkType,
+          document_id: documentId,
+          embedding: vectors[batchIndex],
+          metadata: chunk.metadata,
+          page_number: chunk.pageNumber,
+          section_title: chunk.sectionTitle,
+        }))
+        .filter((row) => row.embedding && row.embedding.length > 0);
+
+      if (rows.length === 0) continue;
+
       const { error } = await supabase.from("document_chunks").insert(rows);
 
       if (error) {
