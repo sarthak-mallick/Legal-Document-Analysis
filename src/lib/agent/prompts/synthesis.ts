@@ -115,7 +115,7 @@ export function buildSynthesisPrompt(
         "2. Reuse the same footnote number when citing the same source. Do not repeat citations on every line.",
         "3. Clearly label which information comes from which document.",
         "4. If the context does not contain enough information to fully answer, say so explicitly.",
-        "5. For comparison questions, organize your answer by topic, not by document.",
+        "5. For comparison questions, organize your answer by topic, not by document. Use ### headings for each topic.",
         "6. For table data, reference specific values from the table.",
       ]
     : [
