@@ -19,6 +19,8 @@ export interface MessageRecord {
 
 export interface Citation {
   chunk_id: string;
+  document_id?: string;
+  filename?: string;
   section_title: string | null;
   page_number: number | null;
   snippet: string;

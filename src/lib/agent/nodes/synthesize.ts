@@ -10,10 +10,12 @@ function extractCitations(
   text: string,
   chunks: {
     id: string;
+    document_id: string;
     section_title: string | null;
     page_number: number | null;
     content: string;
   }[],
+  documentMetas: { id: string; filename: string }[],
 ): Citation[] {
   const citations: Citation[] = [];
   const seen = new Set<string>();
@@ -48,8 +50,11 @@ function extractCitations(
   function addChunk(chunk: (typeof chunks)[0] | undefined) {
     if (chunk && !seen.has(chunk.id)) {
       seen.add(chunk.id);
+      const meta = documentMetas.find((d) => d.id === chunk.document_id);
       citations.push({
         chunk_id: chunk.id,
+        document_id: chunk.document_id,
+        filename: meta?.filename ?? undefined,
         section_title: chunk.section_title,
         page_number: chunk.page_number,
         snippet: makeSnippet(chunk.content),
@@ -145,7 +150,7 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
     }
   }
 
-  const citations = extractCitations(content, state.retrievedChunks);
+  const citations = extractCitations(content, state.retrievedChunks, state.documentMetas ?? []);
 
   // Strip the "Sources" / "References" footer from the displayed response — the citation cards handle this.
   const displayContent = content
