@@ -28,6 +28,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [initialMessages, setInitialMessages] = useState<MessageRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [docsLocked, setDocsLocked] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [previewCitation, setPreviewCitation] = useState<Citation | null>(null);
 
@@ -66,6 +67,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
   useEffect(() => {
     if (!conversationId) {
       setInitialMessages([]);
+      setDocsLocked(false);
       return;
     }
 
@@ -74,9 +76,13 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
         const res = await fetch(`/api/conversations/${conversationId}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        setInitialMessages(data.messages ?? []);
+        const msgs = data.messages ?? [];
+        setInitialMessages(msgs);
         if (data.conversation?.document_ids?.length) {
           setSelectedDocIds(data.conversation.document_ids);
+        }
+        if (msgs.length > 0) {
+          setDocsLocked(true);
         }
       } catch (error) {
         console.error("[chat] Failed to load conversation", error);
@@ -91,6 +97,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
 
   const handleConversationCreated = useCallback((newId: string) => {
     window.history.replaceState(null, "", `/chat/${newId}`);
+    setDocsLocked(true);
     fetch("/api/conversations", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => setConversations(data.conversations ?? []))
@@ -194,6 +201,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
           <DocumentSelector
             documents={documents}
             selectedIds={selectedDocIds}
+            disabled={docsLocked}
             onToggle={handleDocToggle}
           />
           <ConversationSidebar
