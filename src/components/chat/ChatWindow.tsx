@@ -12,6 +12,7 @@ import type { Citation, MessageRecord } from "@/types/conversation";
 interface ChatWindowProps {
   conversationId: string | null;
   documentIds: string[];
+  documentNames?: string[];
   initialMessages?: MessageRecord[];
   onConversationCreated?: (conversationId: string) => void;
   onCitationClick?: (citation: Citation) => void;
@@ -28,6 +29,7 @@ interface DisplayMessage {
 export function ChatWindow({
   conversationId: initialConversationId,
   documentIds,
+  documentNames = [],
   initialMessages = [],
   onConversationCreated,
   onCitationClick,
@@ -185,6 +187,7 @@ export function ChatWindow({
               <MessageBubble
                 citations={msg.citations}
                 content={msg.content}
+                documentNames={documentNames}
                 key={msg.id}
                 role={msg.role}
                 onCitationClick={onCitationClick}

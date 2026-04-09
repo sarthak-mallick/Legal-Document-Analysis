@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { MessageSquare, Scale } from "lucide-react";
 
-import { DocumentSearch } from "@/components/documents/DocumentSearch";
 import { UploadDashboard } from "@/components/documents/UploadDashboard";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { UserMenu } from "@/components/ui/user-menu";
@@ -42,7 +41,6 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="space-y-6">
-          <DocumentSearch />
           <UploadDashboard />
         </div>
       </main>

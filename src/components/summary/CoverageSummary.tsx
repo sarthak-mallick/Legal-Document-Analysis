@@ -3,6 +3,7 @@
 import { AlertTriangle, Info, AlertCircle } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { Markdown } from "@/components/chat/Markdown";
 
 interface RiskFlag {
   title: string;
@@ -43,15 +44,9 @@ export function CoverageSummary({ summary, riskFlags }: CoverageSummaryProps) {
     <div className="space-y-6">
       <Card>
         <h3 className="mb-3 text-sm font-semibold text-foreground">Document Summary</h3>
-        <div
-          className="text-sm leading-relaxed text-foreground"
-          dangerouslySetInnerHTML={{
-            __html: summary
-              .replace(/\n/g, "<br/>")
-              .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-              .replace(/- (.+?)(?=<br|$)/g, "<li>$1</li>"),
-          }}
-        />
+        <div className="text-sm leading-relaxed text-foreground">
+          <Markdown content={summary} />
+        </div>
       </Card>
 
       {riskFlags.length > 0 && (
