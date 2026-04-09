@@ -1,34 +1,29 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 interface UploadDropzoneProps {
   isUploading: boolean;
   onUpload: (file: File) => Promise<void>;
 }
 
-// This component handles local PDF selection for the Week 1 upload flow.
+// This component handles local PDF selection for the upload flow.
 export function UploadDropzone({ isUploading, onUpload }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
 
-  // This handler forwards a selected file into the upload workflow.
   async function handleFiles(fileList: FileList | null) {
     const file = fileList?.[0];
-
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
     await onUpload(file);
   }
 
   return (
-    <Card
-      className={`border-dashed ${dragging ? "border-primary bg-primary/5" : "border-border"}`}
+    <div
+      className={`flex flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors ${dragging ? "border-primary bg-primary/5" : "border-border"}`}
       onDragOver={(event) => {
         event.preventDefault();
         setDragging(true);
@@ -40,27 +35,25 @@ export function UploadDropzone({ isUploading, onUpload }: UploadDropzoneProps) {
         await handleFiles(event.dataTransfer.files);
       }}
     >
-      <div className="flex flex-col items-start gap-4">
-        <div className="space-y-2">
-          <p className="font-serif text-2xl text-foreground">Upload a legal document</p>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            PDF files up to 10MB. Documents are parsed with table detection, classified by type,
-            chunked, embedded, and stored for analysis.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button disabled={isUploading} onClick={() => inputRef.current?.click()}>
-            {isUploading ? "Uploading..." : "Choose PDF"}
-          </Button>
-          <Button
-            disabled={isUploading}
-            onClick={() => inputRef.current?.click()}
-            variant="secondary"
-          >
-            Drag and drop is also supported
-          </Button>
-        </div>
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        <Upload className="h-5 w-5 text-muted-foreground" />
       </div>
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-foreground">
+          {isUploading ? "Uploading..." : "Upload a legal document"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Drag and drop a PDF, or click to browse. Files up to 10MB.
+        </p>
+      </div>
+      <Button
+        disabled={isUploading}
+        onClick={() => inputRef.current?.click()}
+        variant="outline"
+        size="sm"
+      >
+        Choose PDF
+      </Button>
       <input
         accept="application/pdf"
         className="hidden"
@@ -72,6 +65,6 @@ export function UploadDropzone({ isUploading, onUpload }: UploadDropzoneProps) {
         ref={inputRef}
         type="file"
       />
-    </Card>
+    </div>
   );
 }

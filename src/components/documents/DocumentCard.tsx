@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { FileText, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ProcessingStatus } from "@/components/documents/ProcessingStatus";
 import type { DocumentRecord } from "@/types/document";
 
@@ -26,7 +26,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-// This component shows a single ingested document with selection, type badge, and debug toggle.
+// This component shows a single ingested document with selection, type badge, and delete.
 export function DocumentCard({
   document,
   deleting,
@@ -39,7 +39,12 @@ export function DocumentCard({
     DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "unknown type";
 
   return (
-    <Card className={cn("space-y-4 transition", selected && "ring-2 ring-primary ring-offset-2")}>
+    <div
+      className={cn(
+        "group rounded-lg border border-border bg-card p-4 shadow-sm transition",
+        selected && "ring-2 ring-primary ring-offset-2",
+      )}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           {onSelect && (
@@ -50,23 +55,21 @@ export function DocumentCard({
               className="mt-1.5 h-4 w-4 rounded border-border accent-primary"
             />
           )}
-          <div className="space-y-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="space-y-1">
             <Link
               href={`/dashboard/${document.id}` as never}
-              className="text-lg font-semibold text-foreground hover:text-primary hover:underline"
+              className="text-sm font-medium text-foreground hover:underline"
             >
               {document.filename}
             </Link>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>{createdDate}</span>
               <span>{document.page_count ?? "?"} pages</span>
               {document.document_type && (
-                <span
-                  className={cn(
-                    "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    "bg-blue-100 text-blue-800",
-                  )}
-                >
+                <span className="inline-flex rounded-md border border-border px-1.5 py-0.5 text-xs font-medium">
                   {docTypeLabel}
                 </span>
               )}
@@ -75,16 +78,21 @@ export function DocumentCard({
         </div>
         <ProcessingStatus status={document.upload_status} />
       </div>
-      <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-4">
-          <p className="line-clamp-2">
-            {document.summary ?? "Click filename to view details and generate summary."}
-          </p>
-        </div>
-        <Button disabled={deleting} onClick={() => onDelete(document.id)} variant="destructive">
+      <div className="mt-3 flex items-center justify-between gap-4">
+        <p className="line-clamp-1 text-xs text-muted-foreground">
+          {document.summary ?? "Click filename to view details and generate summary."}
+        </p>
+        <Button
+          disabled={deleting}
+          onClick={() => onDelete(document.id)}
+          variant="ghost"
+          size="sm"
+          className="shrink-0 text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
           {deleting ? "Deleting..." : "Delete"}
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }

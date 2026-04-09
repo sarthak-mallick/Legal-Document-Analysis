@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, Scale } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { UserMenu } from "@/components/ui/user-menu";
 import { DocumentSummaryPanel } from "@/components/summary/DocumentSummaryPanel";
 import { ProcessingStatus } from "@/components/documents/ProcessingStatus";
 import type { DocumentRecord } from "@/types/document";
@@ -40,55 +43,81 @@ export default function DocumentDetailPage() {
     load();
   }, [params.documentId]);
 
-  if (loading) {
-    return (
-      <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
-        <p className="text-sm text-muted-foreground">Loading document...</p>
-      </main>
-    );
-  }
-
-  if (!document) {
-    return (
-      <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
-        <p className="text-sm text-muted-foreground">Document not found.</p>
-        <Link href={"/dashboard" as never} className="text-sm text-primary hover:underline">
-          Back to Dashboard
-        </Link>
-      </main>
-    );
-  }
-
-  const docTypeLabel =
-    DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "Unknown";
+  const docTypeLabel = document
+    ? (DOC_TYPE_LABELS[document.document_type ?? ""] ?? document.document_type ?? "Unknown")
+    : "";
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
-      <div className="mb-6">
-        <Link href={"/dashboard" as never} className="text-sm text-primary hover:underline">
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2">
+              <Scale className="h-5 w-5 text-foreground" />
+              <span className="text-sm font-semibold tracking-tight">Legal AI</span>
+            </Link>
+            <span className="text-border">/</span>
+            <Link
+              href={"/dashboard" as never}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Dashboard
+            </Link>
+            {document && (
+              <>
+                <span className="text-border">/</span>
+                <span className="max-w-[200px] truncate text-sm text-muted-foreground">
+                  {document.filename}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <UserMenu />
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl px-6 py-8">
+        <Link
+          href={"/dashboard" as never}
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
           Back to Dashboard
         </Link>
-      </div>
 
-      <Card className="mb-6 space-y-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-serif text-2xl text-foreground">{document.filename}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <span>{document.page_count ?? "?"} pages</span>
-              <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
-                {docTypeLabel}
-              </span>
-              <span>{new Date(document.created_at).toLocaleString()}</span>
-            </div>
-          </div>
-          <ProcessingStatus status={document.upload_status} />
-        </div>
-      </Card>
+        {loading && <p className="text-sm text-muted-foreground">Loading document...</p>}
 
-      {document.upload_status === "ready" && (
-        <DocumentSummaryPanel documentId={document.id} existingSummary={document.summary} />
-      )}
-    </main>
+        {!loading && !document && (
+          <p className="text-sm text-muted-foreground">Document not found.</p>
+        )}
+
+        {!loading && document && (
+          <>
+            <Card className="mb-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-xl font-semibold tracking-tight">{document.filename}</h1>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <span>{document.page_count ?? "?"} pages</span>
+                    <span className="inline-flex rounded-md border border-border px-2 py-0.5 text-xs font-medium">
+                      {docTypeLabel}
+                    </span>
+                    <span>{new Date(document.created_at).toLocaleString()}</span>
+                  </div>
+                </div>
+                <ProcessingStatus status={document.upload_status} />
+              </div>
+            </Card>
+
+            {document.upload_status === "ready" && (
+              <DocumentSummaryPanel documentId={document.id} existingSummary={document.summary} />
+            )}
+          </>
+        )}
+      </main>
+    </div>
   );
 }

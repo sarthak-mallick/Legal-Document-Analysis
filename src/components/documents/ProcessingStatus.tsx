@@ -1,3 +1,5 @@
+import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+
 import type { UploadStatus } from "@/types/document";
 
 import { cn } from "@/lib/utils";
@@ -20,15 +22,18 @@ export function ProcessingStatus({ status }: { status: UploadStatus }) {
   const currentStep = STAGE_ORDER.indexOf(status);
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col items-end gap-1">
       <span
         className={cn(
-          "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-          status === "ready" && "bg-emerald-100 text-emerald-800",
-          isProcessing && "bg-amber-100 text-amber-900",
-          status === "error" && "bg-rose-100 text-rose-900",
+          "inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium",
+          status === "ready" && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+          isProcessing && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+          status === "error" && "bg-destructive/10 text-destructive",
         )}
       >
+        {status === "ready" && <CheckCircle2 className="h-3 w-3" />}
+        {isProcessing && <Loader2 className="h-3 w-3 animate-spin" />}
+        {status === "error" && <AlertCircle className="h-3 w-3" />}
         {STATUS_LABELS[status] ?? "Processing"}
       </span>
       {isProcessing && currentStep >= 0 && (
@@ -36,10 +41,7 @@ export function ProcessingStatus({ status }: { status: UploadStatus }) {
           {STAGE_ORDER.map((stage, i) => (
             <div
               key={stage}
-              className={cn(
-                "h-1 flex-1 rounded-full",
-                i <= currentStep ? "bg-amber-500" : "bg-muted",
-              )}
+              className={cn("h-1 w-6 rounded-full", i <= currentStep ? "bg-amber-500" : "bg-muted")}
             />
           ))}
         </div>
