@@ -150,13 +150,17 @@ export async function POST(request: Request) {
           }
         }
 
-        const agentResponse = finalState.response ?? fullResponse;
+        // finalState.response has the sources-stripped version from the synthesize node.
+        const cleanResponse = finalState.response ?? fullResponse;
 
         // If streaming produced no tokens (fallback), send the full response
-        if (!fullResponse && agentResponse) {
-          fullResponse = agentResponse;
-          await sendSSE({ type: "token", content: agentResponse });
+        if (!fullResponse && cleanResponse) {
+          await sendSSE({ type: "token", content: cleanResponse });
         }
+
+        // Send the cleaned response so the client can replace the raw
+        // streamed text (which may include a "Sources:" footer).
+        await sendSSE({ type: "response", content: cleanResponse });
 
         const citations = finalState.citations ?? [];
         const nodesVisited = finalState.nodesVisited ?? [];
@@ -183,7 +187,7 @@ export async function POST(request: Request) {
         await admin.from("messages").insert({
           conversation_id: conversationId,
           role: "assistant",
-          content: fullResponse || agentResponse,
+          content: cleanResponse,
           citations,
           tool_calls: [
             {
@@ -209,8 +213,9 @@ export async function POST(request: Request) {
       }
     })();
 
-    // Don't await — let the stream flow to the client
-    streamPromise.catch((err) => console.error("[chat] Stream promise rejected", err));
+    // Don't await — let the stream flow to the client.
+    // Suppress unhandled-rejection warnings from LangGraph internals.
+    streamPromise.catch(() => {});
 
     return new Response(readable, {
       headers: {
