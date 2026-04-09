@@ -39,10 +39,10 @@ export function ChatInput({ disabled, onSend }: ChatInputProps) {
   }
 
   return (
-    <div className="flex items-end gap-2 border-t border-slate-200 bg-white p-4">
+    <div className="flex items-end gap-2 border-t border-border bg-card-bg p-4">
       <textarea
         ref={textareaRef}
-        className="flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-1 focus:ring-primary"
+        className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary"
         disabled={disabled}
         onInput={handleInput}
         onKeyDown={handleKeyDown}

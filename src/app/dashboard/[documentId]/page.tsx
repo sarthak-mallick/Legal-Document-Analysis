@@ -46,7 +46,7 @@ export default function DocumentDetailPage() {
   if (loading) {
     return (
       <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
-        <p className="text-sm text-slate-400">Loading document...</p>
+        <p className="text-sm text-muted-foreground">Loading document...</p>
       </main>
     );
   }
@@ -54,7 +54,7 @@ export default function DocumentDetailPage() {
   if (!document) {
     return (
       <main className="mx-auto min-h-screen w-full max-w-6xl px-6 py-12">
-        <p className="text-sm text-slate-600">Document not found.</p>
+        <p className="text-sm text-muted-foreground">Document not found.</p>
         <Link href={"/dashboard" as never} className="text-sm text-primary hover:underline">
           Back to Dashboard
         </Link>
@@ -77,7 +77,7 @@ export default function DocumentDetailPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl text-foreground">{document.filename}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span>{document.page_count ?? "?"} pages</span>
               <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
                 {docTypeLabel}

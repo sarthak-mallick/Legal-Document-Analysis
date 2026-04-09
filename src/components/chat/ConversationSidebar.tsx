@@ -44,7 +44,7 @@ export function ConversationSidebar({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Conversations
         </p>
         <Link href={"/chat" as never} className="text-xs font-medium text-primary hover:underline">
@@ -52,7 +52,7 @@ export function ConversationSidebar({
         </Link>
       </div>
       {conversations.length === 0 && (
-        <p className="text-xs text-slate-400">No conversations yet.</p>
+        <p className="text-xs text-muted-foreground">No conversations yet.</p>
       )}
       {conversations.map((conv) => (
         <div
@@ -61,12 +61,12 @@ export function ConversationSidebar({
             "group flex items-center gap-1 rounded-lg px-3 py-2 text-sm transition",
             conv.id === activeId
               ? "bg-primary/10 font-medium text-primary"
-              : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
+              : "text-foreground hover:bg-muted",
           )}
         >
           {editingId === conv.id ? (
             <input
-              className="flex-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-sm outline-none focus:border-primary dark:border-slate-600 dark:bg-slate-800"
+              className="flex-1 rounded border border-border bg-card-bg px-1.5 py-0.5 text-sm text-foreground outline-none focus:border-primary"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={(e) => {
@@ -82,7 +82,7 @@ export function ConversationSidebar({
                 {conv.title ?? "Untitled"}
               </Link>
               <Button
-                className="hidden text-xs text-slate-400 hover:text-primary group-hover:inline-flex"
+                className="hidden text-xs text-muted-foreground hover:text-primary group-hover:inline-flex"
                 onClick={(e) => {
                   e.preventDefault();
                   startEditing(conv);
@@ -92,7 +92,7 @@ export function ConversationSidebar({
                 Rename
               </Button>
               <Button
-                className="hidden text-xs text-slate-400 hover:text-rose-600 group-hover:inline-flex"
+                className="hidden text-xs text-muted-foreground hover:text-rose-600 group-hover:inline-flex"
                 onClick={(e) => {
                   e.preventDefault();
                   onDelete(conv.id);

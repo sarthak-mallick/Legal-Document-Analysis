@@ -1,18 +1,30 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-border: #d7d6d2;
+  --color-input: #f3f1ec;
+  --color-ring: #1b3c53;
+  --color-background: #f7f2e7;
+  --color-foreground: #17212b;
+  --color-primary: #1b3c53;
+  --color-primary-foreground: #f7f2e7;
+  --color-secondary: #d2c1a0;
+  --color-secondary-foreground: #17212b;
+  --color-accent: #9fb3c8;
+  --color-accent-foreground: #17212b;
+  --color-muted: #ece6d8;
+  --color-muted-foreground: #475569;
+  --color-destructive: #b42318;
+  --color-destructive-foreground: #fff7f7;
+  --color-card-bg: rgba(255, 255, 255, 0.8);
+  --color-parchment: rgba(210, 193, 160, 0.15);
+  --font-sans: "Avenir Next", Avenir, ui-sans-serif, system-ui;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", ui-serif, Georgia;
+  --shadow-panel: 0 24px 60px rgba(23, 33, 43, 0.12);
+}
 
 :root {
   color-scheme: light;
-  --color-background: #faf7ef;
-  --color-foreground: #17212b;
-  --color-primary: #1b3c53;
-  --color-primary-foreground: #faf7ef;
-  --color-secondary: #e8e0d0;
-  --color-secondary-foreground: #17212b;
-  --color-border: rgba(0, 0, 0, 0.1);
-  --color-card-bg: rgba(255, 255, 255, 0.8);
-  --color-parchment: rgba(210, 193, 160, 0.15);
 }
 
 .dark {
@@ -23,6 +35,14 @@
   --color-primary-foreground: #0f1419;
   --color-secondary: #2a2f35;
   --color-secondary-foreground: #e7e9ea;
+  --color-muted: #2a2f35;
+  --color-muted-foreground: #9ba3af;
+  --color-accent: #3a4550;
+  --color-accent-foreground: #e7e9ea;
+  --color-destructive: #e5453a;
+  --color-destructive-foreground: #fff7f7;
+  --color-input: #1e2329;
+  --color-ring: #8ecdf7;
   --color-border: rgba(255, 255, 255, 0.12);
   --color-card-bg: rgba(30, 35, 42, 0.8);
   --color-parchment: rgba(210, 193, 160, 0.05);

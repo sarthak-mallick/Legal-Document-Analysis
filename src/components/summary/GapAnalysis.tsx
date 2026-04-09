@@ -29,10 +29,10 @@ export function GapAnalysis({ items }: GapAnalysisProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Coverage Analysis
         </h3>
-        <div className="flex gap-3 text-xs text-slate-500">
+        <div className="flex gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
             {covered} covered
@@ -54,12 +54,12 @@ export function GapAnalysis({ items }: GapAnalysisProps) {
           return (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm"
+              className="flex items-start gap-3 rounded-lg border border-border bg-card-bg p-3 text-sm"
             >
               <span className={cn("mt-0.5 inline-block h-3 w-3 shrink-0 rounded-full", style.bg)} />
               <div className="min-w-0">
-                <p className="font-medium text-slate-800">{item.category}</p>
-                <p className="text-xs text-slate-500">
+                <p className="font-medium text-foreground">{item.category}</p>
+                <p className="text-xs text-muted-foreground">
                   {style.label}
                   {item.details && ` — ${item.details}`}
                 </p>

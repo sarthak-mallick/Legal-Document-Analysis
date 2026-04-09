@@ -27,7 +27,7 @@ export function CoverageSummary({ summary, riskFlags }: CoverageSummaryProps) {
       <Card className="prose prose-sm max-w-none">
         <h3 className="text-base font-semibold text-foreground">Document Summary</h3>
         <div
-          className="text-sm text-slate-700"
+          className="text-sm text-foreground"
           dangerouslySetInnerHTML={{
             __html: summary
               .replace(/\n/g, "<br/>")
@@ -39,7 +39,7 @@ export function CoverageSummary({ summary, riskFlags }: CoverageSummaryProps) {
 
       {riskFlags.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Risk Flags ({riskFlags.length})
           </h3>
           {riskFlags.map((flag, i) => (

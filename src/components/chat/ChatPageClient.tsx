@@ -130,7 +130,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center text-sm text-slate-400">
+      <div className="flex h-screen items-center justify-center text-sm text-muted-foreground">
         Loading...
       </div>
     );
@@ -148,7 +148,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-slate-200 bg-white p-4 transition-transform dark:border-slate-700 dark:bg-slate-900 md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-border bg-card-bg p-4 transition-transform md:static md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="flex items-center justify-between">
           <Link
@@ -176,7 +176,7 @@ export function ChatPageClient({ conversationId }: ChatPageClientProps) {
 
       {/* Chat area */}
       <main className="flex flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-900 md:px-6">
+        <header className="flex items-center gap-3 border-b border-border bg-card-bg px-4 py-3 md:px-6">
           <Button className="md:hidden" onClick={() => setSidebarOpen(true)} variant="ghost">
             Menu
           </Button>

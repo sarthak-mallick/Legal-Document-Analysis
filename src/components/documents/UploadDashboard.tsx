@@ -124,13 +124,13 @@ export function UploadDashboard() {
       <UploadDropzone isUploading={isUploading} onUpload={handleUpload} />
       {(errorMessage || statusMessage) && (
         <Card className="space-y-2">
-          {statusMessage && <p className="text-sm text-slate-700">{statusMessage}</p>}
+          {statusMessage && <p className="text-sm text-foreground">{statusMessage}</p>}
           {errorMessage && <p className="text-sm text-rose-700">{errorMessage}</p>}
         </Card>
       )}
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-3 text-sm">
-          <span className="text-slate-600">{selectedIds.length} selected</span>
+          <span className="text-muted-foreground">{selectedIds.length} selected</span>
           <Button onClick={handleBatchDelete} variant="destructive">
             Delete Selected
           </Button>

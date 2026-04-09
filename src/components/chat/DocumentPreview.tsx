@@ -10,12 +10,12 @@ interface DocumentPreviewProps {
 // Slide-out panel showing the source chunk content for a clicked citation.
 export function DocumentPreview({ citation, onClose }: DocumentPreviewProps) {
   return (
-    <div className="flex h-full w-80 shrink-0 flex-col border-l border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+    <div className="flex h-full w-80 shrink-0 flex-col border-l border-border bg-card-bg">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h3 className="text-sm font-semibold text-foreground">Source Preview</h3>
         <button
           onClick={onClose}
-          className="text-xs text-slate-400 transition hover:text-slate-600"
+          className="text-xs text-muted-foreground transition hover:text-foreground"
           type="button"
         >
           Close
@@ -27,10 +27,10 @@ export function DocumentPreview({ citation, onClose }: DocumentPreviewProps) {
             {citation.section_title ?? "Unknown Section"}
           </p>
           {citation.page_number && (
-            <p className="text-xs text-slate-400">Page {citation.page_number}</p>
+            <p className="text-xs text-muted-foreground">Page {citation.page_number}</p>
           )}
         </div>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
           {citation.snippet}
         </p>
       </div>

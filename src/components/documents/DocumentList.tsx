@@ -20,7 +20,7 @@ export function DocumentList({
 }: DocumentListProps) {
   if (!documents.length) {
     return (
-      <div className="rounded-[28px] border border-dashed border-border bg-white/40 p-8 text-sm text-slate-600">
+      <div className="rounded-[28px] border border-dashed border-border bg-card-bg/40 p-8 text-sm text-muted-foreground">
         No documents uploaded yet. Add a PDF to start the ingestion pipeline.
       </div>
     );

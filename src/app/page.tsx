@@ -10,13 +10,13 @@ export default function HomePage() {
       <div className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr]">
         <section className="space-y-8">
           <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-muted-foreground">
               Legal Document Analysis
             </p>
             <h1 className="max-w-3xl font-serif text-5xl leading-tight text-foreground sm:text-6xl">
               Upload legal documents. Ask questions. Get cited answers.
             </h1>
-            <p className="max-w-2xl text-lg text-slate-600">
+            <p className="max-w-2xl text-lg text-muted-foreground">
               AI-powered platform for analyzing insurance policies, leases, contracts, and NDAs.
               Table-aware ingestion, multi-step reasoning, and cross-document comparison.
             </p>
@@ -41,10 +41,10 @@ export default function HomePage() {
           </div>
         </section>
         <Card className="space-y-4 bg-parchment">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             How It Works
           </p>
-          <div className="space-y-3 text-sm text-slate-700">
+          <div className="space-y-3 text-sm text-muted-foreground">
             <p>1. Upload a PDF — tables are detected and preserved</p>
             <p>2. Document is classified, chunked, and embedded</p>
             <p>3. Ask questions — the agent retrieves, reasons, and cites</p>
@@ -82,7 +82,7 @@ export default function HomePage() {
         ].map((item) => (
           <Card className="min-h-32" key={item.title}>
             <p className="font-serif text-xl text-foreground">{item.title}</p>
-            <p className="mt-2 text-sm text-slate-600">{item.desc}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{item.desc}</p>
           </Card>
         ))}
       </section>
