@@ -188,3 +188,80 @@ Hard-won fixes and non-obvious issues encountered during development.
 **Root cause:** When the `meta` SSE event arrives with the new conversation ID, `onConversationCreated` fires `router.replace(`/chat/${newId}`)`. In Next.js App Router, this triggers a route navigation from `/chat` to `/chat/[id]`, which unmounts and remounts `ChatPageClient` and `ChatWindow`. The in-progress fetch stream continues in the background but its `setState` calls target the now-unmounted component instance — all tokens are silently discarded.
 
 **Fix:** Replaced `router.replace()` with `window.history.replaceState(null, "", `/chat/${newId}`)`. This updates the browser URL bar without triggering a Next.js navigation, so the component tree stays intact and the stream continues uninterrupted.
+
+---
+
+## Full UI redesign using shadcn/Vercel template patterns
+
+**Date:** 2026-04-09
+**Scope:** 37 files changed across the entire frontend
+
+**What was done:**
+
+1. **Theme system overhaul** — Replaced the warm parchment color palette with shadcn's default neutral/zinc theme using `oklch` color values. Added proper sidebar color tokens, smooth scrollbar styling, and consistent light/dark mode.
+
+2. **Typography** — Switched from Avenir Next / Iowan Old Style to Inter via `next/font/google` for crisp, modern readability.
+
+3. **Icon system** — Added `lucide-react` throughout: Sun/Moon theme toggle, User/LogOut in user menu, FileText for documents, Bot/User avatars in chat, CheckCircle2/Loader2/AlertCircle for processing status, Upload for dropzone, etc.
+
+4. **Landing page** — Sticky blur header with logo, pill badge ("AI-Powered Legal Analysis"), bold split-tone headline, centered hero with CTA buttons, numbered "How it works" cards, feature grid with icon cards that animate on hover, footer.
+
+5. **Auth pages** — Split-screen layout with a dark branding panel (testimonial quote) on the left and clean form on the right, matching shadcn's `login-04` block pattern.
+
+6. **Dashboard** — Sticky header with breadcrumb navigation (`Legal AI / Dashboard`), integrated search bar with icon, centered upload dropzone with dashed border and upload icon, cleaner document cards with file icons and inline type badges.
+
+7. **Chat interface** — Top header bar with breadcrumbs, sidebar using dedicated sidebar color tokens, modern chat input with embedded arrow-up send button, messages as left/right bubbles with distinct colors (user: dark primary, assistant: muted gray).
+
+8. **Component primitives** — Button gained `outline` and `icon` size variants. Card switched to clean `rounded-lg` with subtle shadow. Skeleton uses new radius tokens.
+
+---
+
+## Chat bubbles lacked visual distinction between user and assistant
+
+**Date:** 2026-04-09
+**Symptom:** User and assistant messages looked identical — same alignment, same background, hard to scan a conversation.
+
+**Fix:** User messages align right with `bg-primary` (dark), assistant messages align left with `bg-muted` (light gray). Streaming message uses the same left-aligned muted style.
+
+---
+
+## Citations in cross-document comparisons didn't show which document each source came from
+
+**Date:** 2026-04-09
+**Symptom:** When comparing two documents, the Sources section listed all citations flat with no document attribution. Users couldn't tell which source belonged to which document.
+
+**Root cause:** The `Citation` type only had `chunk_id`, `section_title`, `page_number`, and `snippet` — no `document_id` or `filename`. The `extractCitations` function in `synthesize.ts` didn't carry document metadata from the retrieved chunks.
+
+**Fix:**
+
+1. Extended `Citation` with optional `document_id` and `filename` fields.
+2. Updated `extractCitations` to accept `documentMetas` and populate the new fields by matching each chunk's `document_id` to its document metadata.
+3. Updated `MessageBubble` to group citations by document when multiple documents are present. Each group gets a colored dot and filename header; citation badges use the matching color.
+4. Updated `DocumentPreview` panel to show the source filename.
+
+**Single-document queries remain unchanged** — flat citation list with default styling.
+
+---
+
+## Cross-document comparison responses had no visual per-document attribution in the text
+
+**Date:** 2026-04-09
+**Symptom:** The comparison response text discussed both documents but there was no visual way to tell which paragraphs referenced which document without reading carefully.
+
+**Fix:** Added color-coded left borders to response paragraphs for multi-document queries. The annotation logic:
+
+1. **Line-level tagging** — splits the response on every newline so individual bullet points get tagged, not just double-newline paragraphs.
+2. **Fuzzy matching** — matches filenames, stems (without `.pdf`), and significant words from the filename (5+ characters) to catch references like "the lease agreement" for `Acme_Lease_Agreement.pdf`.
+3. **Carry-forward** — if a heading is tagged (e.g., "**In the Insurance Policy:**"), subsequent lines inherit that color until a blank line or different document reference resets it.
+4. **Block merging** — consecutive lines with the same document tag are merged into a single block for clean rendering.
+
+Colors match the citation section: Document A = blue border + blue badges, Document B = amber border + amber badges. Paragraphs discussing both or neither remain neutral.
+
+---
+
+## Streaming message showed only a bare blinking cursor before tokens arrived
+
+**Date:** 2026-04-09
+**Symptom:** After sending a message, the assistant bubble showed just a tiny blinking cursor bar with no other visual feedback. Looked broken rather than "thinking."
+
+**Fix:** The `StreamingMessage` component now shows three animated bouncing dots when no tokens have arrived yet. Once tokens start streaming, it switches to the normal text + blinking cursor display.
