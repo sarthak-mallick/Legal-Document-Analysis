@@ -111,29 +111,45 @@ export async function synthesize(state: AgentStateType): Promise<AgentUpdateType
     prompt += `\n\n## Table Query Result\nExtracted value for "${state.tableData.question}": ${state.tableData.answer}`;
   }
 
-  const stream = await llm.stream([
+  const messages: { role: string; content: string }[] = [
     { role: "system", content: systemPrompt },
     { role: "user", content: prompt },
-  ]);
+  ];
 
   let content = "";
   let tokenUsage = { promptTokens: 0, completionTokens: 0 };
-  for await (const chunk of stream) {
-    const token = typeof chunk.content === "string" ? chunk.content : String(chunk.content);
-    content += token;
-    if (chunk.usage_metadata) {
+
+  try {
+    const stream = await llm.stream(messages);
+    for await (const chunk of stream) {
+      const token = typeof chunk.content === "string" ? chunk.content : String(chunk.content);
+      content += token;
+      if (chunk.usage_metadata) {
+        tokenUsage = {
+          promptTokens: chunk.usage_metadata.input_tokens ?? 0,
+          completionTokens: chunk.usage_metadata.output_tokens ?? 0,
+        };
+      }
+    }
+  } catch (streamError) {
+    // Gemini streaming can fail with "Failed to parse stream" — fall back to
+    // a non-streaming call so synthesis still completes.
+    console.warn("[agent:synthesize] Stream failed, falling back to invoke", streamError);
+    const response = await llm.invoke(messages);
+    content = typeof response.content === "string" ? response.content : String(response.content);
+    if (response.usage_metadata) {
       tokenUsage = {
-        promptTokens: chunk.usage_metadata.input_tokens ?? 0,
-        completionTokens: chunk.usage_metadata.output_tokens ?? 0,
+        promptTokens: response.usage_metadata.input_tokens ?? 0,
+        completionTokens: response.usage_metadata.output_tokens ?? 0,
       };
     }
   }
 
   const citations = extractCitations(content, state.retrievedChunks);
 
-  // Strip the "Sources:" list from the displayed response — the citation cards handle this.
+  // Strip the "Sources" / "References" footer from the displayed response — the citation cards handle this.
   const displayContent = content
-    .replace(/\n*\*{0,2}Sources:?\*{0,2}\n(\[\d+\][^\n]*\n?)+/i, "")
+    .replace(/\n*[-—–]*\s*\n*\*{0,2}(?:sources|references):?\*{0,2}\s*\n+(\[\d+\][^\n]*\n*)+/gi, "")
     .trimEnd();
 
   console.info("[agent:synthesize] Response generated", {
