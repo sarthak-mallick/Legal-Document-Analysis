@@ -10,11 +10,12 @@ import { cn } from "@/lib/utils";
 interface CitationCardProps {
   citation: Citation;
   index: number;
+  color?: string;
   onClick?: () => void;
 }
 
 // Expandable citation reference showing source chunk details.
-export function CitationCard({ citation, index, onClick }: CitationCardProps) {
+export function CitationCard({ citation, index, color, onClick }: CitationCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -30,7 +31,12 @@ export function CitationCard({ citation, index, onClick }: CitationCardProps) {
       type="button"
     >
       <div className="flex items-center gap-2">
-        <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary text-[10px] font-semibold text-primary-foreground">
+        <span
+          className={cn(
+            "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold",
+            color ?? "bg-primary text-primary-foreground",
+          )}
+        >
           {index + 1}
         </span>
         <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
