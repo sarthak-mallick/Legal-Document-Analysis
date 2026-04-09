@@ -70,10 +70,14 @@ function stripListPrefix(line: string): string {
   return line.replace(/^(?:[*\-+]|\d+\.)\s+/, "").replace(/^\*{1,2}/, "");
 }
 
-// Detect if a line is a section boundary: markdown heading, or a line whose
-// content starts with a document filename (with or without bullet/bold markers).
+// Detect if a line is a section boundary: markdown heading, or a standalone
+// line (not a list item) whose content starts with a document filename.
+// List items are never boundaries — splitting mid-list fragments the markdown
+// into many single-item <ul> blocks that look unformatted.
 function isSectionBoundary(trimmed: string, allTerms: string[][]): boolean {
   if (/^#{1,4}\s/.test(trimmed)) return true;
+  // List items (bullet or numbered) must not split — they form one markdown list
+  if (/^(?:[*\-+]|\d+\.)\s/.test(trimmed)) return false;
   const content = stripListPrefix(trimmed).toLowerCase();
   for (const terms of allTerms) {
     if (content.startsWith(terms[0]) || content.startsWith(terms[1])) return true;
@@ -174,6 +178,22 @@ export function MessageBubble({
     return annotateParagraphs(content, annotationNames);
   }, [content, annotationNames]);
 
+  // Per-list-item color detection for multi-doc responses.
+  // Returns a border class when a list item references exactly one document.
+  const getItemDocColor = useMemo(() => {
+    if (annotationNames.length < 2) return undefined;
+    const allTerms = annotationNames.map(buildSearchTerms);
+    return (text: string): string | null => {
+      const lower = text.toLowerCase();
+      const matches: number[] = [];
+      for (let i = 0; i < allTerms.length; i++) {
+        if (allTerms[i].some((t) => lower.includes(t))) matches.push(i);
+      }
+      if (matches.length !== 1) return null;
+      return DOC_COLORS[matches[0] % DOC_COLORS.length].border;
+    };
+  }, [annotationNames]);
+
   return (
     <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
@@ -190,13 +210,16 @@ export function MessageBubble({
                 para.docIndex !== null ? DOC_COLORS[para.docIndex % DOC_COLORS.length] : null;
               return (
                 <div key={i} className={cn(color && "border-l-2 pl-3", color?.border)}>
-                  <Markdown content={para.text} />
+                  <Markdown
+                    content={para.text}
+                    getItemDocColor={para.docIndex === null ? getItemDocColor : undefined}
+                  />
                 </div>
               );
             })}
           </div>
         ) : (
-          <Markdown content={content} />
+          <Markdown content={content} getItemDocColor={getItemDocColor} />
         )}
         {!isUser && (
           <button
