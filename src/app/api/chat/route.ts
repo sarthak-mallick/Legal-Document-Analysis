@@ -1,10 +1,13 @@
 import { getLLM } from "@/lib/langchain/model";
+import { getNumberEnv } from "@/lib/env";
 import { getUserId } from "@/lib/auth";
 import { buildAgentGraph } from "@/lib/agent/graph";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { chatRequestSchema } from "@/lib/validations/chat";
 import { parseBody } from "@/lib/validations";
 import type { MessageRecord } from "@/types/conversation";
+
+const CONVERSATION_HISTORY_LIMIT = getNumberEnv("CONVERSATION_HISTORY_LIMIT", 10);
 
 // Generate a short title for a new conversation from the first message.
 async function generateTitle(message: string): Promise<string> {
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
       .select("id, conversation_id, role, content, citations, tool_calls, created_at")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
-      .limit(10);
+      .limit(CONVERSATION_HISTORY_LIMIT);
 
     const history = (historyRows ?? []) as MessageRecord[];
     const priorHistory = history.slice(0, -1);

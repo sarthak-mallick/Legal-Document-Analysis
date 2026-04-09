@@ -15,8 +15,23 @@ export interface DocumentRecord {
   upload_status: UploadStatus;
   page_count: number | null;
   summary: string | null;
+  risk_flags: RiskFlag[];
+  gap_analysis: GapItem[];
   created_at: string;
   updated_at: string;
+}
+
+export interface RiskFlag {
+  title: string;
+  description: string;
+  severity: "high" | "medium" | "low";
+  section: string | null;
+}
+
+export interface GapItem {
+  category: string;
+  status: "covered" | "not_covered" | "partial";
+  details: string | null;
 }
 
 export interface DocumentChunkRecord {

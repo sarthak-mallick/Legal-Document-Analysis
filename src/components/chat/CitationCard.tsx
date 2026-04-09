@@ -33,13 +33,16 @@ export function CitationCard({ citation, index, onClick }: CitationCardProps) {
           {index + 1}
         </span>
         <span className="font-medium text-foreground">
-          {citation.section_title ?? "Unknown section"}
+          {citation.section_title ??
+            (citation.page_number ? `Page ${citation.page_number}` : "Unknown source")}
         </span>
-        {citation.page_number && (
+        {citation.section_title && citation.page_number && (
           <span className="text-muted-foreground">Page {citation.page_number}</span>
         )}
       </div>
-      {expanded && <p className="mt-2 text-muted-foreground">{citation.snippet}</p>}
+      {expanded && citation.snippet && (
+        <p className="mt-2 text-muted-foreground">{citation.snippet}</p>
+      )}
     </button>
   );
 }

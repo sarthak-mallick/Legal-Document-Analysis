@@ -71,7 +71,7 @@ describe("buildSystemPrompt", () => {
   it("always includes base citation instructions", () => {
     const result = buildSystemPrompt(["insurance_policy"]);
 
-    expect(result).toContain("Always cite specific sections and page numbers");
+    expect(result).toContain("Cite sources using numbered footnotes");
     expect(result).toContain("plain English");
   });
 });

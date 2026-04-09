@@ -61,7 +61,7 @@ Open the [SQL Editor](https://supabase.com/dashboard/project/_/sql) in your Supa
 cp .env.example .env.local
 ```
 
-Fill in the required values:
+#### Credentials & API Keys
 
 | Variable                        | Required | Description                                                |
 | ------------------------------- | -------- | ---------------------------------------------------------- |
@@ -71,8 +71,35 @@ Fill in the required values:
 | `SUPABASE_SERVICE_ROLE_KEY`     | Yes      | Supabase service role key                                  |
 | `LLAMA_PARSE_API_KEY`           | No       | Enables LlamaParse table extraction (falls back to Gemini) |
 | `BRAVE_SEARCH_API_KEY`          | No       | Enables web search tool in the agent                       |
-| `CHUNK_SIZE`                    | No       | Text chunk size in characters (default: 1000)              |
-| `CHUNK_OVERLAP`                 | No       | Overlap between chunks in characters (default: 200)        |
+
+#### Model Overrides
+
+| Variable                 | Default                | Description                          |
+| ------------------------ | ---------------------- | ------------------------------------ |
+| `GEMINI_CHAT_MODEL`      | `gemini-2.5-flash`     | Google Generative AI chat model      |
+| `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | Google Generative AI embedding model |
+| `MAX_UPLOAD_SIZE_MB`     | 10                     | Maximum PDF upload size in MB        |
+
+#### RAG Hyperparameters
+
+All optional. Defaults work well out of the box — tune these when experimenting with retrieval quality.
+
+| Variable                      | Default | Range to try   | Description                                                                                                                                                                   |
+| ----------------------------- | ------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHUNK_SIZE`                  | 1000    | 500, 800, 1200 | Target chunk size in characters. Smaller chunks give more precise retrieval but less context per chunk; larger chunks preserve more context but reduce retrieval granularity. |
+| `CHUNK_OVERLAP`               | 200     | 100, 200, 300  | Character overlap between consecutive chunks. Higher overlap reduces information loss at chunk boundaries but increases total chunk count and storage.                        |
+| `SIMILARITY_THRESHOLD`        | 0.4     | 0.3 - 0.6      | Minimum cosine similarity score for a retrieved chunk to be included. Too low introduces noise; too high drops relevant but loosely matching chunks.                          |
+| `RETRIEVAL_TOP_K`             | 5       | 5, 8, 10       | Number of top chunks returned per vector search query. More chunks improve recall but add noise and increase token usage in the synthesis prompt.                             |
+| `SEARCH_TOP_K`                | 10      | 5 - 20         | Number of top chunks returned by the global search API (dashboard search).                                                                                                    |
+| `SEARCH_SIMILARITY_THRESHOLD` | 0.7     | 0.5 - 0.8      | Minimum similarity for the global search API. Stricter than the agent threshold since search results are shown directly to the user.                                          |
+| `LLM_TEMPERATURE`             | 0.2     | 0, 0.1, 0.2    | Controls LLM response randomness. Lower values produce more deterministic, factual outputs — best for legal document extraction.                                              |
+| `MAX_RETRIEVAL_ATTEMPTS`      | 3       | 2 - 5          | Maximum retrieval-evaluation loop iterations before the agent proceeds with available context. Higher values improve recall for hard questions but increase latency.          |
+| `MAX_SUB_QUERIES`             | 3       | 2 - 5          | Maximum sub-queries generated for multi-section or cross-document questions. More sub-queries improve recall but add LLM calls and latency.                                   |
+| `EVAL_CHUNK_SAMPLE`           | 8       | 5 - 15         | Number of retrieved chunks shown to the sufficiency evaluator. More chunks give the evaluator a better picture but increase token usage.                                      |
+| `EVAL_SNIPPET_LENGTH`         | 200     | 150 - 500      | Characters per chunk shown to the sufficiency evaluator. Longer snippets help the evaluator judge relevance but cost more tokens.                                             |
+| `EMBEDDING_BATCH_SIZE`        | 50      | 20 - 100       | Chunks processed per embedding API call during ingestion. Larger batches are faster but may hit API rate limits or payload size limits.                                       |
+| `CONVERSATION_HISTORY_LIMIT`  | 10      | 6, 10, 20      | Number of recent messages loaded as context for follow-up questions. More history improves multi-turn coherence but increases token usage.                                    |
+| `SUMMARY_CONTEXT_CHUNKS`      | 30      | 20, 30, 50     | Number of document chunks fed to the summary/risk/gap generation prompts. More chunks produce richer analysis but risk exceeding model token limits.                          |
 
 ### 5. Start the dev server
 

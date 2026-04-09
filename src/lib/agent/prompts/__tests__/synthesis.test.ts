@@ -110,8 +110,8 @@ describe("buildSynthesisPrompt", () => {
 
   it("uses single-doc citation format for one document", () => {
     const result = buildSynthesisPrompt("test", [makeChunk()], [], [], [makeDocMeta()]);
-    expect(result).toContain("[Section: <title>, Page: <number>]");
-    expect(result).not.toContain("[Document:");
+    expect(result).toContain("[1] Section: <title>, Page: <number>");
+    expect(result).not.toContain("[1] Document:");
   });
 
   it("uses multi-doc citation format and groups by document", () => {
@@ -122,7 +122,7 @@ describe("buildSynthesisPrompt", () => {
       makeChunk({ id: "chunk-2", document_id: "doc-2", content: "Chunk from B" }),
     ];
     const result = buildSynthesisPrompt("compare", chunks, [], [], [doc1, doc2]);
-    expect(result).toContain("[Document: <name>, Section: <title>, Page: <number>]");
+    expect(result).toContain("[1] Document: <name>, Section: <title>, Page: <number>");
     expect(result).toContain("### Document: policy-a.pdf");
     expect(result).toContain("### Document: policy-b.pdf");
   });

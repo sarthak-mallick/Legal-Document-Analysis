@@ -9,6 +9,23 @@ export function getRequiredEnv(name: string) {
   return value;
 }
 
+// This utility reads a float environment variable with a default fallback.
+export function getFloatEnv(name: string, fallback: number) {
+  const rawValue = process.env[name];
+
+  if (!rawValue) {
+    return fallback;
+  }
+
+  const parsedValue = parseFloat(rawValue);
+
+  if (Number.isNaN(parsedValue)) {
+    throw new Error(`Environment variable ${name} must be a number`);
+  }
+
+  return parsedValue;
+}
+
 // This utility reads a numeric environment variable with a default fallback.
 export function getNumberEnv(name: string, fallback: number) {
   const rawValue = process.env[name];

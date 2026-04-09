@@ -61,11 +61,24 @@ export function DocumentSummaryPanel({ documentId, existingSummary }: DocumentSu
     }
   }, [documentId]);
 
-  // Auto-generate if no summary exists
+  // Fetch persisted risk flags and gap analysis when a summary already exists
   useEffect(() => {
     if (!existingSummary) return;
     setSummary(existingSummary);
-  }, [existingSummary]);
+
+    async function fetchAnalysis() {
+      try {
+        const res = await fetch(`/api/summary/${documentId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setRiskFlags(data.riskFlags ?? []);
+        setGapAnalysis(data.gapAnalysis ?? []);
+      } catch {
+        // Silently fail — user can regenerate
+      }
+    }
+    fetchAnalysis();
+  }, [existingSummary, documentId]);
 
   return (
     <div className="space-y-6">

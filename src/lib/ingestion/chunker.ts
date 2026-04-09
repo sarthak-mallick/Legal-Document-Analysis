@@ -90,6 +90,7 @@ export async function chunkDocument(
   });
 
   const chunks: DocumentChunkInput[] = [];
+  let lastSectionTitle: string | null = null;
 
   // Index tables by page number for quick lookup
   const tablesByPage = new Map<number, ExtractedTable[]>();
@@ -105,6 +106,8 @@ export async function chunkDocument(
     // Insert table chunks as atomic units first
     for (const table of pageTables) {
       const chunkIndex = chunks.length;
+      const title = table.sectionTitle ?? lastSectionTitle;
+      if (table.sectionTitle) lastSectionTitle = table.sectionTitle;
       chunks.push({
         chunkIndex,
         chunkType: "table",
@@ -115,7 +118,7 @@ export async function chunkDocument(
           preceding_context: table.precedingContext,
         },
         pageNumber: page.pageNumber,
-        sectionTitle: table.sectionTitle,
+        sectionTitle: title,
       });
     }
 
@@ -126,6 +129,8 @@ export async function chunkDocument(
     pageChunks.forEach((chunkText) => {
       const chunkIndex = chunks.length;
       const chunkPrefix = cleanedText.slice(0, cleanedText.indexOf(chunkText));
+      const detected = detectSectionTitle(chunkPrefix);
+      if (detected) lastSectionTitle = detected;
 
       chunks.push({
         chunkIndex,
@@ -133,7 +138,7 @@ export async function chunkDocument(
         content: chunkText,
         metadata: {},
         pageNumber: page.pageNumber,
-        sectionTitle: detectSectionTitle(chunkPrefix),
+        sectionTitle: detected ?? lastSectionTitle,
       });
     });
   }

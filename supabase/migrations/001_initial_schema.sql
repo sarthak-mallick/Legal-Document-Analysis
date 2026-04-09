@@ -11,6 +11,8 @@ create table if not exists documents (
   upload_status text default 'processing',
   page_count integer,
   summary text,
+  risk_flags jsonb default '[]',
+  gap_analysis jsonb default '[]',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

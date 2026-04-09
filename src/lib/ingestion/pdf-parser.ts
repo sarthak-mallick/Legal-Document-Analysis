@@ -1,38 +1,38 @@
-import { createRequire } from "node:module";
+import { extractText, getMeta } from "unpdf";
 
 import type { ParsedDocument } from "@/lib/ingestion/types";
-
-// Load pdf-parse v1 via native require to avoid Turbopack bundling issues
-// with pdfjs-dist's worker system.
-const nativeRequire = createRequire(`${process.cwd()}/package.json`);
-const pdfParse = nativeRequire("pdf-parse") as (
-  buffer: Buffer,
-) => Promise<{ numpages: number; info: Record<string, string>; text: string }>;
 
 // This helper converts raw PDF bytes into page-aware text blocks for chunking.
 export async function parsePdf(buffer: Buffer): Promise<ParsedDocument> {
   console.info("[ingestion] Parsing PDF buffer");
 
   try {
-    const data = await pdfParse(buffer);
+    const uint8 = new Uint8Array(buffer);
+    const { totalPages, text: pageTexts } = await extractText(uint8, { mergePages: false });
+
+    let title: string | undefined;
+    try {
+      const { info } = await getMeta(uint8);
+      title = info?.Title as string | undefined;
+    } catch {
+      // Metadata extraction is best-effort
+    }
 
     console.info("[ingestion] Parsed PDF successfully", {
-      pageCount: data.numpages,
+      pageCount: totalPages,
     });
 
     return {
       metadata: {
-        pageCount: data.numpages,
-        title: data.info?.Title,
+        pageCount: totalPages,
+        title,
       },
-      // v1 doesn't support per-page extraction; pass full text as page 1.
-      // The chunker splits by headings/size anyway, so this is fine.
-      pages: [
-        {
-          pageNumber: 1,
-          text: data.text.trim(),
-        },
-      ],
+      pages: pageTexts
+        .map((text, i) => ({
+          pageNumber: i + 1,
+          text: text.trim(),
+        }))
+        .filter((p) => p.text.length > 0),
     };
   } catch (error) {
     console.error("[ingestion] PDF parsing failed", error);
