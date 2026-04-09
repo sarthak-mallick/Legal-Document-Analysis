@@ -29,9 +29,6 @@ export function DocumentSelector({
   return (
     <div className="space-y-1.5">
       <p className="text-xs font-medium text-muted-foreground">Documents</p>
-      {disabled && (
-        <p className="text-[11px] text-muted-foreground/70">Locked for this conversation</p>
-      )}
       {documents.map((doc) => {
         const selected = selectedIds.includes(doc.id);
         return (
