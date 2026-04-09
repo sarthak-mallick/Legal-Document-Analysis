@@ -2,12 +2,12 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
 
-// This component wraps a surface with the project card styling.
+// Card surface component with shadcn-style styling.
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-border/80 bg-[var(--color-card-bg)] p-6 shadow-panel backdrop-blur",
+        "rounded-lg border border-border bg-card p-6 text-card-foreground shadow-sm",
         className,
       )}
       {...props}
