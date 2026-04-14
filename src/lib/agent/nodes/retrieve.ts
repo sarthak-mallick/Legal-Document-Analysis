@@ -48,7 +48,7 @@ export function filterAndDeduplicate<T extends { id: string; similarity: number 
 
 // Perform vector search retrieval, with sub-query expansion for complex questions.
 export async function retrieve(state: AgentStateType): Promise<AgentUpdateType> {
-  const searchQuery = state.refinedQuery ?? state.query;
+  const searchQuery = state.refinedQuery ?? state.rewrittenQuery ?? state.query;
   const attempt = state.retrievalAttempts + 1;
 
   console.info("[agent:retrieve] Retrieval attempt", { attempt, query: searchQuery.slice(0, 80) });

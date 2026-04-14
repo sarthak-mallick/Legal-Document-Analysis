@@ -113,10 +113,23 @@ export async function POST(request: Request) {
     const sendSSE = (data: unknown) =>
       writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
+    // Human-friendly status messages for each agent node.
+    const NODE_STATUS: Record<string, string> = {
+      rewriteQuery: "Understanding your question…",
+      classifyQuery: "Analyzing question type…",
+      callTools: "Looking up legal terms…",
+      retrieve: "Searching documents…",
+      evaluateContext: "Evaluating relevance…",
+      compare: "Comparing documents…",
+      queryTable: "Extracting table data…",
+      synthesize: "Generating response…",
+    };
+
     // Process agent events in the background while streaming to client
     const streamPromise = (async () => {
       let fullResponse = "";
       let finalState: Partial<AgentStateType> = {};
+      const statusSent = new Set<string>();
 
       try {
         await sendSSE({ type: "meta", conversationId });
@@ -133,6 +146,15 @@ export async function POST(request: Request) {
         );
 
         for await (const event of eventStream) {
+          // Emit a status update the first time each node starts
+          if (event.event === "on_chain_start" && event.metadata?.langgraph_node) {
+            const node = event.metadata.langgraph_node as string;
+            if (NODE_STATUS[node] && !statusSent.has(node)) {
+              statusSent.add(node);
+              await sendSSE({ type: "status", content: NODE_STATUS[node] });
+            }
+          }
+
           if (
             event.event === "on_chat_model_stream" &&
             event.metadata?.langgraph_node === "synthesize"
