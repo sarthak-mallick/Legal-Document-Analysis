@@ -51,6 +51,7 @@ export interface ErrorResponse {
 // SSE event types from the chat streaming endpoint.
 export type ChatStreamEvent =
   | { type: "meta"; conversationId: string }
+  | { type: "status"; content: string }
   | { type: "token"; content: string }
   | { type: "response"; content: string }
   | { type: "citations"; citations: MessageRecord["citations"] }

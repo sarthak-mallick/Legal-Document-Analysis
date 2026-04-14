@@ -43,6 +43,7 @@ export function ChatWindow({
     })),
   );
   const [streamingContent, setStreamingContent] = useState("");
+  const [streamingStatus, setStreamingStatus] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -81,6 +82,7 @@ export function ChatWindow({
       setMessages((prev) => [...prev, userMsg]);
       setIsStreaming(true);
       setStreamingContent("");
+      setStreamingStatus("");
 
       try {
         const response = await fetch("/api/chat", {
@@ -122,6 +124,8 @@ export function ChatWindow({
                   setConversationId(event.conversationId);
                   onConversationCreated?.(event.conversationId);
                 }
+              } else if (event.type === "status") {
+                setStreamingStatus(event.content);
               } else if (event.type === "token") {
                 accumulated += event.content;
                 setStreamingContent(accumulated);
@@ -193,7 +197,9 @@ export function ChatWindow({
                 onCitationClick={onCitationClick}
               />
             ))}
-            {isStreaming && <StreamingMessage content={streamingContent} />}
+            {isStreaming && (
+              <StreamingMessage content={streamingContent} status={streamingStatus} />
+            )}
           </div>
         )}
       </div>
