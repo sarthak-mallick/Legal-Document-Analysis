@@ -1,6 +1,7 @@
 import { END, START, StateGraph } from "@langchain/langgraph";
 
 import { AgentState, type AgentStateType } from "@/lib/agent/state";
+import { rewriteQuery } from "@/lib/agent/nodes/rewrite-query";
 import { classifyQuery } from "@/lib/agent/nodes/classify-query";
 import { retrieve } from "@/lib/agent/nodes/retrieve";
 import { evaluateContext } from "@/lib/agent/nodes/evaluate-context";
@@ -10,20 +11,25 @@ import { callTools } from "@/lib/agent/nodes/call-tools";
 import { compare } from "@/lib/agent/nodes/compare";
 
 /*
-  Agent graph:
+  Agent graph (latency-optimised):
 
-  START → classifyQuery
-  classifyQuery → callTools       (if term_explanation)
-  classifyQuery → retrieve        (for document-focused queries)
+  START → rewriteQuery        (LLM only when conversation history exists)
+  rewriteQuery → classifyQuery (instant heuristic — no LLM)
+  classifyQuery → callTools    (if term_explanation)
+  classifyQuery → retrieve     (for document-focused queries)
   callTools → retrieve
-  retrieve → evaluateContext
-  evaluateContext → retrieve       (if not sufficient, attempts < 3)
-  evaluateContext → callTools      (if not sufficient and tools not yet called)
-  evaluateContext → compare        (if sufficient + cross_document)
-  evaluateContext → queryTable     (if sufficient + table chunks)
-  evaluateContext → synthesize     (if sufficient)
+  retrieve → evaluateContext   (instant heuristic — no LLM)
+  evaluateContext → retrieve   (if not sufficient, attempts < 3)
+  evaluateContext → callTools  (if not sufficient and tools not yet called)
+  evaluateContext → compare    (if sufficient + cross_document)
+  evaluateContext → queryTable (if sufficient + table chunks)
+  evaluateContext → synthesize (if sufficient)
   compare → synthesize
   queryTable → synthesize → END
+
+  Typical first question:  1 LLM call  (synthesize only)
+  Typical follow-up:       2 LLM calls (rewrite + synthesize)
+  Previously:              3-4 LLM calls (classify + evaluate + synthesize ± retry)
 */
 
 // Route after classifyQuery: term explanations go to tools first, others to retrieve.
@@ -64,6 +70,7 @@ function afterEvaluate(
 // Build and compile the LangGraph agent.
 export function buildAgentGraph() {
   const graph = new StateGraph(AgentState)
+    .addNode("rewriteQuery", rewriteQuery)
     .addNode("classifyQuery", classifyQuery)
     .addNode("callTools", callTools)
     .addNode("retrieve", retrieve)
@@ -71,7 +78,8 @@ export function buildAgentGraph() {
     .addNode("compare", compare)
     .addNode("queryTable", queryTable)
     .addNode("synthesize", synthesize)
-    .addEdge(START, "classifyQuery")
+    .addEdge(START, "rewriteQuery")
+    .addEdge("rewriteQuery", "classifyQuery")
     .addConditionalEdges("classifyQuery", afterClassify, ["callTools", "retrieve"])
     .addEdge("callTools", "retrieve")
     .addEdge("retrieve", "evaluateContext")

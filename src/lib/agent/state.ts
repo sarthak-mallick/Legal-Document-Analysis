@@ -52,6 +52,10 @@ export const AgentState = Annotation.Root({
     reducer: (_prev, next) => next,
     default: () => 0,
   }),
+  rewrittenQuery: Annotation<string | null>({
+    reducer: (_prev, next) => next,
+    default: () => null,
+  }),
   refinedQuery: Annotation<string | null>({
     reducer: (_prev, next) => next,
     default: () => null,
