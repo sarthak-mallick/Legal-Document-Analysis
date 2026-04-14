@@ -265,3 +265,39 @@ Colors match the citation section: Document A = blue border + blue badges, Docum
 **Symptom:** After sending a message, the assistant bubble showed just a tiny blinking cursor bar with no other visual feedback. Looked broken rather than "thinking."
 
 **Fix:** The `StreamingMessage` component now shows three animated bouncing dots when no tokens have arrived yet. Once tokens start streaming, it switches to the normal text + blinking cursor display.
+
+---
+
+## Agent pipeline latency: 3-7 sequential LLM calls per question
+
+**Date:** 2026-04-14
+**Symptom:** Every chat message required 3-4 sequential Gemini API calls minimum (classify → evaluate → synthesize, often more with retries). At ~1-3s per LLM round-trip, users waited 3-20s before seeing any streamed tokens. Cross-document and multi-section questions hit the worst case: classify + sub-query expansion + evaluate (×3 retries) + compare + synthesize = 7+ LLM calls.
+
+**Root cause:** The LangGraph agent used an LLM call for query classification (choosing a route label) and another for context evaluation (judging if retrieved chunks are sufficient). Neither task truly requires an LLM — classification can be pattern-matched, and evaluation can be scored from similarity metrics already available in the retrieved chunks. Additionally, follow-up questions like "What about the exclusions?" hit retrieval with zero conversation context, producing poor results that triggered evaluation retries, compounding latency.
+
+**Fix — five changes applied together:**
+
+1. **Replaced classification LLM with keyword heuristics** (`classify-query.ts`). Regex patterns detect `cross_document` (compare/difference/which-document words + multi-doc context), `term_explanation` (define/explain/what-does-X-mean), `table_lookup` (coverage limit/deductible/how much), `multi_section` (am I covered/what happens if), and `general` (greetings). Falls back to `simple_factual`. The function is now synchronous — zero latency.
+
+2. **Replaced evaluate-context LLM with heuristic scoring** (`evaluate-context.ts`). Three tiers: high-confidence fast-path (2+ chunks ≥ 0.8 similarity — already existed), medium-confidence (1+ chunks ≥ 0.4 similarity — new), and low-confidence retry with a simplified query built by stripping question words. The retry loop and max-attempts logic are preserved, but no LLM call is needed at any tier.
+
+3. **Added history-aware query rewriting** (`rewrite-query.ts`). New node at the start of the graph. On follow-up questions (conversation history exists), calls the LLM once to rewrite the query as self-contained — e.g., "What about the exclusions?" → "What are the exclusions in my insurance policy?". First messages skip the LLM entirely (pass-through). The rewritten query feeds into both classification (better routing) and retrieval (better vector search). The original `state.query` is preserved for the synthesis prompt.
+
+4. **Wired rewriteQuery into the graph** (`graph.ts`, `state.ts`, `retrieve.ts`). New `rewrittenQuery` field in agent state. Retrieve uses `refinedQuery ?? rewrittenQuery ?? query` so evaluation retries, query rewrites, and original queries all compose correctly. Graph flow: `START → rewriteQuery → classifyQuery → retrieve → evaluateContext → synthesize → END`.
+
+5. **Added streaming status events** (`route.ts`, `api.ts`, `ChatWindow.tsx`, `StreamingMessage.tsx`). Each agent node emits a human-readable status message on first entry ("Searching documents…", "Generating response…", etc.) via a new `status` SSE event type. The `StreamingMessage` component displays the current status next to the bouncing dots before tokens arrive, so users see progress instead of a blank wait.
+
+**Before vs. after (LLM calls per question):**
+
+| Scenario                                           | Before                                                      | After                                |
+| -------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------ |
+| First question (simple, high-confidence retrieval) | 2-3 (classify + evaluate + synthesize)                      | 1 (synthesize)                       |
+| First question (low-confidence, 2 retries)         | 4-5 (classify + evaluate×3 + synthesize)                    | 1 (synthesize)                       |
+| Follow-up question                                 | 3-4 (same as above, but retrieval often poor)               | 2 (rewrite + synthesize)             |
+| Cross-document comparison                          | 5-7 (classify + retrieve + evaluate + compare + synthesize) | 2-3 (rewrite + compare + synthesize) |
+
+**Trade-offs:**
+
+- Heuristic classification will occasionally misroute (e.g., novel phrasings that don't match patterns). The impact is limited — misrouting to `simple_factual` still retrieves and synthesizes correctly, just without sub-query expansion or tool calls. The synthesis LLM can compensate.
+- Heuristic evaluation is less nuanced than LLM evaluation at judging "is this context enough?" But in practice, the similarity threshold (0.4) already filters irrelevant chunks, and the synthesis LLM explicitly says when context is insufficient. The retry loop catches the zero-chunk case.
+- The query rewrite adds one LLM call to follow-ups that wasn't there before, but this is a net improvement: the rewritten query produces better retrieval results (fewer retries) and the total call count still drops.
