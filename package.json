@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "eval:gen": "vitest run --config vitest.eval.config.ts src/lib/eval/generate.eval.ts",
+    "eval": "vitest run --config vitest.eval.config.ts src/lib/eval/run.eval.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
