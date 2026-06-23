@@ -48,6 +48,10 @@ one document). But **correctness is low for both** (0.35 / 0.25) and the agent t
 some **faithfulness** for completeness. The single-shot baseline is often "faithfully
 incomplete" — grounded, but covering only one document.
 
+> ⚠️ These are single-run numbers and did NOT hold up under repeated measurement.
+> Experiment 3 (votes=3, 2 runs/setting) shows the baseline actually beats the agent on
+> cross-document **correctness**. Treat this baseline table as illustrative, not settled.
+
 ## Experiment 1 — per-document retrieval quota (REVERTED)
 
 - **Hypothesis:** a single global top-k starves non-dominant documents on multi-doc
@@ -91,12 +95,43 @@ baseline being "trivially faithful" (it answers from a narrow single-document co
 - **Thinking-budget quality sweep (agent overall, n=13):** dynamic was marginally best
   on every metric (correctness 0.596, faithfulness 0.856), thinking-off close behind
   (0.558 / 0.843), and **budget 512 was worst on every metric** — partial thinking is
-  not a sweet spot. The off-vs-dynamic quality gap (~0.02-0.04) is within run-to-run
-  noise. **Decision: thinking off** — the per-query speed win is real and measured; the
-  quality cost is within noise. Re-evaluate if correctness becomes the priority.
+  not a sweet spot. At single-run resolution the off-vs-dynamic gap looked like noise —
+  but a hardened re-measurement (Experiment 3) overturned that, so the kept settings are
+  the latency-free wins (retry-cap, sub-query-skip, eval concurrency) with thinking left
+  ON. See Experiment 3.
 - **Caveat:** full-eval wall-clock is NOT a reliable speed metric here — with
   concurrency it's dominated by rate-limit (503) retry backoff, so runs vary by luck.
   Trust the isolated per-query benchmark instead.
+
+## Experiment 3 — hardened thinking comparison (off vs dynamic)
+
+The single-run thinking comparison was too noisy to trust (cross_document correctness
+swung 0.05 ↔ 0.80 between identical-config runs). Re-ran with `EVAL_JUDGE_VOTES=3` and
+**2 full runs per setting**, reporting min–max ranges:
+
+| Metric (agent)             | OFF       | DYNAMIC   | verdict                               |
+| -------------------------- | --------- | --------- | ------------------------------------- |
+| overall answer relevancy   | 0.81–0.83 | 0.92–0.94 | dynamic better, **real** (no overlap) |
+| overall faithfulness       | 0.81–0.87 | 0.87–0.93 | dynamic mildly better                 |
+| overall completeness       | 0.69–0.70 | 0.72–0.78 | dynamic mildly better                 |
+| overall correctness        | 0.52–0.56 | 0.55–0.60 | tied                                  |
+| cross-doc answer relevancy | 0.58–0.62 | 0.80–0.83 | dynamic better, **real** (big gap)    |
+| cross-doc correctness      | 0.07–0.12 | 0.07–0.15 | tied, both near floor                 |
+
+**Two corrections to earlier claims:**
+
+1. **Thinking-off has a real quality cost** — answer relevancy separates cleanly
+   (overall 0.82 vs 0.93; cross-doc 0.60 vs 0.81, ranges don't touch). The earlier
+   "within noise" conclusion was an artifact of single noisy runs. **Decision: revert to
+   dynamic thinking** (`LLM_THINKING_BUDGET=-1`), keeping the latency-free wins. Set
+   `LLM_THINKING_BUDGET=0` to trade ~3-5s/query back for that quality.
+2. **The agent does NOT reliably beat the single-shot baseline.** Across all 4 runs the
+   baseline scored higher cross-document **correctness** (off: agent 0.07–0.12 vs base
+   0.53–0.57; dynamic: agent 0.07–0.15 vs base 0.43–0.58). The agent's broad multi-doc
+   attempt introduces more wrong facts (retrieval-precision/contamination), while the
+   baseline's narrower answer is more often correct. The agent's measured edge is answer
+   relevancy + completeness under dynamic thinking — not correctness. The earlier
+   "agent wins cross-document" was a small-sample artifact.
 
 ## Open directions
 
