@@ -16,7 +16,7 @@ export default defineConfig({
     // LLM + DB calls are slow; run files/tests sequentially to respect rate limits.
     fileParallelism: false,
     maxConcurrency: 1,
-    testTimeout: 1_200_000,
+    testTimeout: 2_400_000,
     hookTimeout: 120_000,
     // No coverage — this isn't a unit-test run.
     coverage: { enabled: false },

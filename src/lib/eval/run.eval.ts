@@ -23,4 +23,4 @@ test("agent vs single-shot evaluation", async () => {
   // Fix before trusting comparisons: per-document retrieval quotas in the retrieve node.
   // Re-enable this guard once that's addressed:
   // expect(agentAgg.faithfulness).toBeGreaterThanOrEqual(baselineAgg.faithfulness - 0.1);
-}, 1_200_000);
+}, 2_400_000);
