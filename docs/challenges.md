@@ -328,9 +328,10 @@ Colors match the citation section: Document A = blue border + blue badges, Docum
 | cross_document | 10,148ms | 6,840ms | −33%        |
 | multi_section  | 9,450ms  | 4,185ms | −56%        |
 
-**Quality check:** ran the eval harness across thinking budgets (off / 512 / dynamic). Dynamic was marginally best on every metric, off was close behind, and a 512-token budget was _worst_ on every metric (partial thinking is not a sweet spot). The off-vs-dynamic quality gap (~0.02-0.04 on correctness/faithfulness) is within run-to-run noise, so thinking-off was chosen — a real, measured speed win for a quality cost that isn't clearly real.
+**Quality check (and reversal):** a budget sweep (off / 512 / dynamic) on single runs suggested the off-vs-dynamic gap was within noise, and 512 was worst on every metric. But single runs proved too noisy (cross-document correctness swung 0.05 ↔ 0.80 between identical-config runs), so the comparison was re-run hardened: `EVAL_JUDGE_VOTES=3`, 2 full runs per setting, min–max ranges. That **overturned the "within noise" conclusion** — thinking-off has a real, consistent answer-relevancy cost (overall 0.82 vs 0.93; cross-document 0.60 vs 0.81, ranges don't overlap). **So thinking was reverted to dynamic** (`LLM_THINKING_BUDGET=-1` default). The latency-free wins (retry-cap, sub-query-skip, eval concurrency) were kept.
 
 **Trade-offs:**
 
-- Disabling thinking can reduce quality on hard multi-step reasoning. The gap was within noise on this eval set (n≤5 per query type), but if correctness becomes the priority, re-enable via `LLM_THINKING_BUDGET=-1` (dynamic).
+- Keeping thinking on costs the ~3-5s/query that disabling it saved. Disable via `LLM_THINKING_BUDGET=0` if latency is prioritized over the measured answer-relevancy quality.
+- **Lesson: don't trust a single eval run.** The first sweep's "within noise" verdict was an artifact of noisy single runs; only votes=3 + repeated runs separated signal (answer relevancy) from noise (correctness). The same hardened run also showed the agent does NOT reliably beat the single-shot baseline on cross-document correctness — a small-sample claim from earlier that didn't survive repetition.
 - Full-eval wall-clock is _not_ a reliable latency metric: with concurrent eval execution it is dominated by Gemini rate-limit (503) retry backoff, so total run time varies by luck. The isolated per-query benchmark is the trustworthy signal.
