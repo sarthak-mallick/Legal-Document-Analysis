@@ -127,11 +127,24 @@ export async function scoreAnswer(params: {
   answer: string;
   retrievedChunks: RetrievedChunk[];
   referenceAnswer: string;
+  // External evidence the answerer also used (e.g. glossary / web-search tool
+  // output). Included in the faithfulness context so tool-grounded claims aren't
+  // scored as hallucinations. NOT the agent's own intermediate LLM output.
+  toolOutputs?: string[];
 }): Promise<JudgeScores> {
-  const context =
+  const chunkContext =
     params.retrievedChunks
       .map((c, i) => `[${i + 1}] ${c.content.slice(0, MAX_CONTEXT_CHARS)}`)
-      .join("\n\n") || "(no context retrieved)";
+      .join("\n\n") || "(no document chunks retrieved)";
+
+  const toolContext = (params.toolOutputs ?? [])
+    .filter((o) => o && o.trim())
+    .map((o, i) => `[T${i + 1}] ${o.slice(0, MAX_CONTEXT_CHARS)}`)
+    .join("\n\n");
+
+  const context = toolContext
+    ? `${chunkContext}\n\nTOOL EVIDENCE (glossary / web search the system retrieved):\n${toolContext}`
+    : chunkContext;
 
   const judgeParams = {
     question: params.question,

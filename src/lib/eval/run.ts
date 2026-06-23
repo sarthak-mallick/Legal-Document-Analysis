@@ -60,6 +60,7 @@ async function runAgent(question: EvalQuestion, docMetas: DocMetaMap) {
     answer: finalState.response ?? "",
     retrievedChunks: (finalState.retrievedChunks ?? []) as RetrievedChunk[],
     queryType: (finalState.queryType ?? null) as QueryType | null,
+    toolOutputs: (finalState.toolResults ?? []).map((t) => t.output),
   };
 }
 
@@ -67,6 +68,7 @@ async function scoreSystem(
   question: EvalQuestion,
   answer: string,
   retrievedChunks: RetrievedChunk[],
+  toolOutputs: string[] = [],
 ): Promise<SystemRunResult> {
   const retrievedChunkIds = retrievedChunks.map((c) => c.id);
   const { hit, reciprocalRank } = retrievalMetrics(retrievedChunkIds, question.sourceChunkId);
@@ -77,6 +79,7 @@ async function scoreSystem(
         answer,
         retrievedChunks,
         referenceAnswer: question.referenceAnswer,
+        toolOutputs,
       }),
     `judge:${question.id}`,
   );
@@ -139,14 +142,9 @@ export async function runEval() {
   const questions = JSON.parse(readFileSync(DATASET_PATH, "utf8")) as EvalQuestion[];
   const docMetas = await loadDocumentMetas(questions);
 
-  const results: QuestionResult[] = [];
-
-  let skipped = 0;
-  for (const [i, question] of questions.entries()) {
-    console.info(`[eval] (${i + 1}/${questions.length}) ${question.question}`);
-
-    // Run agent and baseline (sequential to stay within API rate limits).
-    // One question failing after retries is logged and skipped, not fatal.
+  // Run one question end-to-end (agent + baseline + judge). Returns null on
+  // persistent failure so a single bad question doesn't abort the whole run.
+  async function processQuestion(question: EvalQuestion): Promise<QuestionResult | null> {
     try {
       const agentRun = await withRetry(() => runAgent(question, docMetas), `agent:${question.id}`);
       const baselineRun = await withRetry(
@@ -154,15 +152,43 @@ export async function runEval() {
         `baseline:${question.id}`,
       );
 
-      const agent = await scoreSystem(question, agentRun.answer, agentRun.retrievedChunks);
+      const agent = await scoreSystem(
+        question,
+        agentRun.answer,
+        agentRun.retrievedChunks,
+        agentRun.toolOutputs,
+      );
       const baseline = await scoreSystem(question, baselineRun.answer, baselineRun.retrievedChunks);
 
-      results.push({ question, agentQueryType: agentRun.queryType, agent, baseline });
+      return { question, agentQueryType: agentRun.queryType, agent, baseline };
     } catch (err) {
-      skipped++;
       console.error(`[eval] Skipping ${question.id} after retries: ${(err as Error).message}`);
+      return null;
     }
   }
+
+  // Bounded concurrency — the bottleneck is LLM round-trip latency, not CPU, so
+  // overlapping questions cuts wall-clock. retry.ts handles any rate-limit 503s.
+  const concurrency = Math.max(1, Number(process.env.EVAL_CONCURRENCY ?? 3));
+  const results: QuestionResult[] = [];
+  let cursor = 0;
+  let done = 0;
+
+  async function worker() {
+    while (cursor < questions.length) {
+      const question = questions[cursor++];
+      const result = await processQuestion(question);
+      done++;
+      console.info(`[eval] (${done}/${questions.length}) ${question.question.slice(0, 70)}`);
+      if (result) results.push(result);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, questions.length) }, () => worker()),
+  );
+
+  const skipped = questions.length - results.length;
 
   if (results.length === 0) {
     throw new Error("All questions failed — likely an API outage. Try again later.");

@@ -65,6 +65,39 @@ incomplete" — grounded, but covering only one document.
      schedule chunk, yielding confident-but-wrong product names and terms.
 - **Conclusion:** retrieval **volume** is not the bottleneck; **precision** is. Reverted.
 
+## Evaluator fix — tool evidence in the faithfulness context
+
+The faithfulness judge originally saw only retrieved document chunks, so claims the
+agent sourced from its glossary/web tools were scored as hallucinations. Fixed by
+passing the agent's tool outputs into the judge's context (external evidence only —
+not the agent's own intermediate LLM output, which would let hallucinations launder
+themselves). Effect: term_explanation faithfulness 0.750 → 0.833, overall agent
+faithfulness 0.857 → 0.939. The remaining gap to the baseline's 1.0 is mostly the
+baseline being "trivially faithful" (it answers from a narrow single-document context).
+
+## Experiment 2 — agent latency
+
+- **Root cause:** latency is dominated by sequential Gemini generation calls, NOT
+  vector search. Isolated per-query timing: the non-LLM portion (embeddings + pgvector
+  - DB) is only ~0.5-1s; the rest is LLM round-trips. The biggest single factor was
+    Gemini 2.5 Flash's default "thinking".
+- **Changes:** disable thinking (`thinkingConfig.thinkingBudget: 0`, env
+  `LLM_THINKING_BUDGET`); cap `MAX_RETRIEVAL_ATTEMPTS` 3 → 2; skip sub-query
+  regeneration on retrieval retries; run eval questions with bounded concurrency
+  (`EVAL_CONCURRENCY`, default 3).
+- **Per-query latency (isolated benchmark):** thinking off vs dynamic —
+  cross_document 6.8s vs 10.1s (−33%), multi_section 4.2s vs 9.5s (−56%),
+  simple_factual unchanged (~1.3s, one minimal call).
+- **Thinking-budget quality sweep (agent overall, n=13):** dynamic was marginally best
+  on every metric (correctness 0.596, faithfulness 0.856), thinking-off close behind
+  (0.558 / 0.843), and **budget 512 was worst on every metric** — partial thinking is
+  not a sweet spot. The off-vs-dynamic quality gap (~0.02-0.04) is within run-to-run
+  noise. **Decision: thinking off** — the per-query speed win is real and measured; the
+  quality cost is within noise. Re-evaluate if correctness becomes the priority.
+- **Caveat:** full-eval wall-clock is NOT a reliable speed metric here — with
+  concurrency it's dominated by rate-limit (503) retry backoff, so runs vary by luck.
+  Trust the isolated per-query benchmark instead.
+
 ## Open directions
 
 1. **Retrieval precision for identity/schedule facts** — these chunks don't rank for

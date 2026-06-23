@@ -1,7 +1,7 @@
 import { getFloatEnv, getNumberEnv } from "@/lib/env";
 import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
 
-const MAX_RETRIEVAL_ATTEMPTS = getNumberEnv("MAX_RETRIEVAL_ATTEMPTS", 3);
+const MAX_RETRIEVAL_ATTEMPTS = getNumberEnv("MAX_RETRIEVAL_ATTEMPTS", 2);
 const HIGH_CONFIDENCE_THRESHOLD = getFloatEnv("HIGH_CONFIDENCE_THRESHOLD", 0.8);
 const HIGH_CONFIDENCE_MIN_CHUNKS = getNumberEnv("HIGH_CONFIDENCE_MIN_CHUNKS", 2);
 const SUFFICIENT_THRESHOLD = getFloatEnv("SUFFICIENT_THRESHOLD", 0.4);
