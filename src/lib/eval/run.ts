@@ -95,6 +95,7 @@ function aggregate(results: QuestionResult[], pick: (r: QuestionResult) => Syste
     faithfulness: round(mean(runs.map((r) => r.faithfulness))),
     answerRelevancy: round(mean(runs.map((r) => r.answerRelevancy))),
     contextRelevancy: round(mean(runs.map((r) => r.contextRelevancy))),
+    completeness: round(mean(runs.map((r) => r.completeness))),
     correctness: round(mean(runs.map((r) => r.correctness))),
   };
 }
@@ -118,6 +119,7 @@ function formatTable(agent: Aggregate, baseline: Aggregate): string {
     ["faithfulness", agent.faithfulness, baseline.faithfulness],
     ["answer relevancy", agent.answerRelevancy, baseline.answerRelevancy],
     ["context relevancy", agent.contextRelevancy, baseline.contextRelevancy],
+    ["completeness", agent.completeness, baseline.completeness],
     ["correctness", agent.correctness, baseline.correctness],
   ];
   const lines = [

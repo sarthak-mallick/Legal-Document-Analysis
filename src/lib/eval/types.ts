@@ -24,6 +24,7 @@ export interface SystemRunResult {
   faithfulness: number;
   answerRelevancy: number;
   contextRelevancy: number;
+  completeness: number;
   correctness: number;
 }
 
@@ -38,6 +39,7 @@ export interface JudgeScores {
   faithfulness: number;
   answerRelevancy: number;
   contextRelevancy: number;
+  completeness: number;
   correctness: number;
 }
 
