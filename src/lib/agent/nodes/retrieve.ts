@@ -55,8 +55,13 @@ export async function retrieve(state: AgentStateType): Promise<AgentUpdateType> 
 
   let allChunks = await retrieveChunks(searchQuery, state.documentIds);
 
-  // For multi-section queries, also search with sub-queries in parallel
-  if (state.queryType === "multi_section" || state.queryType === "cross_document") {
+  // For multi-section/cross-document queries, expand with sub-queries — but only
+  // on the first attempt. Regenerating sub-queries on every retry adds a full LLM
+  // round-trip to the retry loop for little gain; retries reuse the simplified query.
+  if (
+    (state.queryType === "multi_section" || state.queryType === "cross_document") &&
+    attempt === 1
+  ) {
     const subQueries = await generateSubQueries(searchQuery);
     const uniqueSubs = subQueries.filter((sub) => sub !== searchQuery);
     if (uniqueSubs.length > 0) {
