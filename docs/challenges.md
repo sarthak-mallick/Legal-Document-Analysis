@@ -301,3 +301,36 @@ Colors match the citation section: Document A = blue border + blue badges, Docum
 - Heuristic classification will occasionally misroute (e.g., novel phrasings that don't match patterns). The impact is limited — misrouting to `simple_factual` still retrieves and synthesizes correctly, just without sub-query expansion or tool calls. The synthesis LLM can compensate.
 - Heuristic evaluation is less nuanced than LLM evaluation at judging "is this context enough?" But in practice, the similarity threshold (0.4) already filters irrelevant chunks, and the synthesis LLM explicitly says when context is insufficient. The retry loop catches the zero-chunk case.
 - The query rewrite adds one LLM call to follow-ups that wasn't there before, but this is a net improvement: the rewritten query produces better retrieval results (fewer retries) and the total call count still drops.
+
+---
+
+## Gemini 2.5 Flash "thinking" dominated per-query latency
+
+**Date:** 2026-06-22
+**Symptom:** Even after the pipeline was trimmed to 2-4 LLM calls per question, complex queries still felt slow — cross-document ~10s, multi-section ~9.5s. The earlier optimizations cut the _number_ of calls but each remaining call was expensive.
+
+**Root cause:** Two findings from an isolated per-query benchmark (timed each query through `agent.streamEvents`, attributing time to LLM calls per graph node vs. everything else):
+
+1. **Vector retrieval is not the bottleneck.** The non-LLM portion of a query (embeddings + pgvector + DB) was only ~0.5-1s. The rest was sequential Gemini generation calls.
+2. **`gemini-2.5-flash` enables "thinking" by default**, which adds latency to every generation call. With 2-4 sequential calls per query (sub-query generation, compare, synthesize), it compounded. The `compare` node took ~4.3s and `synthesize` up to ~7.2s — mostly thinking tokens, not output.
+
+**Fix — three changes:**
+
+1. **Disabled thinking** on the chat model: `thinkingConfig: { thinkingBudget: 0 }` in `model.ts` (override via `LLM_THINKING_BUDGET`). This was the dominant win.
+2. **Capped `MAX_RETRIEVAL_ATTEMPTS` 3 → 2** — bounds worst-case retry latency.
+3. **Skip sub-query regeneration on retrieval retries** (`retrieve.ts`) — sub-queries are now generated only on the first attempt; retries reused the simplified query, so regenerating them just added an LLM round-trip for no gain.
+
+**Result (isolated per-query benchmark, thinking off vs. dynamic):**
+
+| Query type     | Before   | After   | Improvement |
+| -------------- | -------- | ------- | ----------- |
+| simple_factual | 1,283ms  | 1,272ms | ~0%         |
+| cross_document | 10,148ms | 6,840ms | −33%        |
+| multi_section  | 9,450ms  | 4,185ms | −56%        |
+
+**Quality check:** ran the eval harness across thinking budgets (off / 512 / dynamic). Dynamic was marginally best on every metric, off was close behind, and a 512-token budget was _worst_ on every metric (partial thinking is not a sweet spot). The off-vs-dynamic quality gap (~0.02-0.04 on correctness/faithfulness) is within run-to-run noise, so thinking-off was chosen — a real, measured speed win for a quality cost that isn't clearly real.
+
+**Trade-offs:**
+
+- Disabling thinking can reduce quality on hard multi-step reasoning. The gap was within noise on this eval set (n≤5 per query type), but if correctness becomes the priority, re-enable via `LLM_THINKING_BUDGET=-1` (dynamic).
+- Full-eval wall-clock is _not_ a reliable latency metric: with concurrent eval execution it is dominated by Gemini rate-limit (503) retry backoff, so total run time varies by luck. The isolated per-query benchmark is the trustworthy signal.
