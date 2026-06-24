@@ -1,11 +1,11 @@
 import { getFloatEnv, getNumberEnv } from "@/lib/env";
-import { getLLM } from "@/lib/langchain/model";
+import { getFastLLM } from "@/lib/langchain/model";
 import { retrieveChunks } from "@/lib/agent/tools/retriever-tool";
 import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
 
 // Generate sub-queries for multi-section questions to improve recall.
 async function generateSubQueries(query: string): Promise<string[]> {
-  const llm = getLLM();
+  const llm = getFastLLM();
   try {
     const response = await llm.invoke([
       {
