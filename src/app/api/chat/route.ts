@@ -1,7 +1,7 @@
 import { getLLM } from "@/lib/langchain/model";
 import { getNumberEnv } from "@/lib/env";
 import { getUserId } from "@/lib/auth";
-import { buildAgentGraph } from "@/lib/agent/graph";
+import { getAgentGraph } from "@/lib/agent/graph";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { chatRequestSchema } from "@/lib/validations/chat";
 import { parseBody } from "@/lib/validations";
@@ -54,12 +54,14 @@ export async function POST(request: Request) {
 
     // Create or verify conversation
     if (!conversationId) {
-      const title = await generateTitle(message);
+      // Create the conversation immediately with a cheap placeholder title so the
+      // agent can start without waiting on an LLM call (~2-3s). The real title is
+      // generated off the critical path below and patched in once ready.
       const { data: conversation, error: convError } = await admin
         .from("conversations")
         .insert({
           user_id: userId,
-          title,
+          title: message.slice(0, 50),
           document_ids: documentIds,
         })
         .select("id")
@@ -73,6 +75,14 @@ export async function POST(request: Request) {
       }
 
       conversationId = conversation.id;
+
+      // Generate a better title in the background and update the row when ready.
+      // The function stays alive for the duration of the agent stream (longer than
+      // this short LLM call), so the update lands before the request completes.
+      const newConversationId = conversation.id as string;
+      void generateTitle(message)
+        .then((title) => admin.from("conversations").update({ title }).eq("id", newConversationId))
+        .catch((error) => console.error("[chat] Background title generation failed", error));
     }
 
     // Save user message
@@ -105,7 +115,7 @@ export async function POST(request: Request) {
     }));
 
     // Stream the response to the client using SSE with real LLM token streaming
-    const agent = buildAgentGraph();
+    const agent = getAgentGraph();
     const encoder = new TextEncoder();
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
