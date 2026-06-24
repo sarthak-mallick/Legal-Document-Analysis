@@ -50,6 +50,12 @@ npm run format:check   # Check formatting without writing
 - Never commit `.env.local` or secrets
 - Embeddings are 768-dimensional vectors (gemini-embedding-001 with outputDimensionality: 768) — if changing embedding provider, update DB column size
 
+## Database Migrations
+
+- Every schema change is a **new** timestamped file in `supabase/migrations/` (`YYYYMMDDHHmmss_name.sql`) — never edit an already-applied migration; `db push` only runs versions not yet in the remote history table
+- Don't mutate schema via the Supabase dashboard — it drifts the DB from the migration files
+- Migrations auto-apply to production on merge to `main` (`.github/workflows/deploy-migrations.yml`); write migrations forward-only and idempotent, since there are no rollbacks or pre-prod preview
+
 ## Git
 
 - When committing, always break changes into multiple small, logically grouped commits — never one big commit
