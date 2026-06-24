@@ -96,3 +96,15 @@ export function buildAgentGraph() {
 
   return graph.compile();
 }
+
+let cachedGraph: ReturnType<typeof buildAgentGraph> | null = null;
+
+// Returns the compiled agent graph, building it once and reusing it across
+// requests. The graph is stateless — per-request state is passed into
+// streamEvents/invoke — so recompiling per request only wastes CPU.
+export function getAgentGraph() {
+  if (!cachedGraph) {
+    cachedGraph = buildAgentGraph();
+  }
+  return cachedGraph;
+}
