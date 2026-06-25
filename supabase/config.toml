@@ -1,0 +1,10 @@
+# Supabase project config — required by the GitHub integration so it can find
+# this directory and auto-run supabase/migrations/ on merge to main.
+#
+# Kept intentionally minimal: the GitHub integration applies config-as-code,
+# so any setting added here OVERRIDES the dashboard on deploy. Only add a key
+# when you intend Supabase to manage it from the repo.
+#
+# Set project_id to your project's Reference ID
+# (Dashboard → Project Settings → General → Reference ID).
+project_id = "efbtmpzewonhnsauylzh"

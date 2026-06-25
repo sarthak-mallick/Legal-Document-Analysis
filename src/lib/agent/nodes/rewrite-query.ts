@@ -1,4 +1,4 @@
-import { getLLM } from "@/lib/langchain/model";
+import { getFastLLM } from "@/lib/langchain/model";
 import type { AgentStateType, AgentUpdateType } from "@/lib/agent/state";
 
 // Rewrite ambiguous follow-up queries using conversation history.
@@ -11,7 +11,7 @@ export async function rewriteQuery(state: AgentStateType): Promise<AgentUpdateTy
 
   console.info("[agent:rewrite] Rewriting query with conversation context");
 
-  const llm = getLLM();
+  const llm = getFastLLM();
 
   // Use last 4 messages to keep the prompt short
   const recentHistory = state.conversationHistory.slice(-4);
