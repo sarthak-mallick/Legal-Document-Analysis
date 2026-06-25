@@ -54,7 +54,7 @@ npm run format:check   # Check formatting without writing
 
 - Every schema change is a **new** timestamped file in `supabase/migrations/` (`YYYYMMDDHHmmss_name.sql`) — never edit an already-applied migration; `db push` only runs versions not yet in the remote history table
 - Don't mutate schema via the Supabase dashboard — it drifts the DB from the migration files
-- Migrations auto-apply to production on merge to `main` (`.github/workflows/deploy-migrations.yml`); write migrations forward-only and idempotent, since there are no rollbacks or pre-prod preview
+- Migrations auto-apply to production on merge to `main` via Supabase's GitHub integration (Dashboard → Integrations → GitHub, "Deploy to production"); write migrations forward-only and idempotent, since there are no rollbacks or pre-prod preview
 
 ## Git
 
