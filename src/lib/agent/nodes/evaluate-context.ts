@@ -19,6 +19,23 @@ function simplifyQuery(query: string): string {
     .trim();
 }
 
+// Build a simplified retry, or give up if it would re-issue an identical search.
+// simplifyQuery is idempotent, so once the simplified query has already been
+// searched (tracked via lastSearchQuery) retrying adds nothing but latency.
+function retryOrGiveUp(state: AgentStateType): AgentUpdateType {
+  const simplified = simplifyQuery(state.query);
+  if (!simplified || simplified === state.lastSearchQuery) {
+    console.info("[agent:evaluate] Simplified query offers no new search, giving up");
+    return { contextSufficient: true, nodesVisited: ["evaluateContext"] };
+  }
+  console.info("[agent:evaluate] Context insufficient, retrying", { simplified });
+  return {
+    contextSufficient: false,
+    refinedQuery: simplified,
+    nodesVisited: ["evaluateContext"],
+  };
+}
+
 // Evaluate whether retrieved context is sufficient using heuristic scoring (no LLM call).
 export function evaluateContext(state: AgentStateType): AgentUpdateType {
   console.info("[agent:evaluate] Evaluating context (heuristic)", {
@@ -31,12 +48,7 @@ export function evaluateContext(state: AgentStateType): AgentUpdateType {
     if (state.retrievalAttempts >= MAX_RETRIEVAL_ATTEMPTS) {
       return { contextSufficient: true, nodesVisited: ["evaluateContext"] };
     }
-    const simplified = simplifyQuery(state.query);
-    return {
-      contextSufficient: false,
-      refinedQuery: simplified || state.query,
-      nodesVisited: ["evaluateContext"],
-    };
+    return retryOrGiveUp(state);
   }
 
   // High confidence fast-path: 2+ chunks with very high similarity
@@ -65,12 +77,5 @@ export function evaluateContext(state: AgentStateType): AgentUpdateType {
     return { contextSufficient: true, nodesVisited: ["evaluateContext"] };
   }
 
-  const simplified = simplifyQuery(state.query);
-  console.info("[agent:evaluate] Context insufficient, retrying", { simplified });
-
-  return {
-    contextSufficient: false,
-    refinedQuery: simplified || state.query,
-    nodesVisited: ["evaluateContext"],
-  };
+  return retryOrGiveUp(state);
 }

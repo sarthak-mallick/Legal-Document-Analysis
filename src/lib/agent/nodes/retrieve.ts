@@ -83,6 +83,7 @@ export async function retrieve(state: AgentStateType): Promise<AgentUpdateType> 
     retrievedChunks: deduplicated,
     retrievalAttempts: attempt,
     refinedQuery: null,
+    lastSearchQuery: searchQuery,
     nodesVisited: ["retrieve"],
   };
 }
