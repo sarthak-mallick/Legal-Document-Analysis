@@ -133,25 +133,19 @@ export async function POST(request: Request) {
       tool_calls: [],
     });
 
-    // Load conversation history and document metadata in parallel
-    const [{ data: historyRows }, { data: docRows }] = await Promise.all([
-      admin
-        .from("messages")
-        .select("id, conversation_id, role, content, citations, tool_calls, created_at")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
-        .limit(CONVERSATION_HISTORY_LIMIT),
-      admin.from("documents").select("id, filename, document_type").in("id", documentIds),
-    ]);
+    // Load the most recent conversation history. Ordering descending + limit keeps
+    // the latest N messages (ascending + limit would return the OLDEST N, starving
+    // the agent of recent context); reverse back to chronological order.
+    const { data: historyRows } = await admin
+      .from("messages")
+      .select("id, conversation_id, role, content, citations, tool_calls, created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(CONVERSATION_HISTORY_LIMIT);
 
-    const history = (historyRows ?? []) as MessageRecord[];
+    const history = ((historyRows ?? []) as MessageRecord[]).reverse();
+    // Drop the just-inserted user message (now last after reversing).
     const priorHistory = history.slice(0, -1);
-
-    const documentMetas = (docRows ?? []).map((d) => ({
-      id: d.id as string,
-      filename: d.filename as string,
-      documentType: (d.document_type as string) ?? null,
-    }));
 
     // Stream the response to the client using SSE with real LLM token streaming
     const agent = getAgentGraph();
