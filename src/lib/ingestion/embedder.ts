@@ -25,6 +25,15 @@ export async function storeDocumentChunks(documentId: string, chunks: DocumentCh
       const contents = batch.map((chunk) => chunk.content);
       const vectors = await embedTexts(contents);
 
+      // Vectors are mapped to chunks positionally below. If the API returns a
+      // different count, the indices misalign — chunks would get the wrong
+      // embedding or be silently dropped. Fail loudly instead.
+      if (vectors.length !== contents.length) {
+        throw new Error(
+          `Embedding count mismatch: requested ${contents.length}, received ${vectors.length}.`,
+        );
+      }
+
       // Skip chunks whose embedding came back empty (API occasionally
       // returns zero-length vectors for very short or unusual input).
       const rows = batch

@@ -60,6 +60,13 @@ export const AgentState = Annotation.Root({
     reducer: (_prev, next) => next,
     default: () => null,
   }),
+  // The query string actually issued to vector search on the last retrieve pass.
+  // Lets evaluateContext detect when a simplified retry would re-issue an
+  // identical search and stop instead of wasting an attempt.
+  lastSearchQuery: Annotation<string | null>({
+    reducer: (_prev, next) => next,
+    default: () => null,
+  }),
   tableData: Annotation<TableQueryResult | null>({
     reducer: (_prev, next) => next,
     default: () => null,

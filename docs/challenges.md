@@ -4,6 +4,87 @@ Hard-won fixes and non-obvious issues encountered during development.
 
 ---
 
+## Broken access control: admin client bypasses RLS, so routes must check ownership
+
+**Date:** 2026-06-30
+**Time spent:** found via whole-repo code review
+**Symptom:** A user could read, summarise, and chat over **other users' documents**, and inject messages into other users' conversations, just by passing someone else's UUID in a request.
+
+**Root cause:** Every API route uses the Supabase **service-role admin client** (`createSupabaseAdminClient`), which **bypasses Row-Level Security entirely**. The RLS policies in the DB exist but are never the enforcement boundary for these routes — application-level `user_id` checks are. Three routes were missing those checks:
+
+1. `POST /api/chat` — fetched documents with `.in("id", documentIds)` and never filtered by `user_id`; the agent then retrieved/answered over chunks the caller didn't own.
+2. `POST /api/chat` — accepted an existing `conversationId` without verifying ownership, so a caller could append messages to and load the history of someone else's conversation.
+3. `POST /api/summary/[documentId]` — fetched the document by id with **no** `user_id` filter (the **GET** in the same file _did_ have one — the asymmetry was the giveaway), returning and overwriting another user's summary/risk/gap data.
+
+**Fix:**
+
+- Chat: fetch documents scoped with `.eq("user_id", userId)` up front and reject the request if the owned-count ≠ requested-count; verify conversation ownership with `.eq("id", conversationId).eq("user_id", userId)` before any write.
+- Summary POST: add `.eq("user_id", userId)` to the document fetch (matching the GET).
+
+**Lesson:** With the service-role client, **RLS is not a safety net** — it's off. Any query that reads or mutates user-scoped data must carry an explicit `user_id` filter. When two handlers in one file diverge (GET filters by user, POST doesn't), treat that asymmetry as a bug until proven otherwise. Worth a shared `assertOwnership` helper so this can't be forgotten per-route.
+
+---
+
+## Conversation history loaded the oldest N messages instead of the most recent
+
+**Date:** 2026-06-30
+**Symptom:** In long conversations the agent's follow-up answers ignored recent turns — the history-aware query rewrite operated on stale context.
+
+**Root cause:** `GET messages` in the chat route used `.order("created_at", { ascending: true }).limit(N)`, which returns the **first** N messages ever written, not the latest N. For any conversation longer than `CONVERSATION_HISTORY_LIMIT` (default 10), the agent only ever saw messages 1–10.
+
+**Fix:** Order **descending**, `.limit(N)`, then `.reverse()` back to chronological order. The existing `slice(0, -1)` (drop the just-inserted user message) still works because that message is the newest → last after reversing.
+
+**Lesson:** `order + limit` to get "the most recent N" must sort descending; ascending + limit silently gives the oldest N and looks fine on short conversations where the two are identical.
+
+---
+
+## Eval judge: an unparseable response scored a perfect faithfulness (1.0)
+
+**Date:** 2026-06-30
+**Symptom:** Faithfulness metrics looked suspiciously high; a malformed judge response inflated the score instead of being flagged.
+
+**Root cause:** `parseJson()` returned `{}` on a parse failure. That empty object flowed into `faithfulnessFromClaims()`, which found no `claims` array and returned `1.0` ("nothing asserted ⇒ not unfaithful"). So _failed parse_ was indistinguishable from _legitimately no claims_ — and every unparseable judge output counted as a perfect pass.
+
+**Fix:** `parseJson()` now returns `null` on failure (distinct from a valid `{}`). `judgeOnce()` drops a null-parse vote (with a warning) instead of scoring it; if **all** votes fail to parse, `scoreAnswer()` returns zeros so the failure is visible rather than perfect.
+
+**Lesson:** A default/empty value that happens to map to the best possible score will silently corrupt aggregate metrics. Distinguish "couldn't measure" from "measured zero problems."
+
+---
+
+## Smaller hardening from the same review
+
+**Date:** 2026-06-30
+
+- **Embedding count mismatch (`embedder.ts`)** — vectors were mapped to chunks positionally (`vectors[batchIndex]`); a short response from the embedding API would misalign or silently drop chunks. Now asserts `vectors.length === contents.length` and fails loudly.
+- **Retrieval retry made no progress (`evaluate-context.ts`)** — `simplifyQuery` is idempotent and `retrieve` clears `refinedQuery`, so at `MAX_RETRIEVAL_ATTEMPTS ≥ 3` retries re-issued the _identical_ simplified search. Added a `lastSearchQuery` state field; `evaluateContext` now gives up when the simplified query equals the last one searched. (No effect at the default of 2 — latent until the env var is raised.)
+- **`CROSS_DOC_RE` matched partial words (`classify-query.ts`)** — `polic|contract` matched "police"/"policing"/"contractor". Switched to whole-word alternates (`polic(?:y|ies)`, `contracts?`, …).
+- **Streaming reader not aborted on unmount (`ChatWindow.tsx`)** — the SSE read loop had no `AbortController`; unmounting mid-stream kept reading and called `setState` on a gone component. Now aborts on unmount and skips state updates when `signal.aborted`.
+
+---
+
+## Design decision: ingestion/retrieval layer is custom, not LangChain abstractions
+
+**Date:** 2026-06-30
+**Context:** LangChain is a dependency, but only `@langchain/google-genai` (LLM), `@langchain/langgraph` (agent graph), and `@langchain/core` (message primitives) are actually used. The document loading, representation, chunking, and retrieval layers are all hand-rolled. This entry records _why_, so the divergence from "the LangChain way" isn't mistaken for an oversight. (Two specific migrations behind this decision are logged separately below: the `pdf-parse`/`pdfjs-dist` Next.js 16 incompatibility, and the silent-empty-vector bug in `GoogleGenerativeAIEmbeddings`.)
+
+**What we do NOT use, and what replaces it:**
+
+- **PDF loading — `unpdf`, not LangChain `PDFLoader`.** `PDFLoader` wraps `pdf-parse`/`pdfjs-dist`, which broke under Next.js 16 Turbopack (`DataCloneError` in the fake-worker `structuredClone` path) and, on v1, returned the whole document as a single page. `unpdf` is built for serverless/edge runtimes (no native bindings) and returns `text: string[]` with one entry per page via `extractText(..., { mergePages: false })` — page numbers are essential for citations. See `src/lib/ingestion/pdf-parser.ts`.
+
+- **Document representation — custom `ParsedDocument`/`DocumentChunkInput`, not LangChain `Document`.** The pipeline needs page-aware blocks and table interleaving that LangChain's flat `{ pageContent, metadata }` shape would obscure. See `src/lib/ingestion/types.ts`.
+
+- **Chunking — custom table-aware chunker, not `RecursiveCharacterTextSplitter`.** The chunker interleaves LlamaParse-extracted tables (described via Gemini) with prose, carries section titles forward, and tags each chunk with its page. A generic character splitter has none of this. See `src/lib/ingestion/chunker.ts`.
+
+- **Embeddings — direct `@google/generative-ai` SDK, not `GoogleGenerativeAIEmbeddings`.** The wrapper swallowed API errors via `Promise.allSettled` (returning empty vectors silently) and didn't expose `apiVersion`/`outputDimensionality`. We call `batchEmbedContents`/`embedContent` directly with `apiVersion: "v1beta"`, `gemini-embedding-001`, and `outputDimensionality: 768`. See `src/lib/langchain/embeddings.ts`.
+
+- **Retrieval — direct pgvector RPC, not `SupabaseVectorStore`.** `matchDocumentChunks` calls the `match_chunks` Postgres RPC directly, giving explicit control over the similarity function, `filter_document_ids` metadata filtering, and match counts — and one fewer abstraction layer between the agent and the SQL. See `src/lib/langchain/vectorstore.ts`.
+
+**Where LangChain _does_ earn its place:** the LLM/embedding client config (`@langchain/google-genai`) and the LangGraph agent orchestration (`src/lib/agent/`), where the abstraction adds real leverage.
+
+**Lesson:** LangChain's high-level document/loader/splitter/vectorstore abstractions traded away the control this project needs (page-aware citations, table-aware chunking, serverless portability, loud failures, precise SQL). Used selectively — clients and graph only — it's a net win; adopted wholesale, it would have fought the requirements.
+
+---
+
 ## pdf-parse v2 / pdfjs-dist v5 incompatible with Next.js 16
 
 **Date:** 2026-04-08

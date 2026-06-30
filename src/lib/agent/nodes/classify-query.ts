@@ -5,8 +5,14 @@ import type { AgentStateType, AgentUpdateType, QueryType } from "@/lib/agent/sta
 const GENERAL_RE =
   /^(hi|hello|hey|thanks?|thank you|ok(ay)?|sure|got it|bye|good\s+(morning|afternoon|evening))\b/i;
 
-const CROSS_DOC_RE =
-  /\b(compar|differ|versus|vs\.?\b|which\s+(document|policy|contract|agreement|one)|across\s+(document|polic|contract)|both\s+(document|polic|contract)|between\s+(the\s+|my\s+)?(document|polic|contract|two))/i;
+// Whole-word alternates for "policy/policies" and "contract(s)" so unrelated
+// words like "police"/"policing"/"contractor" don't trigger cross-document
+// classification.
+const DOC_NOUN = "(?:documents?|polic(?:y|ies)|contracts?|agreements?)";
+const CROSS_DOC_RE = new RegExp(
+  `\\b(compar|differ|versus|vs\\.?\\b|which\\s+(${DOC_NOUN}|one)|across\\s+${DOC_NOUN}|both\\s+${DOC_NOUN}|between\\s+(the\\s+|my\\s+)?(${DOC_NOUN}|two))`,
+  "i",
+);
 
 const TERM_EXPLAIN_RE = /\b(define\s|explain\s|meaning\s+of\s|what\s+does\s+.{2,40}\s+mean)/i;
 

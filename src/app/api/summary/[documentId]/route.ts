@@ -235,11 +235,14 @@ export async function POST(
     const { documentId } = await context.params;
     const admin = createSupabaseAdminClient();
 
-    // Fetch document
+    // Fetch document — scoped to the caller. The admin client bypasses RLS, so
+    // without the user_id filter any user could generate (and read back) the
+    // summary of any document by ID.
     const { data: document, error: docError } = await admin
       .from("documents")
       .select("*")
       .eq("id", documentId)
+      .eq("user_id", userId)
       .single();
 
     if (docError || !document) {

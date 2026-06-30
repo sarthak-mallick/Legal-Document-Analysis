@@ -30,7 +30,10 @@ function normalize(score: number): number {
   return (clamped - 1) / 4;
 }
 
-function parseJson(raw: string): Record<string, unknown> {
+// Returns null (not {}) when the judge output can't be parsed, so callers can
+// distinguish "judge returned no claims" (legitimately 1.0 faithfulness) from
+// "judge response was unparseable" (which must NOT score as a perfect pass).
+function parseJson(raw: string): Record<string, unknown> | null {
   const cleaned = raw
     .replace(/```json/gi, "")
     .replace(/```/g, "")
@@ -46,7 +49,7 @@ function parseJson(raw: string): Record<string, unknown> {
         /* fall through */
       }
     }
-    return {};
+    return null;
   }
 }
 
@@ -106,10 +109,18 @@ async function judgeOnce(params: {
   answer: string;
   context: string;
   referenceAnswer: string;
-}): Promise<JudgeScores> {
+}): Promise<JudgeScores | null> {
   const response = await getJudge().invoke(PROMPT(params));
   const raw = typeof response.content === "string" ? response.content : String(response.content);
   const parsed = parseJson(raw);
+
+  // Unparseable judge output: drop this vote rather than letting an empty object
+  // flow through to faithfulnessFromClaims() and score a perfect 1.0, which would
+  // silently inflate the metric.
+  if (!parsed) {
+    console.warn("[eval:judge] Could not parse judge response; dropping vote");
+    return null;
+  }
 
   return {
     faithfulness: faithfulnessFromClaims(parsed),
@@ -155,7 +166,21 @@ export async function scoreAnswer(params: {
 
   const votes: JudgeScores[] = [];
   for (let i = 0; i < JUDGE_VOTES; i++) {
-    votes.push(await judgeOnce(judgeParams));
+    const vote = await judgeOnce(judgeParams);
+    if (vote) votes.push(vote);
+  }
+
+  // Every judge pass failed to parse — report zeros so the failure is visible
+  // rather than defaulting to perfect/empty scores.
+  if (votes.length === 0) {
+    console.warn("[eval:judge] All judge votes failed to parse; scoring 0");
+    return {
+      faithfulness: 0,
+      answerRelevancy: 0,
+      contextRelevancy: 0,
+      completeness: 0,
+      correctness: 0,
+    };
   }
 
   return {

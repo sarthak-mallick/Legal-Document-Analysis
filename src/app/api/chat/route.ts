@@ -52,6 +52,28 @@ export async function POST(request: Request) {
 
     const admin = createSupabaseAdminClient();
 
+    // The admin client bypasses RLS, so document ownership MUST be enforced in
+    // application code. Fetch only documents owned by the caller; a count
+    // mismatch means the request referenced a document the user does not own.
+    const { data: ownedDocs } = await admin
+      .from("documents")
+      .select("id, filename, document_type")
+      .in("id", documentIds)
+      .eq("user_id", userId);
+
+    const documentMetas = (ownedDocs ?? []).map((d) => ({
+      id: d.id as string,
+      filename: d.filename as string,
+      documentType: (d.document_type as string) ?? null,
+    }));
+
+    if (documentMetas.length !== documentIds.length) {
+      return new Response(JSON.stringify({ error: "One or more documents were not found." }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // Create or verify conversation
     if (!conversationId) {
       // Create the conversation immediately with a cheap placeholder title so the
@@ -83,6 +105,23 @@ export async function POST(request: Request) {
       void generateTitle(message)
         .then((title) => admin.from("conversations").update({ title }).eq("id", newConversationId))
         .catch((error) => console.error("[chat] Background title generation failed", error));
+    } else {
+      // Verify the caller owns the conversation they're posting to. Without this
+      // check a user could inject messages into — and load the history of —
+      // another user's conversation (the admin client bypasses RLS).
+      const { data: existing } = await admin
+        .from("conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .eq("user_id", userId)
+        .single();
+
+      if (!existing) {
+        return new Response(JSON.stringify({ error: "Conversation not found." }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Save user message
@@ -94,25 +133,19 @@ export async function POST(request: Request) {
       tool_calls: [],
     });
 
-    // Load conversation history and document metadata in parallel
-    const [{ data: historyRows }, { data: docRows }] = await Promise.all([
-      admin
-        .from("messages")
-        .select("id, conversation_id, role, content, citations, tool_calls, created_at")
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true })
-        .limit(CONVERSATION_HISTORY_LIMIT),
-      admin.from("documents").select("id, filename, document_type").in("id", documentIds),
-    ]);
+    // Load the most recent conversation history. Ordering descending + limit keeps
+    // the latest N messages (ascending + limit would return the OLDEST N, starving
+    // the agent of recent context); reverse back to chronological order.
+    const { data: historyRows } = await admin
+      .from("messages")
+      .select("id, conversation_id, role, content, citations, tool_calls, created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(CONVERSATION_HISTORY_LIMIT);
 
-    const history = (historyRows ?? []) as MessageRecord[];
+    const history = ((historyRows ?? []) as MessageRecord[]).reverse();
+    // Drop the just-inserted user message (now last after reversing).
     const priorHistory = history.slice(0, -1);
-
-    const documentMetas = (docRows ?? []).map((d) => ({
-      id: d.id as string,
-      filename: d.filename as string,
-      documentType: (d.document_type as string) ?? null,
-    }));
 
     // Stream the response to the client using SSE with real LLM token streaming
     const agent = getAgentGraph();

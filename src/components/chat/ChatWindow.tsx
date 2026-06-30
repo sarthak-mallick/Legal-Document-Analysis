@@ -47,6 +47,11 @@ export function ChatWindow({
   const [isStreaming, setIsStreaming] = useState(false);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight stream when the component unmounts (e.g. navigation away)
+  // so the read loop stops and we don't setState on an unmounted component.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
     setMessages(
@@ -84,6 +89,9 @@ export function ChatWindow({
       setStreamingContent("");
       setStreamingStatus("");
 
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       try {
         const response = await fetch("/api/chat", {
           method: "POST",
@@ -93,6 +101,7 @@ export function ChatWindow({
             conversationId,
             documentIds,
           }),
+          signal: controller.signal,
         });
 
         if (!response.ok || !response.body) {
@@ -153,6 +162,8 @@ export function ChatWindow({
           },
         ]);
       } catch (error) {
+        // Aborted on unmount — the component is gone, don't touch state.
+        if (controller.signal.aborted) return;
         console.error("[chat] Failed to send message", error);
         setMessages((prev) => [
           ...prev,
@@ -163,8 +174,11 @@ export function ChatWindow({
           },
         ]);
       } finally {
-        setIsStreaming(false);
-        setStreamingContent("");
+        if (!controller.signal.aborted) {
+          setIsStreaming(false);
+          setStreamingContent("");
+        }
+        if (abortRef.current === controller) abortRef.current = null;
       }
     },
     [isStreaming, conversationId, documentIds, onConversationCreated],
