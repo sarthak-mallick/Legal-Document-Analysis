@@ -14,7 +14,7 @@ Full spec: `docs/project-spec.md`
 - **Database:** Supabase (Postgres + pgvector), Supabase Auth
 - **LLM:** Google Gemini 2.5 Flash via `@langchain/google-genai`
 - **Embeddings:** Gemini `text-embedding-004` (768 dimensions)
-- **PDF Parsing:** `pdf-parse` + LlamaParse (optional, for table extraction)
+- **PDF Parsing:** `unpdf` (per-page text extraction) + LlamaParse (optional, for table extraction)
 - **External Tools:** Custom MCP servers (glossary, web search)
 - **Hosting:** Vercel
 
