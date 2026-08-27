@@ -17,16 +17,17 @@ Query:      User → Next.js Frontend → API Routes (SSE streaming) → LangGra
 
 ## Tech Stack
 
-| Layer          | Technology                                               |
-| -------------- | -------------------------------------------------------- |
-| Frontend       | Next.js 16 (App Router), Tailwind CSS v4                 |
-| Backend        | Next.js API routes, LangGraph (TypeScript), LangChain.js |
-| Database       | Supabase (Postgres + pgvector)                           |
-| Auth           | Supabase Auth (email/password)                           |
-| LLM            | Google Gemini 2.5 Flash                                  |
-| Embeddings     | Gemini embedding-001 (768d)                              |
-| PDF Parsing    | pdf-parse + LlamaParse (optional)                        |
-| External Tools | Custom MCP servers (glossary, web search)                |
+| Layer          | Technology                                                        |
+| -------------- | ----------------------------------------------------------------- |
+| Frontend       | Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui               |
+| Backend        | Next.js API routes, LangGraph (TypeScript), LangChain.js          |
+| Database       | Supabase (Postgres + pgvector)                                    |
+| Auth           | Supabase Auth (email/password)                                    |
+| LLM            | Google Gemini 2.5 Flash via `@langchain/google-genai`             |
+| Embeddings     | Gemini `gemini-embedding-001` (768d)                              |
+| PDF Parsing    | `unpdf` (per-page text) + LlamaParse (optional, table extraction) |
+| External Tools | Custom MCP servers (glossary, web search)                         |
+| Hosting        | Vercel                                                            |
 
 ## Features
 
@@ -52,18 +53,19 @@ See [docs/deployment.md](docs/deployment.md) for local development setup and pro
 
 ## Key Directories
 
-| Directory            | Purpose                                                     |
-| -------------------- | ----------------------------------------------------------- |
-| `src/lib/ingestion/` | PDF parsing, table extraction, chunking, embedding pipeline |
-| `src/lib/agent/`     | LangGraph agent: graph, nodes, state, tools, prompts        |
-| `src/lib/langchain/` | LLM and embeddings configuration                            |
-| `src/lib/supabase/`  | Supabase clients (browser, server, admin)                   |
-| `src/app/api/`       | API routes: upload, chat, documents, conversations, summary |
-| `src/app/(auth)/`    | Login and signup pages                                      |
-| `src/components/`    | React components: chat, documents, summary, UI primitives   |
-| `src/types/`         | Shared TypeScript type definitions                          |
-| `mcp-servers/`       | MCP server packages: glossary, web search                   |
-| `docs/`              | Project spec, deployment guide, and execution plans         |
+| Directory              | Purpose                                                             |
+| ---------------------- | ------------------------------------------------------------------- |
+| `src/lib/ingestion/`   | PDF parsing, table extraction, chunking, embedding pipeline         |
+| `src/lib/agent/`       | LangGraph agent: graph, nodes, state, tools, prompts                |
+| `src/lib/langchain/`   | LLM and embeddings configuration                                    |
+| `src/lib/supabase/`    | Supabase clients (browser, server, admin)                           |
+| `src/app/api/`         | API routes: upload, chat, documents, conversations, summary, search |
+| `src/app/(auth)/`      | Login and signup pages                                              |
+| `src/components/`      | React components: chat, documents, summary, UI primitives           |
+| `src/lib/validations/` | Zod request body schemas                                            |
+| `src/types/`           | Shared TypeScript type definitions                                  |
+| `mcp-servers/`         | MCP server packages: glossary, web search                           |
+| `docs/`                | Project spec, deployment guide, execution plans, agent workflow     |
 
 ## Model Swapping
 

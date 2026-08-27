@@ -43,18 +43,10 @@ Use the thread-start checklist and minimal-read mode from `docs/agent/workflow.m
 ## Project
 
 AI-powered legal document analysis platform using RAG + LangGraph agent.
-Full spec: `docs/project-spec.md`
 
-## Tech Stack
-
-- **Frontend:** Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui
-- **Backend:** Next.js API routes, LangGraph (TypeScript), LangChain.js
-- **Database:** Supabase (Postgres + pgvector), Supabase Auth
-- **LLM:** Google Gemini 2.5 Flash via `@langchain/google-genai`
-- **Embeddings:** Gemini `text-embedding-004` (768 dimensions)
-- **PDF Parsing:** `unpdf` (per-page text extraction) + LlamaParse (optional, for table extraction)
-- **External Tools:** Custom MCP servers (glossary, web search)
-- **Hosting:** Vercel
+- Full spec: `docs/project-spec.md`
+- Tech stack, architecture, features, directory map: `README.md`
+- Setup and deployment: `docs/deployment.md`
 
 ## Commands
 
@@ -68,17 +60,6 @@ npm run lint           # Run ESLint
 npm run format         # Format code with Prettier
 npm run format:check   # Check formatting without writing
 ```
-
-## Key Directories
-
-- `src/lib/ingestion/` — PDF parsing, chunking, embedding pipeline
-- `src/lib/agent/` — LangGraph agent (graph, nodes, tools, prompts)
-- `src/lib/langchain/` — LLM and embeddings config (swap models here)
-- `src/lib/supabase/` — Supabase clients (browser, server, admin)
-- `src/app/api/` — API routes (upload, chat, documents, conversations, summary, search)
-- `src/lib/validations/` — Zod request body schemas
-- `mcp-servers/` — MCP server packages (glossary, web search)
-- `docs/` — Project spec, weekly execution plans, agent workflow
 
 ## Conventions
 
