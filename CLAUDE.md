@@ -1,22 +1,57 @@
 # CLAUDE.md
 
-Follow all project policy in AGENTS.md (source of truth order, scope discipline, etc.).
+Repository-level policy for Claude Code and sub-agents. For any thread in this
+repository, agents must apply these rules by default — you do not need to be
+told to use these files each time.
+
+## Source of Truth Order
+
+1. `docs/project-spec.md` for product scope, architecture, and acceptance criteria.
+2. The GitHub issue being worked, for current task scope and live status (see `docs/agents/issue-tracker.md`).
+3. `docs/adr/` for architectural decisions already made.
+4. `docs/agents/workflow.md` for execution workflow and decision rules.
+5. `docs/agents/handoff-template.md` for handoff/report format.
+6. `CLAUDE.md` for top-level policy.
+
+If there is any conflict:
+
+- Product/scope conflict: `docs/project-spec.md` wins.
+- Task-level conflict: the issue wins.
+- If work contradicts an existing ADR, say so explicitly rather than silently overriding it.
+
+`docs/archive/` holds the **frozen** record of the completed 8-week build (closed
+2026-03-26). Read it for history; never update it, and don't start a week 9.
+
+## Mandatory Rules
+
+- Clarification before assumption:
+  Ask the user before making any assumption that could affect scope, architecture, timeline, cost, security, environment, or data contracts.
+- Scope discipline:
+  Execute only the requested issue scope unless the user explicitly approves scope expansion.
+- Status discipline:
+  Track work as GitHub issues. Keep the issue's labels and comments current before closing a thread.
+- Workflow authority discipline:
+  Treat `docs/agents/workflow.md` as the canonical location for execution-level rules (task sequencing and batching preferences, code observability, documentation maintenance, current E2E runner maintenance, and context hygiene).
+  Avoid duplicating those detailed rules here.
+
+## Thread Start Reference
+
+Use the thread-start checklist and minimal-read mode from `docs/agents/workflow.md` as the canonical process.
+
+## Change Management
+
+- If product scope changes, update `docs/project-spec.md`.
+- If an architectural decision is made or reversed, add an ADR in `docs/adr/`.
+- If workflow/handoff behavior changes, update `docs/agents/workflow.md` and/or `docs/agents/handoff-template.md`.
+- Keep the policy sections above short; only policy belongs there.
 
 ## Project
 
 AI-powered legal document analysis platform using RAG + LangGraph agent.
-Full spec: `docs/project-spec.md`
 
-## Tech Stack
-
-- **Frontend:** Next.js 16 (App Router), Tailwind CSS v4, shadcn/ui
-- **Backend:** Next.js API routes, LangGraph (TypeScript), LangChain.js
-- **Database:** Supabase (Postgres + pgvector), Supabase Auth
-- **LLM:** Google Gemini 2.5 Flash via `@langchain/google-genai`
-- **Embeddings:** Gemini `text-embedding-004` (768 dimensions)
-- **PDF Parsing:** `unpdf` (per-page text extraction) + LlamaParse (optional, for table extraction)
-- **External Tools:** Custom MCP servers (glossary, web search)
-- **Hosting:** Vercel
+- Full spec: `docs/project-spec.md`
+- Tech stack, architecture, features, directory map: `README.md`
+- Setup and deployment: `docs/deployment.md`
 
 ## Commands
 
@@ -31,17 +66,6 @@ npm run format         # Format code with Prettier
 npm run format:check   # Check formatting without writing
 ```
 
-## Key Directories
-
-- `src/lib/ingestion/` — PDF parsing, chunking, embedding pipeline
-- `src/lib/agent/` — LangGraph agent (graph, nodes, tools, prompts)
-- `src/lib/langchain/` — LLM and embeddings config (swap models here)
-- `src/lib/supabase/` — Supabase clients (browser, server, admin)
-- `src/app/api/` — API routes (upload, chat, documents, conversations, summary, search)
-- `src/lib/validations/` — Zod request body schemas
-- `mcp-servers/` — MCP server packages (glossary, web search)
-- `docs/` — Project spec, weekly execution plans, agent workflow
-
 ## Conventions
 
 - Use App Router patterns (server components by default, `"use client"` only when needed)
@@ -54,3 +78,17 @@ npm run format:check   # Check formatting without writing
 
 - When committing, always break changes into multiple small, logically grouped commits — never one big commit
 - Each commit should focus on one concern (e.g., separate commits for config, bug fixes, features, docs)
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `sarthak-mallick/Legal-Document-Analysis`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, unchanged (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` at the root, ADRs in `docs/adr/`. See `docs/agents/domain.md`.
