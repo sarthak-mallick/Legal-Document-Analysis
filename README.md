@@ -53,19 +53,19 @@ See [docs/deployment.md](docs/deployment.md) for local development setup and pro
 
 ## Key Directories
 
-| Directory              | Purpose                                                             |
-| ---------------------- | ------------------------------------------------------------------- |
-| `src/lib/ingestion/`   | PDF parsing, table extraction, chunking, embedding pipeline         |
-| `src/lib/agent/`       | LangGraph agent: graph, nodes, state, tools, prompts                |
-| `src/lib/langchain/`   | LLM and embeddings configuration                                    |
-| `src/lib/supabase/`    | Supabase clients (browser, server, admin)                           |
-| `src/app/api/`         | API routes: upload, chat, documents, conversations, summary, search |
-| `src/app/(auth)/`      | Login and signup pages                                              |
-| `src/components/`      | React components: chat, documents, summary, UI primitives           |
-| `src/lib/validations/` | Zod request body schemas                                            |
-| `src/types/`           | Shared TypeScript type definitions                                  |
-| `mcp-servers/`         | MCP server packages: glossary, web search                           |
-| `docs/`                | Project spec, deployment guide, execution plans, agent workflow     |
+| Directory              | Purpose                                                              |
+| ---------------------- | -------------------------------------------------------------------- |
+| `src/lib/ingestion/`   | PDF parsing, table extraction, chunking, embedding pipeline          |
+| `src/lib/agent/`       | LangGraph agent: graph, nodes, state, tools, prompts                 |
+| `src/lib/langchain/`   | LLM and embeddings configuration                                     |
+| `src/lib/supabase/`    | Supabase clients (browser, server, admin)                            |
+| `src/app/api/`         | API routes: upload, chat, documents, conversations, summary          |
+| `src/app/(auth)/`      | Login and signup pages                                               |
+| `src/components/`      | React components: chat, documents, summary, UI primitives            |
+| `src/lib/validations/` | Zod request body schemas                                             |
+| `src/types/`           | Shared TypeScript type definitions                                   |
+| `mcp-servers/`         | MCP server packages: glossary, web search                            |
+| `docs/`                | Project spec, deployment guide, ADRs, challenges log, agent workflow |
 
 ## Model Swapping
 
