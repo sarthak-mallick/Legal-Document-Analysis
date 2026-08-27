@@ -2,9 +2,21 @@
 
 Hard-won fixes and non-obvious issues encountered during development.
 
+The **decisions** that came out of these entries are recorded separately as ADRs in
+`docs/adr/`, which is where agents and new contributors should look first:
+
+- [ADR-0001](adr/0001-custom-ingestion-and-retrieval-layer.md) — custom ingestion/retrieval layer, not LangChain abstractions
+- [ADR-0002](adr/0002-application-level-ownership-checks-not-rls.md) — application-level ownership checks are the access-control boundary, not RLS
+- [ADR-0003](adr/0003-unpdf-for-pdf-parsing.md) — `unpdf` for PDF parsing
+- [ADR-0004](adr/0004-heuristic-agent-routing-and-thinking-budget.md) — heuristic query routing, and keeping Gemini "thinking" on
+
+This file keeps the full debugging detail: symptoms, root causes, and what didn't work.
+
 ---
 
 ## Broken access control: admin client bypasses RLS, so routes must check ownership
+
+> Decision recorded in [ADR-0002](adr/0002-application-level-ownership-checks-not-rls.md).
 
 **Date:** 2026-06-30
 **Time spent:** found via whole-repo code review
@@ -64,6 +76,8 @@ Hard-won fixes and non-obvious issues encountered during development.
 
 ## Design decision: ingestion/retrieval layer is custom, not LangChain abstractions
 
+> Decision recorded in [ADR-0001](adr/0001-custom-ingestion-and-retrieval-layer.md).
+
 **Date:** 2026-06-30
 **Context:** LangChain is a dependency, but only `@langchain/google-genai` (LLM), `@langchain/langgraph` (agent graph), and `@langchain/core` (message primitives) are actually used. The document loading, representation, chunking, and retrieval layers are all hand-rolled. This entry records _why_, so the divergence from "the LangChain way" isn't mistaken for an oversight. (Two specific migrations behind this decision are logged separately below: the `pdf-parse`/`pdfjs-dist` Next.js 16 incompatibility, and the silent-empty-vector bug in `GoogleGenerativeAIEmbeddings`.)
 
@@ -86,6 +100,9 @@ Hard-won fixes and non-obvious issues encountered during development.
 ---
 
 ## pdf-parse v2 / pdfjs-dist v5 incompatible with Next.js 16
+
+> Decision recorded in [ADR-0003](adr/0003-unpdf-for-pdf-parsing.md). The `pdf-parse@1.1.1`
+> fix below was an interim step; the project now uses `unpdf`.
 
 **Date:** 2026-04-08
 **Time spent:** ~1 hour
@@ -351,6 +368,8 @@ Colors match the citation section: Document A = blue border + blue badges, Docum
 
 ## Agent pipeline latency: 3-7 sequential LLM calls per question
 
+> Decision recorded in [ADR-0004](adr/0004-heuristic-agent-routing-and-thinking-budget.md).
+
 **Date:** 2026-04-14
 **Symptom:** Every chat message required 3-4 sequential Gemini API calls minimum (classify → evaluate → synthesize, often more with retries). At ~1-3s per LLM round-trip, users waited 3-20s before seeing any streamed tokens. Cross-document and multi-section questions hit the worst case: classify + sub-query expansion + evaluate (×3 retries) + compare + synthesize = 7+ LLM calls.
 
@@ -386,6 +405,8 @@ Colors match the citation section: Document A = blue border + blue badges, Docum
 ---
 
 ## Gemini 2.5 Flash "thinking" dominated per-query latency
+
+> Decision recorded in [ADR-0004](adr/0004-heuristic-agent-routing-and-thinking-budget.md).
 
 **Date:** 2026-06-22
 **Symptom:** Even after the pipeline was trimmed to 2-4 LLM calls per question, complex queries still felt slow — cross-document ~10s, multi-section ~9.5s. The earlier optimizations cut the _number_ of calls but each remaining call was expensive.
