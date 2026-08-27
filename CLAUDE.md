@@ -73,3 +73,17 @@ npm run format:check   # Check formatting without writing
 
 - When committing, always break changes into multiple small, logically grouped commits — never one big commit
 - Each commit should focus on one concern (e.g., separate commits for config, bug fixes, features, docs)
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `sarthak-mallick/Legal-Document-Analysis`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, unchanged (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` at the root, ADRs in `docs/adr/`. See `docs/agents/domain.md`.
