@@ -1,5 +1,9 @@
 # Week 8 Execution
 
+> **Final week of the build plan.** All of Weeks 1-8 closed on 2026-03-26. These files
+> are frozen history — see `docs/archive/README.md`. New work is tracked as GitHub
+> issues; see `docs/agents/issue-tracker.md`.
+
 ## Objective
 
 Polish the UI, add dark mode, improve loading states and responsiveness, and finalize documentation for production readiness.
