@@ -6,28 +6,32 @@ told to use these files each time.
 
 ## Source of Truth Order
 
-1. `docs/project-spec.md` for product scope, architecture, timeline, and acceptance criteria.
-2. `docs/week-N-execution.md` for the active week plan and live status.
-3. `docs/agents/workflow.md` for execution workflow and decision rules.
-4. `docs/agents/handoff-template.md` for handoff/report format.
-5. `CLAUDE.md` for top-level policy.
+1. `docs/project-spec.md` for product scope, architecture, and acceptance criteria.
+2. The GitHub issue being worked, for current task scope and live status (see `docs/agents/issue-tracker.md`).
+3. `docs/adr/` for architectural decisions already made.
+4. `docs/agents/workflow.md` for execution workflow and decision rules.
+5. `docs/agents/handoff-template.md` for handoff/report format.
+6. `CLAUDE.md` for top-level policy.
 
 If there is any conflict:
 
-- Product/timeline conflict: `docs/project-spec.md` wins.
-- Week execution conflict: active `docs/week-N-execution.md` wins.
+- Product/scope conflict: `docs/project-spec.md` wins.
+- Task-level conflict: the issue wins.
+- If work contradicts an existing ADR, say so explicitly rather than silently overriding it.
+
+`docs/archive/` holds the **frozen** record of the completed 8-week build (closed
+2026-03-26). Read it for history; never update it, and don't start a week 9.
 
 ## Mandatory Rules
 
 - Clarification before assumption:
   Ask the user before making any assumption that could affect scope, architecture, timeline, cost, security, environment, or data contracts.
 - Scope discipline:
-  Execute only the requested week/milestone scope unless the user explicitly approves scope expansion.
-- Weekly status discipline:
-  Keep exactly one execution file per active week (`docs/week-1-execution.md`, `docs/week-2-execution.md`, etc.).
-  Update that file's live status sections before closing a thread.
+  Execute only the requested issue scope unless the user explicitly approves scope expansion.
+- Status discipline:
+  Track work as GitHub issues. Keep the issue's labels and comments current before closing a thread.
 - Workflow authority discipline:
-  Treat `docs/agents/workflow.md` as the canonical location for execution-level rules (task sequencing and batching preferences, code observability, README/runbook maintenance, current E2E runner maintenance, and context hygiene).
+  Treat `docs/agents/workflow.md` as the canonical location for execution-level rules (task sequencing and batching preferences, code observability, documentation maintenance, current E2E runner maintenance, and context hygiene).
   Avoid duplicating those detailed rules here.
 
 ## Thread Start Reference
@@ -36,7 +40,8 @@ Use the thread-start checklist and minimal-read mode from `docs/agents/workflow.
 
 ## Change Management
 
-- If product scope/timeline changes, update `docs/project-spec.md` change log.
+- If product scope changes, update `docs/project-spec.md`.
+- If an architectural decision is made or reversed, add an ADR in `docs/adr/`.
 - If workflow/handoff behavior changes, update `docs/agents/workflow.md` and/or `docs/agents/handoff-template.md`.
 - Keep the policy sections above short; only policy belongs there.
 

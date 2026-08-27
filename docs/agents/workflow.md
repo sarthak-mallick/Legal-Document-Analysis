@@ -2,20 +2,32 @@
 
 Operational workflow for implementation threads in this repository.
 
+## 0) Unit of Work
+
+The 8-week build plan closed on 2026-03-26. Weeks 1-8 are **frozen history** in
+`docs/archive/` — read them for background, never update them, and do not create a
+week 9 file. `docs/project-spec.md` still describes a Week 9 scope; any of it that is
+still outstanding belongs in the issue tracker, not in a new execution file.
+
+New work is tracked as **GitHub issues**. See `docs/agents/issue-tracker.md` for the
+`gh` conventions and `docs/agents/triage-labels.md` for the label vocabulary.
+
 ## 1) Thread Start Checklist
 
 1. Follow the source-of-truth read order in `CLAUDE.md`.
-2. Confirm scope: current week, tasks, and acceptance criteria.
+2. Confirm scope: the issue being worked and its acceptance criteria.
 3. If any critical detail is unclear, ask clarification questions before implementation.
 
-Use minimal-read mode for `docs/week-N-execution.md`:
+Use minimal-read mode when reading an issue:
 
-1. `Objective`
-2. `In Scope` / `Out of Scope`
-3. `Live Task Status`
-4. `Handoff Snapshot`
-5. Latest session-log entries (most recent only)
-6. Only the task/contract subsection needed for current work
+1. Title and body
+2. Labels (current triage state)
+3. Latest comments only — not the full thread
+4. Linked issues/PRs only when the current task depends on them
+
+Apply the same minimal-read discipline to the frozen files in `docs/archive/` when
+consulting them for history: `Objective`, `In Scope` / `Out of Scope`, and
+`Handoff Snapshot` first; the rest only if needed.
 
 ## 2) Clarification Triggers (Ask First)
 
@@ -34,75 +46,76 @@ Question style:
 
 ## 3) Execution Rules
 
-- Stay within requested week scope.
-- Use the active week file as the live source for task status.
+- Stay within the scope of the issue being worked.
+- Use the issue itself as the live source for status — labels and comments.
 - Do not create separate status files unless requested.
-- Keep changes incremental and tied to specific task IDs.
-- Batching is allowed by default when it improves delivery speed (for example, completing multiple tasks for a day in one pass).
-- Pause between task IDs only when the user explicitly asks for step-by-step review checkpoints.
+- Keep changes incremental and tied to a specific issue number.
+- Batching is allowed by default when it improves delivery speed (for example, closing several small related issues in one pass).
+- Pause between issues only when the user explicitly asks for step-by-step review checkpoints.
 - Code comments/logging rule: every new or modified function must include a short purpose comment and meaningful logging for key transitions and error paths (avoid noisy per-line logs).
 
-## 4) Week Status Update Rules
+## 4) Issue Status Update Rules
 
-During execution, update active `docs/week-N-execution.md`:
+During execution, keep the issue current:
 
-- `Live Task Status`
-- `Session Log (Append-Only)`
-- `Handoff Snapshot`
+- Apply the triage label that reflects its state (`docs/agents/triage-labels.md`).
+- Comment when a task blocks, changes direction, or completes.
+- Close with a comment summarising the outcome.
 
 Update points:
 
-- When a task starts.
-- When a task completes/fails/blocks.
+- When work starts (claim it: `gh issue edit <n> --add-assignee @me`).
+- When the task completes, fails, or blocks.
 - Before thread close.
 
 Status entry style:
 
-- Keep entries short and factual (1-2 lines).
-- Prefer task IDs and outcome over long narrative.
+- Keep comments short and factual (1-2 lines).
+- Prefer issue number and outcome over long narrative.
+- Don't paste long command output into a comment; link the commit or PR instead.
 
 ## 5) End-of-Thread Checklist
 
 1. Verify/report acceptance criteria progress.
-2. Record blockers/risks and unresolved decisions.
+2. Record blockers/risks and unresolved decisions on the issue.
 3. Set next smallest actionable task.
-4. Update `Handoff Snapshot`.
-5. Use `docs/agents/handoff-template.md` format in final summary.
+4. Use `docs/agents/handoff-template.md` format in the final summary and in the closing
+   issue comment or PR description.
 
-## 6) Week Transition Rule
+## 6) Decision Records
 
-When moving from Week N to Week N+1:
+When a thread settles an architectural decision — a library choice, a security boundary,
+a tradeoff with lasting consequences — record it as an ADR in `docs/adr/`, numbered
+sequentially. Keep the debugging detail (symptom, root cause, what didn't work) in
+`docs/challenges.md` and link the two.
 
-- Create `docs/week-(N+1)-execution.md` if missing.
-- Carry only unresolved blockers/risks from prior week.
-- Do not copy stale completed-task noise.
+If your work contradicts an existing ADR, surface it explicitly rather than silently
+overriding it. See `docs/agents/domain.md`.
 
 ## 7) Context Hygiene (Automatic)
 
 Agents must keep context size controlled without user prompting:
 
-1. Do not reread full weekly docs on every turn; reread only sections needed for the current task.
-2. Keep `Session Log` concise; avoid pasting long command output or long prose.
-3. Keep `Handoff Snapshot` current so new threads can start from it instead of full-history reading.
-4. When a week is completed, compact the weekly file by:
-   - preserving final acceptance status, key decisions, and unresolved risks
-   - keeping a brief completion summary
-   - condensing stale in-progress noise outside append-only logs
-5. If additional detail is ever required, rely on git history rather than expanding execution docs indefinitely.
+1. Do not reread long docs on every turn; reread only the sections needed for the current task.
+2. Keep issue comments concise; avoid pasting long command output or long prose.
+3. Prefer the issue body and latest comments over reading the full thread history.
+4. Do not expand `docs/challenges.md` or the ADRs indefinitely — if additional detail is
+   ever required, rely on git history.
 
-## 8) README Runbook Maintenance Rule
+## 8) Documentation Maintenance
 
-Maintain `README.md` as the operational runbook for the latest completed implementation day only:
-
-1. Use a single cumulative setup/test flow for current Day N.
-2. When Day N is implemented, remove or replace Day (N-1) sections and labels.
-3. Do not keep parallel day-specific runbooks in `README.md` (for example, separate Day 1 and Day 2 blocks).
-4. Ensure teardown instructions remain present in the current cumulative runbook.
+- `README.md` is the product-facing document: features, architecture, tech stack,
+  directory map. Keep it accurate when those change.
+- `docs/deployment.md` holds setup and deployment instructions. Runbook steps belong
+  there, not in `README.md`.
+- `CLAUDE.md` holds only policy and agent-actionable conventions. Descriptive material
+  belongs in `README.md`.
 
 ## 9) Current E2E Runner Maintenance Rule
 
-Maintain `scripts/run-current-e2e.sh` as the single canonical executable validation flow for the latest completed implementation day:
+Maintain `scripts/run-current-e2e.sh` as the single canonical executable validation flow:
 
-1. Keep it aligned with current Day N behavior and checks.
-2. When Day N advances, update this script to the new cumulative flow and remove/replace Day (N-1)-specific logic from the canonical path.
-3. Keep README commands aligned to `scripts/run-current-e2e.sh`.
+1. Keep it aligned with current behavior and checks.
+2. When the validated flow changes, update this script and remove superseded logic from
+   the canonical path.
+3. Keep documented commands aligned to `scripts/run-current-e2e.sh`.
