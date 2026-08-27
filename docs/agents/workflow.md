@@ -67,7 +67,7 @@ Status entry style:
 2. Record blockers/risks and unresolved decisions.
 3. Set next smallest actionable task.
 4. Update `Handoff Snapshot`.
-5. Use `docs/agent/handoff-template.md` format in final summary.
+5. Use `docs/agents/handoff-template.md` format in final summary.
 
 ## 6) Week Transition Rule
 

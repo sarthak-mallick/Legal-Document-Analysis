@@ -8,8 +8,8 @@ told to use these files each time.
 
 1. `docs/project-spec.md` for product scope, architecture, timeline, and acceptance criteria.
 2. `docs/week-N-execution.md` for the active week plan and live status.
-3. `docs/agent/workflow.md` for execution workflow and decision rules.
-4. `docs/agent/handoff-template.md` for handoff/report format.
+3. `docs/agents/workflow.md` for execution workflow and decision rules.
+4. `docs/agents/handoff-template.md` for handoff/report format.
 5. `CLAUDE.md` for top-level policy.
 
 If there is any conflict:
@@ -27,17 +27,17 @@ If there is any conflict:
   Keep exactly one execution file per active week (`docs/week-1-execution.md`, `docs/week-2-execution.md`, etc.).
   Update that file's live status sections before closing a thread.
 - Workflow authority discipline:
-  Treat `docs/agent/workflow.md` as the canonical location for execution-level rules (task sequencing and batching preferences, code observability, README/runbook maintenance, current E2E runner maintenance, and context hygiene).
+  Treat `docs/agents/workflow.md` as the canonical location for execution-level rules (task sequencing and batching preferences, code observability, README/runbook maintenance, current E2E runner maintenance, and context hygiene).
   Avoid duplicating those detailed rules here.
 
 ## Thread Start Reference
 
-Use the thread-start checklist and minimal-read mode from `docs/agent/workflow.md` as the canonical process.
+Use the thread-start checklist and minimal-read mode from `docs/agents/workflow.md` as the canonical process.
 
 ## Change Management
 
 - If product scope/timeline changes, update `docs/project-spec.md` change log.
-- If workflow/handoff behavior changes, update `docs/agent/workflow.md` and/or `docs/agent/handoff-template.md`.
+- If workflow/handoff behavior changes, update `docs/agents/workflow.md` and/or `docs/agents/handoff-template.md`.
 - Keep the policy sections above short; only policy belongs there.
 
 ## Project
