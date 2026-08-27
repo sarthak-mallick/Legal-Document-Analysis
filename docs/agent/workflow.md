@@ -4,7 +4,7 @@ Operational workflow for implementation threads in this repository.
 
 ## 1) Thread Start Checklist
 
-1. Follow the source-of-truth read order in `AGENTS.md`.
+1. Follow the source-of-truth read order in `CLAUDE.md`.
 2. Confirm scope: current week, tasks, and acceptance criteria.
 3. If any critical detail is unclear, ask clarification questions before implementation.
 
